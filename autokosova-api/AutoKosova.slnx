@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AutoKosova.Api/AutoKosova.Api.csproj" Id="328569e5-b9aa-41df-9442-48096080bd86" />
+  <Project Path="AutoKosova.Business/AutoKosova.Business.csproj" Id="54020eca-2c2a-4a09-8040-9adba4add375" />
+  <Project Path="AutoKosova.DataAccess/AutoKosova.DataAccess.csproj" Id="9c9dd9cf-147c-465e-8861-e2f9bcd185c9" />
+  <Project Path="AutoKosova.Entity/AutoKosova.Entity.csproj" Id="d88a45aa-1e68-46af-9dae-bbe7630d40ae" />
+</Solution>

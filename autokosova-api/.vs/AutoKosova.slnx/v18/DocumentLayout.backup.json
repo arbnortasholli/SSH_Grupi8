@@ -1,0 +1,79 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{D88A45AA-1E68-46AF-9DAE-BBE7630D40AE}|AutoKosova.Entity\\AutoKosova.Entity.csproj|c:\\users\\admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\autokosova.entity\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D88A45AA-1E68-46AF-9DAE-BBE7630D40AE}|AutoKosova.Entity\\AutoKosova.Entity.csproj|solutionrelative:autokosova.entity\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9C9DD9CF-147C-465E-8861-E2F9BCD185C9}|AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj|c:\\users\\admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\autokosova.dataaccess\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9C9DD9CF-147C-465E-8861-E2F9BCD185C9}|AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj|solutionrelative:autokosova.dataaccess\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{54020ECA-2C2A-4A09-8040-9ADBA4ADD375}|AutoKosova.Business\\AutoKosova.Business.csproj|c:\\users\\admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\autokosova.business\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{54020ECA-2C2A-4A09-8040-9ADBA4ADD375}|AutoKosova.Business\\AutoKosova.Business.csproj|solutionrelative:autokosova.business\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Class1.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Entity\\Class1.cs",
+              "RelativeDocumentMoniker": "AutoKosova.Entity\\Class1.cs",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Entity\\Class1.cs",
+              "RelativeToolTip": "AutoKosova.Entity\\Class1.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-18T12:07:42.57Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Class1.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.DataAccess\\Class1.cs",
+              "RelativeDocumentMoniker": "AutoKosova.DataAccess\\Class1.cs",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.DataAccess\\Class1.cs",
+              "RelativeToolTip": "AutoKosova.DataAccess\\Class1.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-18T12:07:00.218Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Class1.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Business\\Class1.cs",
+              "RelativeDocumentMoniker": "AutoKosova.Business\\Class1.cs",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Business\\Class1.cs",
+              "RelativeToolTip": "AutoKosova.Business\\Class1.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-18T12:05:27.102Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
