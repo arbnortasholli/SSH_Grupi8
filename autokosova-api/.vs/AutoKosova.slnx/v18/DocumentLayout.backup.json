@@ -27,16 +27,16 @@
       "RelativeMoniker": "D:0:0:{9C9DD9CF-147C-465E-8861-E2F9BCD185C9}|AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj|solutionrelative:autokosova.dataaccess\\autokosova.dataaccess.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{9C9DD9CF-147C-465E-8861-E2F9BCD185C9}|AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.dataaccess\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9C9DD9CF-147C-465E-8861-E2F9BCD185C9}|AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj|solutionrelative:autokosova.dataaccess\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{54020ECA-2C2A-4A09-8040-9ADBA4ADD375}|AutoKosova.Business\\AutoKosova.Business.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.business\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{54020ECA-2C2A-4A09-8040-9ADBA4ADD375}|AutoKosova.Business\\AutoKosova.Business.csproj|solutionrelative:autokosova.business\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\Class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:AutoKosova.Entity\\Class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.DataAccess\\Class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:AutoKosova.DataAccess\\Class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -46,11 +46,19 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
             },
             {
               "$type": "Document",
@@ -127,7 +135,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 7,
               "Title": "Class1.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\Class1.cs",
               "RelativeDocumentMoniker": "AutoKosova.Entity\\Class1.cs",
@@ -139,7 +147,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 8,
               "Title": "Class1.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.DataAccess\\Class1.cs",
               "RelativeDocumentMoniker": "AutoKosova.DataAccess\\Class1.cs",
@@ -151,7 +159,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 6,
               "Title": "Class1.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Business\\Class1.cs",
               "RelativeDocumentMoniker": "AutoKosova.Business\\Class1.cs",

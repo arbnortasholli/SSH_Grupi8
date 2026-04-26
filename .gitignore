@@ -1,0 +1,33 @@
+# Ignore the .vs folder (Visual Studio-specific files)
+.vs/
+
+# Ignore build output directories
+bin/
+obj/
+
+# Ignore user-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Ignore ASP.NET temporary files
+# https://github.com/dotnet/aspnetcore/issues/32944
+wwwroot/
+$_node_modules/
+
+# Ignore ASP.NET Core app files
+appsettings.Development.json
+appsettings.Production.json
+
+# Ignore MacOS system files
+.DS_Store
+
+# Ignore Windows system files
+Thumbs.db
+
+# Ignore logs
+*.log
+
+# Ignore package restore directories
+packages/

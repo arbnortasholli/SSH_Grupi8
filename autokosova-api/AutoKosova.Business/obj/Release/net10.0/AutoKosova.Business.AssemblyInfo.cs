@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AutoKosova.Business")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bb346a5511b5fc94a9ddb18703dc682497f58c09")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e3a807e95c256aa22ecf66a072a48afe6a05bc4e")]
 [assembly: System.Reflection.AssemblyProductAttribute("AutoKosova.Business")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AutoKosova.Business")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
