@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj": {}
+    "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj": {
+    "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj",
+        "projectUniqueName": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj",
         "projectName": "AutoKosova.DataAccess",
-        "projectPath": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj",
+        "projectPath": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.DataAccess\\AutoKosova.DataAccess.csproj",
         "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.DataAccess\\obj\\",
+        "outputPath": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.DataAccess\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -30,10 +30,11 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj": {
-                "projectPath": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj"
+              "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj": {
+                "projectPath": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj"
               }
             }
           }
@@ -52,7 +53,14 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[10.0.7, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -69,7 +77,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -347,14 +355,14 @@
         }
       }
     },
-    "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj": {
+    "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj",
+        "projectUniqueName": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj",
         "projectName": "AutoKosova.Entity",
-        "projectPath": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj",
+        "projectPath": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj",
         "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Admin\\source\\repos\\arberhalimi\\autokosova\\autokosova-api\\AutoKosova.Entity\\obj\\",
+        "outputPath": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -373,6 +381,7 @@
         },
         "frameworks": {
           "net10.0": {
+            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -391,6 +400,7 @@
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "imports": [
             "net461",
@@ -408,7 +418,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

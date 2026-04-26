@@ -1,0 +1,56 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "AutoKosova.Business/1.0.0": {
+        "dependencies": {
+          "AutoKosova.DataAccess": "1.0.0",
+          "AutoKosova.Entity": "1.0.0"
+        },
+        "runtime": {
+          "AutoKosova.Business.dll": {}
+        }
+      },
+      "AutoKosova.DataAccess/1.0.0": {
+        "dependencies": {
+          "AutoKosova.Entity": "1.0.0"
+        },
+        "runtime": {
+          "AutoKosova.DataAccess.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "AutoKosova.Entity/1.0.0": {
+        "runtime": {
+          "AutoKosova.Entity.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "AutoKosova.Business/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AutoKosova.DataAccess/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AutoKosova.Entity/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

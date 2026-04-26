@@ -1,0 +1,16 @@
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\bin\Debug\net10.0\AutoKosova.DataAccess.deps.json
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\bin\Debug\net10.0\AutoKosova.DataAccess.dll
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\bin\Debug\net10.0\AutoKosova.DataAccess.pdb
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\bin\Debug\net10.0\AutoKosova.Entity.dll
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\bin\Debug\net10.0\AutoKosova.Entity.pdb
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKosova.DataAccess.csproj.AssemblyReference.cache
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKosova.DataAccess.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKosova.DataAccess.AssemblyInfoInputs.cache
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKosova.DataAccess.AssemblyInfo.cs
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKosova.DataAccess.csproj.CoreCompileInputs.cache
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKosova.DataAccess.sourcelink.json
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKoso.ED65902A.Up2Date
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKosova.DataAccess.dll
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\refint\AutoKosova.DataAccess.dll
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\AutoKosova.DataAccess.pdb
+C:\Users\Admin\source\repos\arbnortasholli\SSH_Grupi8\autokosova-api\AutoKosova.DataAccess\obj\Debug\net10.0\ref\AutoKosova.DataAccess.dll
