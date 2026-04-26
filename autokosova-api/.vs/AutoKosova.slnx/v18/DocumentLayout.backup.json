@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.api\\autokosova.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|solutionrelative:autokosova.api\\autokosova.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.api\\weatherforecast.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|solutionrelative:autokosova.api\\weatherforecast.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -13,10 +17,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{D88A45AA-1E68-46AF-9DAE-BBE7630D40AE}|AutoKosova.Entity\\AutoKosova.Entity.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.entity\\autokosova.entity.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
       "RelativeMoniker": "D:0:0:{D88A45AA-1E68-46AF-9DAE-BBE7630D40AE}|AutoKosova.Entity\\AutoKosova.Entity.csproj|solutionrelative:autokosova.entity\\autokosova.entity.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.api\\autokosova.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|solutionrelative:autokosova.api\\autokosova.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
       "AbsoluteMoniker": "D:0:0:{54020ECA-2C2A-4A09-8040-9ADBA4ADD375}|AutoKosova.Business\\AutoKosova.Business.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.business\\autokosova.business.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
@@ -46,7 +46,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
@@ -54,24 +54,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "WeatherForecast.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\WeatherForecast.cs",
               "RelativeDocumentMoniker": "AutoKosova.Api\\WeatherForecast.cs",
               "ToolTip": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\WeatherForecast.cs",
               "RelativeToolTip": "AutoKosova.Api\\WeatherForecast.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-18T22:29:23.837Z",
               "EditorCaption": ""
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "WeatherForecastController.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\Controllers\\WeatherForecastController.cs",
               "RelativeDocumentMoniker": "AutoKosova.Api\\Controllers\\WeatherForecastController.cs",
@@ -79,13 +75,12 @@
               "RelativeToolTip": "AutoKosova.Api\\Controllers\\WeatherForecastController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-18T22:28:59.321Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-18T22:28:59.321Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "AutoKosova.Entity",
+              "DocumentIndex": 3,
+              "Title": "AutoKosova.Entity.csproj",
               "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj",
               "RelativeDocumentMoniker": "AutoKosova.Entity\\AutoKosova.Entity.csproj",
               "ToolTip": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Entity\\AutoKosova.Entity.csproj",
@@ -97,7 +92,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 0,
               "Title": "AutoKosova.Api.csproj",
               "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\AutoKosova.Api.csproj",
               "RelativeDocumentMoniker": "AutoKosova.Api\\AutoKosova.Api.csproj",

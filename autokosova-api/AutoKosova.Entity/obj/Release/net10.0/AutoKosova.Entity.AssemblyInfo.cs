@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AutoKosova.Entity")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6837f62021074839d7f05b3258a4dd9c753adda6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a1c68a22729866df83ea10fa8e4de45ce065e6d5")]
 [assembly: System.Reflection.AssemblyProductAttribute("AutoKosova.Entity")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AutoKosova.Entity")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
