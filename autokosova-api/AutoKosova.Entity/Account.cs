@@ -53,7 +53,7 @@ namespace AutoKosova.Entity
         public string? AccountTimeZone { get; set; }
         public bool AccountDeleted { get; set; }
         public DateTime AccountDeletedDate { get; set; }
-        public Accounts? AccountDeletedBy { get; set; }
+        public Account? AccountDeletedBy { get; set; }
         //public List<AccountDocument> ListOfDocuments { get; set; }
     }
 }
