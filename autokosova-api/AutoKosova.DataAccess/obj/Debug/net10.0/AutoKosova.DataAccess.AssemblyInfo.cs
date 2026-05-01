@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AutoKosova.DataAccess")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e3a807e95c256aa22ecf66a072a48afe6a05bc4e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cc80f92ffe1d757e5e6408ec17c5aacb6ac55c88")]
 [assembly: System.Reflection.AssemblyProductAttribute("AutoKosova.DataAccess")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AutoKosova.DataAccess")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
