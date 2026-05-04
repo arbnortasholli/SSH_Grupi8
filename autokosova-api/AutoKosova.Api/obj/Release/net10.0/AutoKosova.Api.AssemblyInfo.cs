@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AutoKosova.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cc80f92ffe1d757e5e6408ec17c5aacb6ac55c88")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+81449f0172394c1a78cb07da03b45b2c0f948d65")]
 [assembly: System.Reflection.AssemblyProductAttribute("AutoKosova.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AutoKosova.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,7 +1,7 @@
+import { AppRoutes } from './routes/Routes'
+
 function App() {
-  return (
-    <h3>AutoKosova</h3>
-  )
+    return <AppRoutes />
 }
 
 export default App

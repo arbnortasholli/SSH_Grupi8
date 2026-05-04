@@ -5,6 +5,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.api\\controllers\\accountsrolecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|solutionrelative:autokosova.api\\controllers\\accountsrolecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|c:\\users\\admin\\source\\repos\\arbnortasholli\\ssh_grupi8\\autokosova-api\\autokosova.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{328569E5-B9AA-41DF-9442-48096080BD86}|AutoKosova.Api\\AutoKosova.Api.csproj|solutionrelative:autokosova.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -26,13 +30,26 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\Program.cs",
+              "RelativeDocumentMoniker": "AutoKosova.Api\\Program.cs",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\Program.cs",
+              "RelativeToolTip": "AutoKosova.Api\\Program.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAABcAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-01T13:16:56.514Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
               "Title": "AccountsRoleController.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\Controllers\\AccountsRoleController.cs",
               "RelativeDocumentMoniker": "AutoKosova.Api\\Controllers\\AccountsRoleController.cs",
-              "ToolTip": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\Controllers\\AccountsRoleController.cs*",
-              "RelativeToolTip": "AutoKosova.Api\\Controllers\\AccountsRoleController.cs*",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAIAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\Admin\\source\\repos\\arbnortasholli\\SSH_Grupi8\\autokosova-api\\AutoKosova.Api\\Controllers\\AccountsRoleController.cs",
+              "RelativeToolTip": "AutoKosova.Api\\Controllers\\AccountsRoleController.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAA0AAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-04-26T17:38:04.475Z",
               "EditorCaption": ""

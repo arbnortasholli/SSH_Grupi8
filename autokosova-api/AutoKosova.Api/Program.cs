@@ -13,6 +13,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddCors();
+
 // Build the app
 var app = builder.Build();
 
@@ -27,6 +29,9 @@ app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS
 app.UseAuthorization();    // Enable authorization middleware
 
 // Map controllers to the app (i.e., configure routing for controllers)
+app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod()
+    .WithOrigins("http://localhost:3000", "https://localhost:3000"));
+
 app.MapControllers();
 
 // Apply database migrations at startup to ensure the database is up-to-date
