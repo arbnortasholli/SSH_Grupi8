@@ -4,6 +4,7 @@ using AutoKosova.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoKosova.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260504110536_initModel")]
+    partial class initModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -376,7 +379,7 @@ namespace AutoKosova.DataAccess.Migrations
                     b.HasOne("AutoKosova.Entity.AccountRole", "AccountRole")
                         .WithMany()
                         .HasForeignKey("AccountRoleID")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("AccountDeletedBy");
@@ -389,7 +392,7 @@ namespace AutoKosova.DataAccess.Migrations
                     b.HasOne("AutoKosova.Entity.Cars", "Car")
                         .WithMany("CarImages")
                         .HasForeignKey("CarID")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Car");
@@ -400,13 +403,12 @@ namespace AutoKosova.DataAccess.Migrations
                     b.HasOne("AutoKosova.Entity.Account", "CreatedByAccount")
                         .WithMany("CreatedCars")
                         .HasForeignKey("CreatedByAccountID")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("AutoKosova.Entity.Tenant", "Tenant")
                         .WithMany("Cars")
-                        .HasForeignKey("TenantID")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .HasForeignKey("TenantID");
 
                     b.Navigation("CreatedByAccount");
 
@@ -418,19 +420,19 @@ namespace AutoKosova.DataAccess.Migrations
                     b.HasOne("AutoKosova.Entity.Cars", "Car")
                         .WithMany("RentalBookings")
                         .HasForeignKey("CarID")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("AutoKosova.Entity.Account", "CustomerAccount")
                         .WithMany("RentalBookings")
                         .HasForeignKey("CustomerAccountID")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("AutoKosova.Entity.Tenant", "Tenant")
                         .WithMany("RentalBookings")
                         .HasForeignKey("TenantID")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Car");
