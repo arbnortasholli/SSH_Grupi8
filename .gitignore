@@ -1,33 +1,96 @@
-# Ignore the .vs folder (Visual Studio-specific files)
+# =========================
+# Visual Studio / IDE files
+# =========================
 .vs/
-
-# Ignore build output directories
-bin/
-obj/
-
-# Ignore user-specific files
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
+*.rsuser
 
-# Ignore ASP.NET temporary files
-# https://github.com/dotnet/aspnetcore/issues/32944
-wwwroot/
-$_node_modules/
+# =========================
+# Build output
+# =========================
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
 
-# Ignore ASP.NET Core app files
+# =========================
+# .NET generated files
+# =========================
+*.dll
+*.exe
+*.pdb
+*.cache
+*.ilk
+*.meta
+*.iobj
+*.ipdb
+*.nupkg
+*.snupkg
+
+# =========================
+# ASP.NET Core config files
+# Kujdes: zakonisht appsettings.json lejohet,
+# por Development/Production mund të kenë secrets.
+# =========================
 appsettings.Development.json
 appsettings.Production.json
+appsettings.Local.json
 
-# Ignore MacOS system files
-.DS_Store
-
-# Ignore Windows system files
-Thumbs.db
-
-# Ignore logs
+# =========================
+# Logs
+# =========================
 *.log
+logs/
+Log/
 
-# Ignore package restore directories
+# =========================
+# NuGet
+# =========================
 packages/
+*.nupkg
+.nuget/
+
+# =========================
+# React / Node
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =========================
+# Test results / coverage
+# =========================
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# =========================
+# Rider / VS Code optional
+# =========================
+.idea/
+.vscode/

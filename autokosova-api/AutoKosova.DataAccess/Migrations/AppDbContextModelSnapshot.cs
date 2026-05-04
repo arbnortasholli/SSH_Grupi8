@@ -371,7 +371,8 @@ namespace AutoKosova.DataAccess.Migrations
                 {
                     b.HasOne("AutoKosova.Entity.Account", "AccountDeletedBy")
                         .WithMany()
-                        .HasForeignKey("AccountDeletedByID");
+                        .HasForeignKey("AccountDeletedByID")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AutoKosova.Entity.AccountRole", "AccountRole")
                         .WithMany()

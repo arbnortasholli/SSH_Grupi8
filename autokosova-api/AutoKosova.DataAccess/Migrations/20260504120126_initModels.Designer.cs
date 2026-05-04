@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoKosova.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260504111846_init-models")]
-    partial class initmodels
+    [Migration("20260504120126_initModels")]
+    partial class initModels
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -200,9 +200,6 @@ namespace AutoKosova.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CarsID"));
 
-                    b.Property<int?>("AccountID")
-                        .HasColumnType("int");
-
                     b.Property<string>("CarBodyType")
                         .HasColumnType("nvarchar(max)");
 
@@ -272,7 +269,9 @@ namespace AutoKosova.DataAccess.Migrations
 
                     b.HasKey("CarsID");
 
-                    b.HasIndex("AccountID");
+                    b.HasIndex("CreatedByAccountID");
+
+                    b.HasIndex("TenantID");
 
                     b.ToTable("Cars");
                 });
@@ -284,9 +283,6 @@ namespace AutoKosova.DataAccess.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RentalBookingID"));
-
-                    b.Property<int?>("AccountID")
-                        .HasColumnType("int");
 
                     b.Property<int>("CarID")
                         .HasColumnType("int");
@@ -327,7 +323,11 @@ namespace AutoKosova.DataAccess.Migrations
 
                     b.HasKey("RentalBookingID");
 
-                    b.HasIndex("AccountID");
+                    b.HasIndex("CarID");
+
+                    b.HasIndex("CustomerAccountID");
+
+                    b.HasIndex("TenantID");
 
                     b.ToTable("RentalBookings");
                 });
@@ -374,12 +374,13 @@ namespace AutoKosova.DataAccess.Migrations
                 {
                     b.HasOne("AutoKosova.Entity.Account", "AccountDeletedBy")
                         .WithMany()
-                        .HasForeignKey("AccountDeletedByID");
+                        .HasForeignKey("AccountDeletedByID")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AutoKosova.Entity.AccountRole", "AccountRole")
                         .WithMany()
                         .HasForeignKey("AccountRoleID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("AccountDeletedBy");
@@ -390,9 +391,9 @@ namespace AutoKosova.DataAccess.Migrations
             modelBuilder.Entity("AutoKosova.Entity.CarImage", b =>
                 {
                     b.HasOne("AutoKosova.Entity.Cars", "Car")
-                        .WithMany()
+                        .WithMany("CarImages")
                         .HasForeignKey("CarID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Car");
@@ -400,21 +401,66 @@ namespace AutoKosova.DataAccess.Migrations
 
             modelBuilder.Entity("AutoKosova.Entity.Cars", b =>
                 {
-                    b.HasOne("AutoKosova.Entity.Account", null)
+                    b.HasOne("AutoKosova.Entity.Account", "CreatedByAccount")
                         .WithMany("CreatedCars")
-                        .HasForeignKey("AccountID");
+                        .HasForeignKey("CreatedByAccountID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AutoKosova.Entity.Tenant", "Tenant")
+                        .WithMany("Cars")
+                        .HasForeignKey("TenantID")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreatedByAccount");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.RentalBooking", b =>
                 {
-                    b.HasOne("AutoKosova.Entity.Account", null)
+                    b.HasOne("AutoKosova.Entity.Cars", "Car")
                         .WithMany("RentalBookings")
-                        .HasForeignKey("AccountID");
+                        .HasForeignKey("CarID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AutoKosova.Entity.Account", "CustomerAccount")
+                        .WithMany("RentalBookings")
+                        .HasForeignKey("CustomerAccountID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AutoKosova.Entity.Tenant", "Tenant")
+                        .WithMany("RentalBookings")
+                        .HasForeignKey("TenantID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Car");
+
+                    b.Navigation("CustomerAccount");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.Account", b =>
                 {
                     b.Navigation("CreatedCars");
+
+                    b.Navigation("RentalBookings");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.Cars", b =>
+                {
+                    b.Navigation("CarImages");
+
+                    b.Navigation("RentalBookings");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.Tenant", b =>
+                {
+                    b.Navigation("Cars");
 
                     b.Navigation("RentalBookings");
                 });
