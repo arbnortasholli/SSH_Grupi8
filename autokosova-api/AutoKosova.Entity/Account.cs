@@ -67,7 +67,7 @@ namespace AutoKosova.Entity
 
         public string? AccountTimeZone { get; set; }
 
-        public required AccountRole AccountRole { get; set; }
+        public  AccountRole? AccountRole { get; set; }
 
         public Account? AccountDeletedBy { get; set; }
 
