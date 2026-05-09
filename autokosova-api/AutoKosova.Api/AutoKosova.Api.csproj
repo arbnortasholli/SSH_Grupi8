@@ -7,7 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -16,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AutoKosova.Business\AutoKosova.Business.csproj" />
+    <ProjectReference Include="..\AutoKosova.DataAccess\AutoKosova.DataAccess.csproj" />
     <ProjectReference Include="..\AutoKosova.Entity\AutoKosova.Entity.csproj" />
   </ItemGroup>
 

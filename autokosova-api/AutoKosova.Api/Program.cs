@@ -1,15 +1,55 @@
+using AutoKosova.Api.Services;
 using AutoKosova.DataAccess;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllers(); // Adds controller services to the DI container
+// Controllers
+builder.Services.AddControllers();
 
-// Register OpenAPI (Swagger) for API documentation
-builder.Services.AddOpenApi();
+// Swagger
+builder.Services.AddEndpointsApiExplorer();
 
-// Register DbContext (AppDbContext) for dependency injection
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "AutoKosova API",
+        Version = "v1"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Vendose JWT token-in kështu: Bearer {token}",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+                Reference = new OpenApiReference
+                {
+                    Id = "Bearer",
+                    Type = ReferenceType.SecurityScheme
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -18,47 +58,87 @@ builder.Services.AddDbContext<AppDbContext>(options =>
             sqlOptions.MigrationsAssembly("AutoKosova.DataAccess");
         }));
 
-builder.Services.AddCors();
+// Services
+builder.Services.AddScoped<PasswordService>();
+builder.Services.AddScoped<JwtService>();
 
-// Build the app
-var app = builder.Build();
+// JWT settings
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
 
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+if (string.IsNullOrWhiteSpace(jwtKey))
 {
-    // Enable OpenAPI (Swagger) in development
-    app.MapOpenApi();
+    throw new Exception("Jwt:Key is missing in appsettings.json.");
 }
 
-app.UseHttpsRedirection(); // Redirect HTTP requests to HTTPS
-app.UseAuthorization();    // Enable authorization middleware
+// Authentication
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
 
-// Map controllers to the app (i.e., configure routing for controllers)
-app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod()
-    .WithOrigins("http://localhost:3000", "https://localhost:3000"));
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey)
+            ),
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+// Authorization
+builder.Services.AddAuthorization();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApps", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:3000",
+                "https://localhost:3000",
+                "http://localhost:5173",
+                "https://localhost:5173",
+                "http://localhost:5174",
+                "https://localhost:5174"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "AutoKosova API v1");
+    });
+}
+
+// app.UseHttpsRedirection();
+
+app.UseCors("AllowReactApps");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
-// Apply database migrations at startup to ensure the database is up-to-date
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-
-    try
-    {
-        // Get AppDbContext from DI container
-        var context = services.GetRequiredService<AppDbContext>();
-
-        // Apply any pending migrations asynchronously
-        await context.Database.MigrateAsync();
-    }
-    catch (Exception ex)
-    {
-        // Handle errors during migration (you can log the exception here)
-        Console.WriteLine($"An error occurred during migration: {ex.Message}");
-        throw; // Rethrow the exception to stop the application startup
-    }
-}
-
-// Run the application
 app.Run();
