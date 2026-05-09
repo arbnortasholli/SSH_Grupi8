@@ -55,7 +55,7 @@ namespace AutoKosova.Entity
         // Navigation properties
         public Tenant? Tenant { get; set; }
 
-        public required Account CreatedByAccount { get; set; }
+        public Account? CreatedByAccount { get; set; }
 
         public ICollection<CarImage> CarImages { get; set; } = new List<CarImage>();
 
