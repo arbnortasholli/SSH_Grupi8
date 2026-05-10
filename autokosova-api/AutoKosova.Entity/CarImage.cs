@@ -22,6 +22,6 @@ namespace AutoKosova.Entity
         public bool CarImageDeleted { get; set; }
 
         public DateTime? CarImageDeletedDate { get; set; }
-        public required Cars Car { get; set; }
+        public Cars? Car { get; set; }
     }
 }
