@@ -32,10 +32,10 @@ namespace AutoKosova.Entity
 
         public DateTime? RentalBookingDeletedDate { get; set; }
 
-        public required Tenant Tenant { get; set; }
+        public Tenant? Tenant { get; set; }
 
-        public required Cars Car { get; set; }
+        public Cars? Car { get; set; }
 
-        public required Account CustomerAccount { get; set; }
+        public Account? CustomerAccount { get; set; }
     }
 }
