@@ -116,6 +116,7 @@ namespace AutoKosova.Api.Controllers
             var image = new CarImage
             {
                 CarID = carId,
+                Car=car,
                 CarImageUrl = request.CarImageUrl.Trim(),
                 CarImageIsMain = request.CarImageIsMain,
                 CarImageOrderNumber = request.CarImageOrderNumber,
