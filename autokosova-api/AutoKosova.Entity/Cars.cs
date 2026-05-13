@@ -60,5 +60,7 @@ namespace AutoKosova.Entity
         public ICollection<CarImage> CarImages { get; set; } = new List<CarImage>();
 
         public ICollection<RentalBooking> RentalBookings { get; set; } = new List<RentalBooking>();
+
+        public ICollection<CarFeatureMapping> CarFeatureMappings { get; set; } = new List<CarFeatureMapping>();
     }
 }
