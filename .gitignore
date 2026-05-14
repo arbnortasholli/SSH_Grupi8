@@ -2,8 +2,10 @@
 # Visual Studio / IDE files
 # =========================
 .vs/
+**/.vs/
 *.user
 *.suo
+*.wsuo
 *.userosscache
 *.sln.docstates
 *.rsuser
@@ -13,8 +15,12 @@
 # =========================
 bin/
 obj/
+**/bin/
+**/obj/
 [Dd]ebug/
 [Rr]elease/
+**/[Dd]ebug/
+**/[Rr]elease/
 x64/
 x86/
 [Aa][Rr][Mm]/
