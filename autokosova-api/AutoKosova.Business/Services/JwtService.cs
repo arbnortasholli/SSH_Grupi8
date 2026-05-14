@@ -1,10 +1,11 @@
 using AutoKosova.Entity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace AutoKosova.Api.Services
+namespace AutoKosova.Business.Services
 {
     public class JwtService
     {

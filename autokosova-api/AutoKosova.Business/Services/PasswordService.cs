@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace AutoKosova.Api.Services
+namespace AutoKosova.Business.Services
 {
     public class PasswordService
     {

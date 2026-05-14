@@ -1,4 +1,4 @@
-using AutoKosova.Api.Services;
+using AutoKosova.Business.Services;
 using AutoKosova.DataAccess;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
