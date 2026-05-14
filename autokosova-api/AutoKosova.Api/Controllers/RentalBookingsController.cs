@@ -1,210 +1,86 @@
 using AutoKosova.Api.DTOs.RentalBookings;
-using AutoKosova.DataAccess;
-using AutoKosova.Entity;
+using AutoKosova.Business.Models;
+using AutoKosova.Business.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace AutoKosova.Api.Controllers
 {
     [ApiController]
-    public class RentalBookingsController : ControllerBase
+    public class RentalBookingsController : BaseApiController
     {
-        private readonly AppDbContext _context;
+        private readonly RentalBookingService _rentalBookingService;
 
-        public RentalBookingsController(AppDbContext context)
+        public RentalBookingsController(RentalBookingService rentalBookingService)
         {
-            _context = context;
+            _rentalBookingService = rentalBookingService;
         }
 
         [Authorize(Roles = "Admin,Seller")]
         [HttpGet("api/rental-bookings")]
         public async Task<IActionResult> GetAll()
         {
-            var accountId = GetCurrentAccountId();
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var query = _context.RentalBookings
-                .Include(rb => rb.Car)
-                .Where(rb => !rb.RentalBookingDeleted)
-                .AsQueryable();
+            var result = await _rentalBookingService.GetAll(CurrentAccountId.Value, CurrentRole);
 
-            if (role != "Admin")
+            if (!result.IsSuccess)
             {
-                query = query.Where(rb => rb.Car != null && rb.Car.CreatedByAccountID == accountId.Value);
+                return ToActionResult(result);
             }
 
-            var bookings = await query
-                .OrderByDescending(rb => rb.RentalBookingCreationDate)
-                .Select(rb => new RentalBookingListResponseDto
-                {
-                    RentalBookingID = rb.RentalBookingID,
-                    TenantID = rb.TenantID,
-                    CarID = rb.CarID,
-                    CustomerAccountID = rb.CustomerAccountID,
-                    CarTitle = rb.Car != null ? rb.Car.CarTitle : string.Empty,
-                    CarBrand = rb.Car != null ? rb.Car.CarBrand : string.Empty,
-                    CarModel = rb.Car != null ? rb.Car.CarModel : string.Empty,
-                    RentalBookingStartDate = rb.RentalBookingStartDate,
-                    RentalBookingEndDate = rb.RentalBookingEndDate,
-                    RentalBookingDailyPrice = rb.RentalBookingDailyPrice,
-                    RentalBookingTotalPrice = rb.RentalBookingTotalPrice,
-                    RentalBookingStatus = rb.RentalBookingStatus,
-                    RentalBookingCreationDate = rb.RentalBookingCreationDate
-                })
-                .ToListAsync();
-
-            return Ok(bookings);
+            return Ok(result.Data!.Select(ToListDto));
         }
 
         [Authorize]
         [HttpGet("api/rental-bookings/{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var accountId = GetCurrentAccountId();
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var booking = await _context.RentalBookings
-                .Include(rb => rb.Car)
-                .Include(rb => rb.CustomerAccount)
-                .FirstOrDefaultAsync(rb => rb.RentalBookingID == id && !rb.RentalBookingDeleted);
+            var result = await _rentalBookingService.GetById(id, CurrentAccountId.Value, CurrentRole);
 
-            if (booking == null)
+            if (!result.IsSuccess)
             {
-                return NotFound("Rental booking not found.");
+                return ToActionResult(result);
             }
 
-            var isCustomer = booking.CustomerAccountID == accountId.Value;
-            var isCarOwner = booking.Car != null && booking.Car.CreatedByAccountID == accountId.Value;
-            var isAdmin = role == "Admin";
-
-            if (!isCustomer && !isCarOwner && !isAdmin)
-            {
-                return Forbid("You are not allowed to view this booking.");
-            }
-
-            var response = new RentalBookingDetailsResponseDto
-            {
-                RentalBookingID = booking.RentalBookingID,
-                TenantID = booking.TenantID,
-                CarID = booking.CarID,
-                CustomerAccountID = booking.CustomerAccountID,
-                CustomerUsername = booking.CustomerAccount?.AccountUsername ?? string.Empty,
-                CustomerEmail = booking.CustomerAccount?.AccountEmail ?? string.Empty,
-                CarTitle = booking.Car?.CarTitle ?? string.Empty,
-                CarBrand = booking.Car?.CarBrand ?? string.Empty,
-                CarModel = booking.Car?.CarModel ?? string.Empty,
-                RentalBookingStartDate = booking.RentalBookingStartDate,
-                RentalBookingEndDate = booking.RentalBookingEndDate,
-                RentalBookingDailyPrice = booking.RentalBookingDailyPrice,
-                RentalBookingTotalPrice = booking.RentalBookingTotalPrice,
-                RentalBookingStatus = booking.RentalBookingStatus,
-                RentalBookingCreationDate = booking.RentalBookingCreationDate,
-                RentalBookingUpdatedDate = booking.RentalBookingUpdatedDate
-            };
-
-            return Ok(response);
+            return Ok(ToDetailsDto(result.Data!));
         }
 
         [Authorize]
         [HttpPost("api/rental-bookings")]
         public async Task<IActionResult> Create(RentalBookingCreateRequestDto request)
         {
-            var accountId = GetCurrentAccountId();
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            if (request.CarID <= 0)
+            var result = await _rentalBookingService.Create(new RentalBookingCreateCommand
             {
-                return BadRequest("Invalid car.");
+                CarID = request.CarID,
+                RentalBookingStartDate = request.RentalBookingStartDate,
+                RentalBookingEndDate = request.RentalBookingEndDate
+            }, CurrentAccountId.Value);
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
             }
-
-            if (request.RentalBookingStartDate.Date < DateTime.UtcNow.Date)
-            {
-                return BadRequest("Start date cannot be in the past.");
-            }
-
-            if (request.RentalBookingEndDate.Date <= request.RentalBookingStartDate.Date)
-            {
-                return BadRequest("End date must be after start date.");
-            }
-
-            var car = await _context.Cars
-    .Include(c => c.Tenant)
-    .FirstOrDefaultAsync(c =>
-        c.CarsID == request.CarID &&
-        !c.CarDeleted &&
-        c.IsForRent);
-
-            if (car == null)
-            {
-                return NotFound("Car not found or not available for rent.");
-            }
-
-            if (!car.TenantID.HasValue)
-            {
-                return BadRequest("Rental car must belong to a tenant.");
-            }
-
-            if (!car.RentalDailyPrice.HasValue || car.RentalDailyPrice.Value <= 0)
-            {
-                return BadRequest("Car rental daily price is not valid.");
-            }
-
-            var hasConflict = await HasBookingConflict(
-                request.CarID,
-                request.RentalBookingStartDate.Date,
-                request.RentalBookingEndDate.Date
-            );
-
-            if (hasConflict)
-            {
-                return BadRequest("Car is not available for the selected dates.");
-            }
-
-            var totalDays = (request.RentalBookingEndDate.Date - request.RentalBookingStartDate.Date).Days;
-            var totalPrice = totalDays * car.RentalDailyPrice.Value;
-
-            var booking = new RentalBooking
-            {
-                TenantID = car.TenantID.Value,
-                CarID = car.CarsID,
-                CustomerAccountID = accountId.Value,
-                RentalBookingStartDate = request.RentalBookingStartDate.Date,
-                RentalBookingEndDate = request.RentalBookingEndDate.Date,
-                RentalBookingDailyPrice = car.RentalDailyPrice.Value,
-                RentalBookingTotalPrice = totalPrice,
-                RentalBookingStatus = "Pending",
-                RentalBookingCreationDate = DateTime.UtcNow,
-                RentalBookingDeleted = false,
-
-                Tenant = car.Tenant,
-                Car = car
-            };
-
-            _context.RentalBookings.Add(booking);
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 message = "Rental booking created successfully.",
-                rentalBookingID = booking.RentalBookingID,
-                totalDays,
-                totalPrice
+                rentalBookingID = result.Data!.RentalBookingID,
+                totalDays = result.Data.TotalDays,
+                totalPrice = result.Data.TotalPrice
             });
         }
 
@@ -212,36 +88,19 @@ namespace AutoKosova.Api.Controllers
         [HttpGet("api/accounts/me/bookings")]
         public async Task<IActionResult> GetMyBookings()
         {
-            var accountId = GetCurrentAccountId();
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var bookings = await _context.RentalBookings
-                .Include(rb => rb.Car)
-                .Where(rb => !rb.RentalBookingDeleted && rb.CustomerAccountID == accountId.Value)
-                .OrderByDescending(rb => rb.RentalBookingCreationDate)
-                .Select(rb => new RentalBookingListResponseDto
-                {
-                    RentalBookingID = rb.RentalBookingID,
-                    TenantID = rb.TenantID,
-                    CarID = rb.CarID,
-                    CustomerAccountID = rb.CustomerAccountID,
-                    CarTitle = rb.Car != null ? rb.Car.CarTitle : string.Empty,
-                    CarBrand = rb.Car != null ? rb.Car.CarBrand : string.Empty,
-                    CarModel = rb.Car != null ? rb.Car.CarModel : string.Empty,
-                    RentalBookingStartDate = rb.RentalBookingStartDate,
-                    RentalBookingEndDate = rb.RentalBookingEndDate,
-                    RentalBookingDailyPrice = rb.RentalBookingDailyPrice,
-                    RentalBookingTotalPrice = rb.RentalBookingTotalPrice,
-                    RentalBookingStatus = rb.RentalBookingStatus,
-                    RentalBookingCreationDate = rb.RentalBookingCreationDate
-                })
-                .ToListAsync();
+            var result = await _rentalBookingService.GetMyBookings(CurrentAccountId.Value);
 
-            return Ok(bookings);
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
+            }
+
+            return Ok(result.Data!.Select(ToListDto));
         }
 
         [HttpGet("api/cars/{carId:int}/availability")]
@@ -250,130 +109,63 @@ namespace AutoKosova.Api.Controllers
             [FromQuery] DateTime startDate,
             [FromQuery] DateTime endDate)
         {
-            if (startDate.Date < DateTime.UtcNow.Date)
+            var result = await _rentalBookingService.CheckAvailability(carId, startDate, endDate);
+
+            if (!result.IsSuccess)
             {
-                return BadRequest("Start date cannot be in the past.");
+                return ToActionResult(result);
             }
 
-            if (endDate.Date <= startDate.Date)
+            return Ok(new CarAvailabilityResponseDto
             {
-                return BadRequest("End date must be after start date.");
-            }
-
-            var carExists = await _context.Cars
-                .AnyAsync(c => c.CarsID == carId && !c.CarDeleted && c.IsForRent);
-
-            if (!carExists)
-            {
-                return NotFound("Car not found or not available for rent.");
-            }
-
-            var hasConflict = await HasBookingConflict(carId, startDate.Date, endDate.Date);
-
-            var response = new CarAvailabilityResponseDto
-            {
-                CarID = carId,
-                StartDate = startDate.Date,
-                EndDate = endDate.Date,
-                IsAvailable = !hasConflict,
-                Message = hasConflict
-                    ? "Car is not available for the selected dates."
-                    : "Car is available for the selected dates."
-            };
-
-            return Ok(response);
+                CarID = result.Data!.CarID,
+                StartDate = result.Data.StartDate,
+                EndDate = result.Data.EndDate,
+                IsAvailable = result.Data.IsAvailable,
+                Message = result.Data.Message
+            });
         }
 
         [Authorize(Roles = "Admin,Seller")]
         [HttpGet("api/tenants/{tenantId:int}/bookings")]
         public async Task<IActionResult> GetByTenant(int tenantId)
         {
-            var accountId = GetCurrentAccountId();
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var query = _context.RentalBookings
-                .Include(rb => rb.Car)
-                .Where(rb => !rb.RentalBookingDeleted && rb.TenantID == tenantId)
-                .AsQueryable();
+            var result = await _rentalBookingService.GetByTenant(tenantId, CurrentAccountId.Value, CurrentRole);
 
-            if (role != "Admin")
+            if (!result.IsSuccess)
             {
-                query = query.Where(rb => rb.Car != null && rb.Car.CreatedByAccountID == accountId.Value);
+                return ToActionResult(result);
             }
 
-            var bookings = await query
-                .OrderByDescending(rb => rb.RentalBookingCreationDate)
-                .Select(rb => new RentalBookingListResponseDto
-                {
-                    RentalBookingID = rb.RentalBookingID,
-                    TenantID = rb.TenantID,
-                    CarID = rb.CarID,
-                    CustomerAccountID = rb.CustomerAccountID,
-                    CarTitle = rb.Car != null ? rb.Car.CarTitle : string.Empty,
-                    CarBrand = rb.Car != null ? rb.Car.CarBrand : string.Empty,
-                    CarModel = rb.Car != null ? rb.Car.CarModel : string.Empty,
-                    RentalBookingStartDate = rb.RentalBookingStartDate,
-                    RentalBookingEndDate = rb.RentalBookingEndDate,
-                    RentalBookingDailyPrice = rb.RentalBookingDailyPrice,
-                    RentalBookingTotalPrice = rb.RentalBookingTotalPrice,
-                    RentalBookingStatus = rb.RentalBookingStatus,
-                    RentalBookingCreationDate = rb.RentalBookingCreationDate
-                })
-                .ToListAsync();
-
-            return Ok(bookings);
+            return Ok(result.Data!.Select(ToListDto));
         }
 
         [Authorize(Roles = "Admin,Seller")]
         [HttpPut("api/rental-bookings/{id:int}/status")]
         public async Task<IActionResult> UpdateStatus(int id, RentalBookingStatusUpdateDto request)
         {
-            var accountId = GetCurrentAccountId();
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var allowedStatuses = new[] { "Pending", "Confirmed", "Cancelled", "Completed" };
+            var result = await _rentalBookingService.UpdateStatus(id, request.Status, CurrentAccountId.Value, CurrentRole);
 
-            if (string.IsNullOrWhiteSpace(request.Status) ||
-                !allowedStatuses.Contains(request.Status))
+            if (!result.IsSuccess)
             {
-                return BadRequest("Invalid booking status.");
+                return ToActionResult(result);
             }
-
-            var booking = await _context.RentalBookings
-                .Include(rb => rb.Car)
-                .FirstOrDefaultAsync(rb => rb.RentalBookingID == id && !rb.RentalBookingDeleted);
-
-            if (booking == null)
-            {
-                return NotFound("Rental booking not found.");
-            }
-
-            if (role != "Admin" &&
-                (booking.Car == null || booking.Car.CreatedByAccountID != accountId.Value))
-            {
-                return Forbid("You can update only bookings for cars created by you.");
-            }
-
-            booking.RentalBookingStatus = request.Status;
-            booking.RentalBookingUpdatedDate = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 message = "Rental booking status updated successfully.",
-                rentalBookingID = booking.RentalBookingID,
-                status = booking.RentalBookingStatus
+                rentalBookingID = result.Data!.RentalBookingID,
+                status = result.Data.Status
             });
         }
 
@@ -381,67 +173,66 @@ namespace AutoKosova.Api.Controllers
         [HttpDelete("api/rental-bookings/{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var accountId = GetCurrentAccountId();
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var booking = await _context.RentalBookings
-                .Include(rb => rb.Car)
-                .FirstOrDefaultAsync(rb => rb.RentalBookingID == id && !rb.RentalBookingDeleted);
+            var result = await _rentalBookingService.Delete(id, CurrentAccountId.Value, CurrentRole);
 
-            if (booking == null)
+            if (!result.IsSuccess)
             {
-                return NotFound("Rental booking not found.");
+                return ToActionResult(result);
             }
-
-            var isCustomer = booking.CustomerAccountID == accountId.Value;
-            var isCarOwner = booking.Car != null && booking.Car.CreatedByAccountID == accountId.Value;
-            var isAdmin = role == "Admin";
-
-            if (!isCustomer && !isCarOwner && !isAdmin)
-            {
-                return Forbid("You are not allowed to delete this booking.");
-            }
-
-            booking.RentalBookingDeleted = true;
-            booking.RentalBookingDeletedDate = DateTime.UtcNow;
-            booking.RentalBookingUpdatedDate = DateTime.UtcNow;
-            booking.RentalBookingStatus = "Cancelled";
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 message = "Rental booking cancelled successfully.",
-                rentalBookingID = booking.RentalBookingID
+                rentalBookingID = result.Data!.RentalBookingID
             });
         }
 
-        private async Task<bool> HasBookingConflict(int carId, DateTime startDate, DateTime endDate)
+        private static RentalBookingListResponseDto ToListDto(RentalBookingListModel booking)
         {
-            return await _context.RentalBookings
-                .AnyAsync(rb =>
-                    rb.CarID == carId &&
-                    !rb.RentalBookingDeleted &&
-                    rb.RentalBookingStatus != "Cancelled" &&
-                    startDate < rb.RentalBookingEndDate &&
-                    endDate > rb.RentalBookingStartDate);
+            return new RentalBookingListResponseDto
+            {
+                RentalBookingID = booking.RentalBookingID,
+                TenantID = booking.TenantID,
+                CarID = booking.CarID,
+                CustomerAccountID = booking.CustomerAccountID,
+                CarTitle = booking.CarTitle,
+                CarBrand = booking.CarBrand,
+                CarModel = booking.CarModel,
+                RentalBookingStartDate = booking.RentalBookingStartDate,
+                RentalBookingEndDate = booking.RentalBookingEndDate,
+                RentalBookingDailyPrice = booking.RentalBookingDailyPrice,
+                RentalBookingTotalPrice = booking.RentalBookingTotalPrice,
+                RentalBookingStatus = booking.RentalBookingStatus,
+                RentalBookingCreationDate = booking.RentalBookingCreationDate
+            };
         }
 
-        private int? GetCurrentAccountId()
+        private static RentalBookingDetailsResponseDto ToDetailsDto(RentalBookingDetailsModel booking)
         {
-            var accountIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (int.TryParse(accountIdValue, out var accountId))
+            return new RentalBookingDetailsResponseDto
             {
-                return accountId;
-            }
-
-            return null;
+                RentalBookingID = booking.RentalBookingID,
+                TenantID = booking.TenantID,
+                CarID = booking.CarID,
+                CustomerAccountID = booking.CustomerAccountID,
+                CustomerUsername = booking.CustomerUsername,
+                CustomerEmail = booking.CustomerEmail,
+                CarTitle = booking.CarTitle,
+                CarBrand = booking.CarBrand,
+                CarModel = booking.CarModel,
+                RentalBookingStartDate = booking.RentalBookingStartDate,
+                RentalBookingEndDate = booking.RentalBookingEndDate,
+                RentalBookingDailyPrice = booking.RentalBookingDailyPrice,
+                RentalBookingTotalPrice = booking.RentalBookingTotalPrice,
+                RentalBookingStatus = booking.RentalBookingStatus,
+                RentalBookingCreationDate = booking.RentalBookingCreationDate,
+                RentalBookingUpdatedDate = booking.RentalBookingUpdatedDate
+            };
         }
     }
 }

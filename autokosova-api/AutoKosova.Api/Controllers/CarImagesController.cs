@@ -1,136 +1,77 @@
 using AutoKosova.Api.DTOs.CarImages;
-using AutoKosova.DataAccess;
-using AutoKosova.Entity;
+using AutoKosova.Business.Models;
+using AutoKosova.Business.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace AutoKosova.Api.Controllers
 {
     [ApiController]
-    public class CarImagesController : ControllerBase
+    public class CarImagesController : BaseApiController
     {
-        private readonly AppDbContext _context;
+        private readonly CarImageService _carImageService;
 
-        public CarImagesController(AppDbContext context)
+        public CarImagesController(CarImageService carImageService)
         {
-            _context = context;
+            _carImageService = carImageService;
         }
 
         [HttpGet("api/cars/{carId:int}/images")]
         public async Task<IActionResult> GetImagesByCarId(int carId)
         {
-            var carExists = await _context.Cars
-                .AnyAsync(c => c.CarsID == carId && !c.CarDeleted);
+            var result = await _carImageService.GetImagesByCarId(carId);
 
-            if (!carExists)
+            if (!result.IsSuccess)
             {
-                return NotFound("Car not found.");
+                return ToActionResult(result);
             }
 
-            var images = await _context.CarImages
-                .Where(ci => ci.CarID == carId && !ci.CarImageDeleted)
-                .OrderByDescending(ci => ci.CarImageIsMain)
-                .ThenBy(ci => ci.CarImageOrderNumber)
-                .Select(ci => new CarImageResponseDto
-                {
-                    CarImageID = ci.CarImageID,
-                    CarID = ci.CarID,
-                    CarImageUrl = ci.CarImageUrl,
-                    CarImageIsMain = ci.CarImageIsMain,
-                    CarImageOrderNumber = ci.CarImageOrderNumber,
-                    CarImageCreationDate = ci.CarImageCreationDate
-                })
-                .ToListAsync();
-
-            return Ok(images);
+            return Ok(result.Data!.Select(ToDto));
         }
 
         [HttpGet("api/car-images/{imageId:int}")]
         public async Task<IActionResult> GetImageById(int imageId)
         {
-            var image = await _context.CarImages
-                .Where(ci => ci.CarImageID == imageId && !ci.CarImageDeleted)
-                .Select(ci => new CarImageResponseDto
-                {
-                    CarImageID = ci.CarImageID,
-                    CarID = ci.CarID,
-                    CarImageUrl = ci.CarImageUrl,
-                    CarImageIsMain = ci.CarImageIsMain,
-                    CarImageOrderNumber = ci.CarImageOrderNumber,
-                    CarImageCreationDate = ci.CarImageCreationDate
-                })
-                .FirstOrDefaultAsync();
+            var result = await _carImageService.GetImageById(imageId);
 
-            if (image == null)
+            if (!result.IsSuccess)
             {
-                return NotFound("Car image not found.");
+                return ToActionResult(result);
             }
 
-            return Ok(image);
+            return Ok(ToDto(result.Data!));
         }
 
         [Authorize(Roles = "Admin,Seller")]
         [HttpPost("api/cars/{carId:int}/images")]
         public async Task<IActionResult> AddImage(int carId, CarImageCreateRequestDto request)
         {
-            var accountId = GetCurrentAccountId();
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            if (string.IsNullOrWhiteSpace(request.CarImageUrl))
-            {
-                return BadRequest("Car image URL is required.");
-            }
-
-            var car = await _context.Cars
-                .FirstOrDefaultAsync(c => c.CarsID == carId && !c.CarDeleted);
-
-            if (car == null)
-            {
-                return NotFound("Car not found.");
-            }
-
-            if (role != "Admin" && car.CreatedByAccountID != accountId.Value)
-            {
-                return Forbid("You can add images only to cars created by you.");
-            }
-
-            if (request.CarImageIsMain)
-            {
-                var existingMainImages = await _context.CarImages
-                    .Where(ci => ci.CarID == carId && !ci.CarImageDeleted && ci.CarImageIsMain)
-                    .ToListAsync();
-
-                foreach (var existingImage in existingMainImages)
+            var result = await _carImageService.AddImage(
+                carId,
+                new CarImageCreateCommand
                 {
-                    existingImage.CarImageIsMain = false;
-                }
-            }
+                    CarImageUrl = request.CarImageUrl,
+                    CarImageIsMain = request.CarImageIsMain,
+                    CarImageOrderNumber = request.CarImageOrderNumber
+                },
+                CurrentAccountId.Value,
+                CurrentRole
+            );
 
-            var image = new CarImage
+            if (!result.IsSuccess)
             {
-                CarID = carId,
-                Car=car,
-                CarImageUrl = request.CarImageUrl.Trim(),
-                CarImageIsMain = request.CarImageIsMain,
-                CarImageOrderNumber = request.CarImageOrderNumber,
-                CarImageCreationDate = DateTime.UtcNow,
-                CarImageDeleted = false
-            };
-
-            _context.CarImages.Add(image);
-            await _context.SaveChangesAsync();
+                return ToActionResult(result);
+            }
 
             return Ok(new
             {
                 message = "Car image added successfully.",
-                carImageID = image.CarImageID
+                carImageID = result.Data!.CarImageID
             });
         }
 
@@ -138,50 +79,22 @@ namespace AutoKosova.Api.Controllers
         [HttpPut("api/car-images/{imageId:int}/set-main")]
         public async Task<IActionResult> SetMainImage(int imageId)
         {
-            var accountId = GetCurrentAccountId();
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var image = await _context.CarImages
-                .Include(ci => ci.Car)
-                .FirstOrDefaultAsync(ci => ci.CarImageID == imageId && !ci.CarImageDeleted);
+            var result = await _carImageService.SetMainImage(imageId, CurrentAccountId.Value, CurrentRole);
 
-            if (image == null)
+            if (!result.IsSuccess)
             {
-                return NotFound("Car image not found.");
+                return ToActionResult(result);
             }
-
-            if (image.Car == null || image.Car.CarDeleted)
-            {
-                return NotFound("Car not found.");
-            }
-
-            if (role != "Admin" && image.Car.CreatedByAccountID != accountId.Value)
-            {
-                return Forbid("You can update images only for cars created by you.");
-            }
-
-            var carImages = await _context.CarImages
-                .Where(ci => ci.CarID == image.CarID && !ci.CarImageDeleted)
-                .ToListAsync();
-
-            foreach (var carImage in carImages)
-            {
-                carImage.CarImageIsMain = false;
-            }
-
-            image.CarImageIsMain = true;
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 message = "Main image updated successfully.",
-                carImageID = image.CarImageID
+                carImageID = result.Data!.CarImageID
             });
         }
 
@@ -189,55 +102,36 @@ namespace AutoKosova.Api.Controllers
         [HttpDelete("api/car-images/{imageId:int}")]
         public async Task<IActionResult> DeleteImage(int imageId)
         {
-            var accountId = GetCurrentAccountId();
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
-            if (accountId == null)
+            if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var image = await _context.CarImages
-                .Include(ci => ci.Car)
-                .FirstOrDefaultAsync(ci => ci.CarImageID == imageId && !ci.CarImageDeleted);
+            var result = await _carImageService.DeleteImage(imageId, CurrentAccountId.Value, CurrentRole);
 
-            if (image == null)
+            if (!result.IsSuccess)
             {
-                return NotFound("Car image not found.");
+                return ToActionResult(result);
             }
-
-            if (image.Car == null || image.Car.CarDeleted)
-            {
-                return NotFound("Car not found.");
-            }
-
-            if (role != "Admin" && image.Car.CreatedByAccountID != accountId.Value)
-            {
-                return Forbid("You can delete images only for cars created by you.");
-            }
-
-            image.CarImageDeleted = true;
-            image.CarImageDeletedDate = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 message = "Car image deleted successfully.",
-                carImageID = image.CarImageID
+                carImageID = result.Data!.CarImageID
             });
         }
 
-        private int? GetCurrentAccountId()
+        private static CarImageResponseDto ToDto(CarImageModel image)
         {
-            var accountIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (int.TryParse(accountIdValue, out var accountId))
+            return new CarImageResponseDto
             {
-                return accountId;
-            }
-
-            return null;
+                CarImageID = image.CarImageID,
+                CarID = image.CarID,
+                CarImageUrl = image.CarImageUrl,
+                CarImageIsMain = image.CarImageIsMain,
+                CarImageOrderNumber = image.CarImageOrderNumber,
+                CarImageCreationDate = image.CarImageCreationDate
+            };
         }
     }
 }

@@ -59,6 +59,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         }));
 
 // Services
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<CarService>();
+builder.Services.AddScoped<CarImageService>();
+builder.Services.AddScoped<RentalBookingService>();
 builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<JwtService>();
 
