@@ -1,8 +1,6 @@
-using AutoKosova.Business.Models;
 using AutoKosova.DataAccess;
 using AutoKosova.Entity;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace AutoKosova.Business.Services
 {
@@ -17,7 +15,7 @@ namespace AutoKosova.Business.Services
             _context = context;
         }
 
-        public async Task<ServiceResult<List<RentalBookingListModel>>> GetAll(int accountId, string? role)
+        public async Task<ServiceResult<List<RentalBooking>>> GetAll(int accountId, string? role)
         {
             var query = _context.RentalBookings
                 .Include(rb => rb.Car)
@@ -31,13 +29,12 @@ namespace AutoKosova.Business.Services
 
             var bookings = await query
                 .OrderByDescending(rb => rb.RentalBookingCreationDate)
-                .Select(ListProjection)
                 .ToListAsync();
 
-            return ServiceResult<List<RentalBookingListModel>>.Success(bookings);
+            return ServiceResult<List<RentalBooking>>.Success(bookings);
         }
 
-        public async Task<ServiceResult<RentalBookingDetailsModel>> GetById(int id, int accountId, string? role)
+        public async Task<ServiceResult<RentalBooking>> GetById(int id, int accountId, string? role)
         {
             var booking = await _context.RentalBookings
                 .Include(rb => rb.Car)
@@ -46,73 +43,59 @@ namespace AutoKosova.Business.Services
 
             if (booking == null)
             {
-                return ServiceResult<RentalBookingDetailsModel>.NotFound("Rental booking not found.");
+                return ServiceResult<RentalBooking>.NotFound("Rental booking not found.");
             }
 
             if (!CanAccessBooking(booking, accountId, role))
             {
-                return ServiceResult<RentalBookingDetailsModel>.Forbidden("You are not allowed to view this booking.");
+                return ServiceResult<RentalBooking>.Forbidden("You are not allowed to view this booking.");
             }
 
-            return ServiceResult<RentalBookingDetailsModel>.Success(new RentalBookingDetailsModel
-            {
-                RentalBookingID = booking.RentalBookingID,
-                TenantID = booking.TenantID,
-                CarID = booking.CarID,
-                CustomerAccountID = booking.CustomerAccountID,
-                CustomerUsername = booking.CustomerAccount?.AccountUsername ?? string.Empty,
-                CustomerEmail = booking.CustomerAccount?.AccountEmail ?? string.Empty,
-                CarTitle = booking.Car?.CarTitle ?? string.Empty,
-                CarBrand = booking.Car?.CarBrand ?? string.Empty,
-                CarModel = booking.Car?.CarModel ?? string.Empty,
-                RentalBookingStartDate = booking.RentalBookingStartDate,
-                RentalBookingEndDate = booking.RentalBookingEndDate,
-                RentalBookingDailyPrice = booking.RentalBookingDailyPrice,
-                RentalBookingTotalPrice = booking.RentalBookingTotalPrice,
-                RentalBookingStatus = booking.RentalBookingStatus,
-                RentalBookingCreationDate = booking.RentalBookingCreationDate,
-                RentalBookingUpdatedDate = booking.RentalBookingUpdatedDate
-            });
+            return ServiceResult<RentalBooking>.Success(booking);
         }
 
-        public async Task<ServiceResult<RentalBookingCreatedModel>> Create(RentalBookingCreateCommand command, int accountId)
+        public async Task<ServiceResult<(RentalBooking Booking, int TotalDays, decimal TotalPrice)>> Create(
+            int carId,
+            DateTime rentalBookingStartDate,
+            DateTime rentalBookingEndDate,
+            int accountId)
         {
-            var validationError = ValidateDates(command.CarID, command.RentalBookingStartDate, command.RentalBookingEndDate);
+            var validationError = ValidateDates(carId, rentalBookingStartDate, rentalBookingEndDate);
 
             if (validationError != null)
             {
-                return ServiceResult<RentalBookingCreatedModel>.BadRequest(validationError);
+                return ServiceResult<(RentalBooking Booking, int TotalDays, decimal TotalPrice)>.BadRequest(validationError);
             }
 
             var car = await _context.Cars
                 .Include(c => c.Tenant)
                 .FirstOrDefaultAsync(c =>
-                    c.CarsID == command.CarID &&
+                    c.CarsID == carId &&
                     !c.CarDeleted &&
                     c.IsForRent);
 
             if (car == null)
             {
-                return ServiceResult<RentalBookingCreatedModel>.NotFound("Car not found or not available for rent.");
+                return ServiceResult<(RentalBooking Booking, int TotalDays, decimal TotalPrice)>.NotFound("Car not found or not available for rent.");
             }
 
             if (!car.TenantID.HasValue)
             {
-                return ServiceResult<RentalBookingCreatedModel>.BadRequest("Rental car must belong to a tenant.");
+                return ServiceResult<(RentalBooking Booking, int TotalDays, decimal TotalPrice)>.BadRequest("Rental car must belong to a tenant.");
             }
 
             if (!car.RentalDailyPrice.HasValue || car.RentalDailyPrice.Value <= 0)
             {
-                return ServiceResult<RentalBookingCreatedModel>.BadRequest("Car rental daily price is not valid.");
+                return ServiceResult<(RentalBooking Booking, int TotalDays, decimal TotalPrice)>.BadRequest("Car rental daily price is not valid.");
             }
 
-            var startDate = command.RentalBookingStartDate.Date;
-            var endDate = command.RentalBookingEndDate.Date;
-            var hasConflict = await HasBookingConflict(command.CarID, startDate, endDate);
+            var startDate = rentalBookingStartDate.Date;
+            var endDate = rentalBookingEndDate.Date;
+            var hasConflict = await HasBookingConflict(carId, startDate, endDate);
 
             if (hasConflict)
             {
-                return ServiceResult<RentalBookingCreatedModel>.BadRequest("Car is not available for the selected dates.");
+                return ServiceResult<(RentalBooking Booking, int TotalDays, decimal TotalPrice)>.BadRequest("Car is not available for the selected dates.");
             }
 
             var totalDays = (endDate - startDate).Days;
@@ -137,33 +120,27 @@ namespace AutoKosova.Business.Services
             _context.RentalBookings.Add(booking);
             await _context.SaveChangesAsync();
 
-            return ServiceResult<RentalBookingCreatedModel>.Success(new RentalBookingCreatedModel
-            {
-                RentalBookingID = booking.RentalBookingID,
-                TotalDays = totalDays,
-                TotalPrice = totalPrice
-            });
+            return ServiceResult<(RentalBooking Booking, int TotalDays, decimal TotalPrice)>.Success((booking, totalDays, totalPrice));
         }
 
-        public async Task<ServiceResult<List<RentalBookingListModel>>> GetMyBookings(int accountId)
+        public async Task<ServiceResult<List<RentalBooking>>> GetMyBookings(int accountId)
         {
             var bookings = await _context.RentalBookings
                 .Include(rb => rb.Car)
                 .Where(rb => !rb.RentalBookingDeleted && rb.CustomerAccountID == accountId)
                 .OrderByDescending(rb => rb.RentalBookingCreationDate)
-                .Select(ListProjection)
                 .ToListAsync();
 
-            return ServiceResult<List<RentalBookingListModel>>.Success(bookings);
+            return ServiceResult<List<RentalBooking>>.Success(bookings);
         }
 
-        public async Task<ServiceResult<CarAvailabilityModel>> CheckAvailability(int carId, DateTime startDate, DateTime endDate)
+        public async Task<ServiceResult<(int CarID, DateTime StartDate, DateTime EndDate, bool IsAvailable, string Message)>> CheckAvailability(int carId, DateTime startDate, DateTime endDate)
         {
             var validationError = ValidateDates(carId, startDate, endDate);
 
             if (validationError != null)
             {
-                return ServiceResult<CarAvailabilityModel>.BadRequest(validationError);
+                return ServiceResult<(int CarID, DateTime StartDate, DateTime EndDate, bool IsAvailable, string Message)>.BadRequest(validationError);
             }
 
             var carExists = await _context.Cars
@@ -171,24 +148,23 @@ namespace AutoKosova.Business.Services
 
             if (!carExists)
             {
-                return ServiceResult<CarAvailabilityModel>.NotFound("Car not found or not available for rent.");
+                return ServiceResult<(int CarID, DateTime StartDate, DateTime EndDate, bool IsAvailable, string Message)>.NotFound("Car not found or not available for rent.");
             }
 
             var hasConflict = await HasBookingConflict(carId, startDate.Date, endDate.Date);
 
-            return ServiceResult<CarAvailabilityModel>.Success(new CarAvailabilityModel
-            {
-                CarID = carId,
-                StartDate = startDate.Date,
-                EndDate = endDate.Date,
-                IsAvailable = !hasConflict,
-                Message = hasConflict
+            return ServiceResult<(int CarID, DateTime StartDate, DateTime EndDate, bool IsAvailable, string Message)>.Success((
+                carId,
+                startDate.Date,
+                endDate.Date,
+                !hasConflict,
+                hasConflict
                     ? "Car is not available for the selected dates."
                     : "Car is available for the selected dates."
-            });
+            ));
         }
 
-        public async Task<ServiceResult<List<RentalBookingListModel>>> GetByTenant(int tenantId, int accountId, string? role)
+        public async Task<ServiceResult<List<RentalBooking>>> GetByTenant(int tenantId, int accountId, string? role)
         {
             var query = _context.RentalBookings
                 .Include(rb => rb.Car)
@@ -202,17 +178,16 @@ namespace AutoKosova.Business.Services
 
             var bookings = await query
                 .OrderByDescending(rb => rb.RentalBookingCreationDate)
-                .Select(ListProjection)
                 .ToListAsync();
 
-            return ServiceResult<List<RentalBookingListModel>>.Success(bookings);
+            return ServiceResult<List<RentalBooking>>.Success(bookings);
         }
 
-        public async Task<ServiceResult<RentalBookingStatusModel>> UpdateStatus(int id, string status, int accountId, string? role)
+        public async Task<ServiceResult<RentalBooking>> UpdateStatus(int id, string status, int accountId, string? role)
         {
             if (string.IsNullOrWhiteSpace(status) || !AllowedStatuses.Contains(status))
             {
-                return ServiceResult<RentalBookingStatusModel>.BadRequest("Invalid booking status.");
+                return ServiceResult<RentalBooking>.BadRequest("Invalid booking status.");
             }
 
             var booking = await _context.RentalBookings
@@ -221,13 +196,13 @@ namespace AutoKosova.Business.Services
 
             if (booking == null)
             {
-                return ServiceResult<RentalBookingStatusModel>.NotFound("Rental booking not found.");
+                return ServiceResult<RentalBooking>.NotFound("Rental booking not found.");
             }
 
             if (role != "Admin" &&
                 (booking.Car == null || booking.Car.CreatedByAccountID != accountId))
             {
-                return ServiceResult<RentalBookingStatusModel>.Forbidden("You can update only bookings for cars created by you.");
+                return ServiceResult<RentalBooking>.Forbidden("You can update only bookings for cars created by you.");
             }
 
             booking.RentalBookingStatus = status;
@@ -235,14 +210,10 @@ namespace AutoKosova.Business.Services
 
             await _context.SaveChangesAsync();
 
-            return ServiceResult<RentalBookingStatusModel>.Success(new RentalBookingStatusModel
-            {
-                RentalBookingID = booking.RentalBookingID,
-                Status = booking.RentalBookingStatus
-            });
+            return ServiceResult<RentalBooking>.Success(booking);
         }
 
-        public async Task<ServiceResult<RentalBookingStatusModel>> Delete(int id, int accountId, string? role)
+        public async Task<ServiceResult<RentalBooking>> Delete(int id, int accountId, string? role)
         {
             var booking = await _context.RentalBookings
                 .Include(rb => rb.Car)
@@ -250,12 +221,12 @@ namespace AutoKosova.Business.Services
 
             if (booking == null)
             {
-                return ServiceResult<RentalBookingStatusModel>.NotFound("Rental booking not found.");
+                return ServiceResult<RentalBooking>.NotFound("Rental booking not found.");
             }
 
             if (!CanAccessBooking(booking, accountId, role))
             {
-                return ServiceResult<RentalBookingStatusModel>.Forbidden("You are not allowed to delete this booking.");
+                return ServiceResult<RentalBooking>.Forbidden("You are not allowed to delete this booking.");
             }
 
             booking.RentalBookingDeleted = true;
@@ -265,11 +236,7 @@ namespace AutoKosova.Business.Services
 
             await _context.SaveChangesAsync();
 
-            return ServiceResult<RentalBookingStatusModel>.Success(new RentalBookingStatusModel
-            {
-                RentalBookingID = booking.RentalBookingID,
-                Status = booking.RentalBookingStatus
-            });
+            return ServiceResult<RentalBooking>.Success(booking);
         }
 
         private async Task<bool> HasBookingConflict(int carId, DateTime startDate, DateTime endDate)
@@ -311,22 +278,5 @@ namespace AutoKosova.Business.Services
 
             return isCustomer || isCarOwner || isAdmin;
         }
-
-        private static readonly Expression<Func<RentalBooking, RentalBookingListModel>> ListProjection = booking => new RentalBookingListModel
-        {
-            RentalBookingID = booking.RentalBookingID,
-            TenantID = booking.TenantID,
-            CarID = booking.CarID,
-            CustomerAccountID = booking.CustomerAccountID,
-            CarTitle = booking.Car != null ? booking.Car.CarTitle : string.Empty,
-            CarBrand = booking.Car != null ? booking.Car.CarBrand : string.Empty,
-            CarModel = booking.Car != null ? booking.Car.CarModel : string.Empty,
-            RentalBookingStartDate = booking.RentalBookingStartDate,
-            RentalBookingEndDate = booking.RentalBookingEndDate,
-            RentalBookingDailyPrice = booking.RentalBookingDailyPrice,
-            RentalBookingTotalPrice = booking.RentalBookingTotalPrice,
-            RentalBookingStatus = booking.RentalBookingStatus,
-            RentalBookingCreationDate = booking.RentalBookingCreationDate
-        };
     }
 }

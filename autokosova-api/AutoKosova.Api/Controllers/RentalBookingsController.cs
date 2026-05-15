@@ -1,6 +1,6 @@
 using AutoKosova.Api.DTOs.RentalBookings;
-using AutoKosova.Business.Models;
 using AutoKosova.Business.Services;
+using AutoKosova.Entity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -63,12 +63,11 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _rentalBookingService.Create(new RentalBookingCreateCommand
-            {
-                CarID = request.CarID,
-                RentalBookingStartDate = request.RentalBookingStartDate,
-                RentalBookingEndDate = request.RentalBookingEndDate
-            }, CurrentAccountId.Value);
+            var result = await _rentalBookingService.Create(
+                request.CarID,
+                request.RentalBookingStartDate,
+                request.RentalBookingEndDate,
+                CurrentAccountId.Value);
 
             if (!result.IsSuccess)
             {
@@ -78,7 +77,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(new
             {
                 message = "Rental booking created successfully.",
-                rentalBookingID = result.Data!.RentalBookingID,
+                rentalBookingID = result.Data!.Booking.RentalBookingID,
                 totalDays = result.Data.TotalDays,
                 totalPrice = result.Data.TotalPrice
             });
@@ -165,7 +164,7 @@ namespace AutoKosova.Api.Controllers
             {
                 message = "Rental booking status updated successfully.",
                 rentalBookingID = result.Data!.RentalBookingID,
-                status = result.Data.Status
+                status = result.Data.RentalBookingStatus
             });
         }
 
@@ -192,7 +191,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        private static RentalBookingListResponseDto ToListDto(RentalBookingListModel booking)
+        private static RentalBookingListResponseDto ToListDto(RentalBooking booking)
         {
             return new RentalBookingListResponseDto
             {
@@ -200,9 +199,9 @@ namespace AutoKosova.Api.Controllers
                 TenantID = booking.TenantID,
                 CarID = booking.CarID,
                 CustomerAccountID = booking.CustomerAccountID,
-                CarTitle = booking.CarTitle,
-                CarBrand = booking.CarBrand,
-                CarModel = booking.CarModel,
+                CarTitle = booking.Car?.CarTitle ?? string.Empty,
+                CarBrand = booking.Car?.CarBrand ?? string.Empty,
+                CarModel = booking.Car?.CarModel ?? string.Empty,
                 RentalBookingStartDate = booking.RentalBookingStartDate,
                 RentalBookingEndDate = booking.RentalBookingEndDate,
                 RentalBookingDailyPrice = booking.RentalBookingDailyPrice,
@@ -212,7 +211,7 @@ namespace AutoKosova.Api.Controllers
             };
         }
 
-        private static RentalBookingDetailsResponseDto ToDetailsDto(RentalBookingDetailsModel booking)
+        private static RentalBookingDetailsResponseDto ToDetailsDto(RentalBooking booking)
         {
             return new RentalBookingDetailsResponseDto
             {
@@ -220,11 +219,11 @@ namespace AutoKosova.Api.Controllers
                 TenantID = booking.TenantID,
                 CarID = booking.CarID,
                 CustomerAccountID = booking.CustomerAccountID,
-                CustomerUsername = booking.CustomerUsername,
-                CustomerEmail = booking.CustomerEmail,
-                CarTitle = booking.CarTitle,
-                CarBrand = booking.CarBrand,
-                CarModel = booking.CarModel,
+                CustomerUsername = booking.CustomerAccount?.AccountUsername ?? string.Empty,
+                CustomerEmail = booking.CustomerAccount?.AccountEmail ?? string.Empty,
+                CarTitle = booking.Car?.CarTitle ?? string.Empty,
+                CarBrand = booking.Car?.CarBrand ?? string.Empty,
+                CarModel = booking.Car?.CarModel ?? string.Empty,
                 RentalBookingStartDate = booking.RentalBookingStartDate,
                 RentalBookingEndDate = booking.RentalBookingEndDate,
                 RentalBookingDailyPrice = booking.RentalBookingDailyPrice,

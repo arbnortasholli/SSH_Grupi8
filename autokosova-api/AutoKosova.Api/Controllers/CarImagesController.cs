@@ -1,6 +1,6 @@
 using AutoKosova.Api.DTOs.CarImages;
-using AutoKosova.Business.Models;
 using AutoKosova.Business.Services;
+using AutoKosova.Entity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,12 +53,9 @@ namespace AutoKosova.Api.Controllers
 
             var result = await _carImageService.AddImage(
                 carId,
-                new CarImageCreateCommand
-                {
-                    CarImageUrl = request.CarImageUrl,
-                    CarImageIsMain = request.CarImageIsMain,
-                    CarImageOrderNumber = request.CarImageOrderNumber
-                },
+                request.CarImageUrl,
+                request.CarImageIsMain,
+                request.CarImageOrderNumber,
                 CurrentAccountId.Value,
                 CurrentRole
             );
@@ -121,7 +118,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        private static CarImageResponseDto ToDto(CarImageModel image)
+        private static CarImageResponseDto ToDto(CarImage image)
         {
             return new CarImageResponseDto
             {

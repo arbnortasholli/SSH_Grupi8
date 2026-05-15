@@ -1,6 +1,6 @@
 using AutoKosova.Api.DTOs.Cars;
-using AutoKosova.Business.Models;
 using AutoKosova.Business.Services;
+using AutoKosova.Entity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -47,7 +47,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carService.Create(ToWriteCommand(request), CurrentAccountId.Value);
+            var result = await _carService.Create(ToCar(request), CurrentAccountId.Value);
 
             if (!result.IsSuccess)
             {
@@ -57,7 +57,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(new
             {
                 message = "Car created successfully.",
-                carID = result.Data!.CarID
+                carID = result.Data!.CarsID
             });
         }
 
@@ -70,7 +70,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carService.Update(id, ToWriteCommand(request), CurrentAccountId.Value, CurrentRole);
+            var result = await _carService.Update(id, ToCar(request), CurrentAccountId.Value, CurrentRole);
 
             if (!result.IsSuccess)
             {
@@ -80,7 +80,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(new
             {
                 message = "Car updated successfully.",
-                carID = result.Data!.CarID
+                carID = result.Data!.CarsID
             });
         }
 
@@ -103,7 +103,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(new
             {
                 message = "Car deleted successfully.",
-                carID = result.Data!.CarID
+                carID = result.Data!.CarsID
             });
         }
 
@@ -126,26 +126,24 @@ namespace AutoKosova.Api.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] CarSearchRequestDto request)
         {
-            var result = await _carService.Search(new CarSearchCommand
-            {
-                SearchTerm = request.SearchTerm,
-                Brand = request.Brand,
-                Model = request.Model,
-                MinYear = request.MinYear,
-                MaxYear = request.MaxYear,
-                MaxMileage = request.MaxMileage,
-                FuelType = request.FuelType,
-                Transmission = request.Transmission,
-                BodyType = request.BodyType,
-                Color = request.Color,
-                IsForSale = request.IsForSale,
-                IsForRent = request.IsForRent,
-                MinPrice = request.MinPrice,
-                MaxPrice = request.MaxPrice,
-                Status = request.Status,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
-            });
+            var result = await _carService.Search(
+                request.SearchTerm,
+                request.Brand,
+                request.Model,
+                request.MinYear,
+                request.MaxYear,
+                request.MaxMileage,
+                request.FuelType,
+                request.Transmission,
+                request.BodyType,
+                request.Color,
+                request.IsForSale,
+                request.IsForRent,
+                request.MinPrice,
+                request.MaxPrice,
+                request.Status,
+                request.PageNumber,
+                request.PageSize);
 
             return Ok(new
             {
@@ -179,9 +177,9 @@ namespace AutoKosova.Api.Controllers
             return Ok(cars.Select(ToListDto));
         }
 
-        private static CarWriteCommand ToWriteCommand(CarCreateRequestDto request)
+        private static Cars ToCar(CarCreateRequestDto request)
         {
-            return new CarWriteCommand
+            return new Cars
             {
                 TenantID = request.TenantID,
                 CarTitle = request.CarTitle,
@@ -202,9 +200,9 @@ namespace AutoKosova.Api.Controllers
             };
         }
 
-        private static CarWriteCommand ToWriteCommand(CarUpdateRequestDto request)
+        private static Cars ToCar(CarUpdateRequestDto request)
         {
-            return new CarWriteCommand
+            return new Cars
             {
                 TenantID = request.TenantID,
                 CarTitle = request.CarTitle,
@@ -225,7 +223,7 @@ namespace AutoKosova.Api.Controllers
             };
         }
 
-        private static CarListResponseDto ToListDto(CarListModel car)
+        private static CarListResponseDto ToListDto(Cars car)
         {
             return new CarListResponseDto
             {
@@ -249,7 +247,7 @@ namespace AutoKosova.Api.Controllers
             };
         }
 
-        private static CarDetailsResponseDto ToDetailsDto(CarDetailsModel car)
+        private static CarDetailsResponseDto ToDetailsDto(Cars car)
         {
             return new CarDetailsResponseDto
             {

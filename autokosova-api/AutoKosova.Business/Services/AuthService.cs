@@ -1,4 +1,3 @@
-using AutoKosova.Business.Models;
 using AutoKosova.DataAccess;
 using AutoKosova.Entity;
 using Microsoft.EntityFrameworkCore;
@@ -21,57 +20,66 @@ namespace AutoKosova.Business.Services
             _jwtService = jwtService;
         }
 
-        public async Task<ServiceResult<RegisterAccountResult>> Register(RegisterAccountCommand command)
+        public async Task<ServiceResult<Account>> Register(
+            int accountRoleId,
+            string accountUsername,
+            string accountEmail,
+            string password,
+            string accountName,
+            string accountLastname,
+            string? accountPhoneNumber,
+            string? accountAddress,
+            string? accountCity)
         {
-            var validationError = ValidateRegister(command);
+            var validationError = ValidateRegister(accountUsername, accountEmail, password, accountName, accountLastname);
 
             if (validationError != null)
             {
-                return ServiceResult<RegisterAccountResult>.BadRequest(validationError);
+                return ServiceResult<Account>.BadRequest(validationError);
             }
 
             var usernameExists = await _context.Accounts
-                .AnyAsync(a => a.AccountUsername == command.AccountUsername);
+                .AnyAsync(a => a.AccountUsername == accountUsername);
 
             if (usernameExists)
             {
-                return ServiceResult<RegisterAccountResult>.BadRequest("Username already exists.");
+                return ServiceResult<Account>.BadRequest("Username already exists.");
             }
 
             var emailExists = await _context.Accounts
-                .AnyAsync(a => a.AccountEmail == command.AccountEmail);
+                .AnyAsync(a => a.AccountEmail == accountEmail);
 
             if (emailExists)
             {
-                return ServiceResult<RegisterAccountResult>.BadRequest("Email already exists.");
+                return ServiceResult<Account>.BadRequest("Email already exists.");
             }
 
             var roleExists = await _context.AccountRoles
-                .AnyAsync(r => r.AccountRoleID == command.AccountRoleID);
+                .AnyAsync(r => r.AccountRoleID == accountRoleId);
 
             if (!roleExists)
             {
-                return ServiceResult<RegisterAccountResult>.BadRequest("Invalid account role.");
+                return ServiceResult<Account>.BadRequest("Invalid account role.");
             }
 
             _passwordService.CreatePasswordHash(
-                command.Password,
+                password,
                 out var passwordHash,
                 out var passwordSalt
             );
 
             var account = new Account
             {
-                AccountRoleID = command.AccountRoleID,
-                AccountUsername = command.AccountUsername.Trim(),
-                AccountEmail = command.AccountEmail.Trim(),
+                AccountRoleID = accountRoleId,
+                AccountUsername = accountUsername.Trim(),
+                AccountEmail = accountEmail.Trim(),
                 AccountPasswordHash = passwordHash,
                 AccountPasswordSalt = passwordSalt,
-                AccountName = command.AccountName.Trim(),
-                AccountLastname = command.AccountLastname.Trim(),
-                AccountPhoneNumber = command.AccountPhoneNumber,
-                AccountAddress = command.AccountAddress,
-                AccountCity = command.AccountCity,
+                AccountName = accountName.Trim(),
+                AccountLastname = accountLastname.Trim(),
+                AccountPhoneNumber = accountPhoneNumber,
+                AccountAddress = accountAddress,
+                AccountCity = accountCity,
 
                 AccountEmailConfirmed = false,
                 AccountLocked = false,
@@ -84,52 +92,51 @@ namespace AutoKosova.Business.Services
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
 
-            return ServiceResult<RegisterAccountResult>.Success(new RegisterAccountResult
-            {
-                AccountID = account.AccountID
-            });
+            return ServiceResult<Account>.Success(account);
         }
 
-        public async Task<ServiceResult<AuthResult>> Login(LoginCommand command)
+        public async Task<ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>> Login(
+            string emailOrUsername,
+            string password)
         {
-            if (string.IsNullOrWhiteSpace(command.EmailOrUsername))
+            if (string.IsNullOrWhiteSpace(emailOrUsername))
             {
-                return ServiceResult<AuthResult>.BadRequest("Email or username is required.");
+                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.BadRequest("Email or username is required.");
             }
 
-            if (string.IsNullOrWhiteSpace(command.Password))
+            if (string.IsNullOrWhiteSpace(password))
             {
-                return ServiceResult<AuthResult>.BadRequest("Password is required.");
+                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.BadRequest("Password is required.");
             }
 
             var account = await _context.Accounts
                 .Include(a => a.AccountRole)
                 .FirstOrDefaultAsync(a =>
-                    a.AccountEmail == command.EmailOrUsername ||
-                    a.AccountUsername == command.EmailOrUsername);
+                    a.AccountEmail == emailOrUsername ||
+                    a.AccountUsername == emailOrUsername);
 
             if (account == null)
             {
-                return ServiceResult<AuthResult>.Unauthorized("Invalid credentials.");
+                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Invalid credentials.");
             }
 
             if (account.AccountDeleted)
             {
-                return ServiceResult<AuthResult>.Unauthorized("Account does not exist.");
+                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Account does not exist.");
             }
 
             if (!account.AccountIsActive)
             {
-                return ServiceResult<AuthResult>.Unauthorized("Account is inactive.");
+                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Account is inactive.");
             }
 
             if (account.AccountLocked)
             {
-                return ServiceResult<AuthResult>.Unauthorized("Account is locked.");
+                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Account is locked.");
             }
 
             var passwordIsValid = _passwordService.VerifyPasswordHash(
-                command.Password,
+                password,
                 account.AccountPasswordHash,
                 account.AccountPasswordSalt
             );
@@ -147,7 +154,7 @@ namespace AutoKosova.Business.Services
 
                 await _context.SaveChangesAsync();
 
-                return ServiceResult<AuthResult>.Unauthorized("Invalid credentials.");
+                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Invalid credentials.");
             }
 
             account.AccountFailPasswordCount = 0;
@@ -157,43 +164,42 @@ namespace AutoKosova.Business.Services
 
             var roleName = account.AccountRole?.AccountRoleName ?? "User";
 
-            return ServiceResult<AuthResult>.Success(new AuthResult
-            {
-                Token = _jwtService.GenerateToken(account),
-                ExpiresAt = _jwtService.GetExpirationDate(),
-                AccountID = account.AccountID,
-                AccountRoleID = account.AccountRoleID,
-                Role = roleName,
-                AccountUsername = account.AccountUsername,
-                AccountEmail = account.AccountEmail,
-                AccountName = account.AccountName,
-                AccountLastname = account.AccountLastname
-            });
+            return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Success((
+                account,
+                _jwtService.GenerateToken(account),
+                _jwtService.GetExpirationDate(),
+                roleName
+            ));
         }
 
-        private static string? ValidateRegister(RegisterAccountCommand command)
+        private static string? ValidateRegister(
+            string accountUsername,
+            string accountEmail,
+            string password,
+            string accountName,
+            string accountLastname)
         {
-            if (string.IsNullOrWhiteSpace(command.AccountUsername))
+            if (string.IsNullOrWhiteSpace(accountUsername))
             {
                 return "Username is required.";
             }
 
-            if (string.IsNullOrWhiteSpace(command.AccountEmail))
+            if (string.IsNullOrWhiteSpace(accountEmail))
             {
                 return "Email is required.";
             }
 
-            if (string.IsNullOrWhiteSpace(command.Password))
+            if (string.IsNullOrWhiteSpace(password))
             {
                 return "Password is required.";
             }
 
-            if (string.IsNullOrWhiteSpace(command.AccountName))
+            if (string.IsNullOrWhiteSpace(accountName))
             {
                 return "Name is required.";
             }
 
-            if (string.IsNullOrWhiteSpace(command.AccountLastname))
+            if (string.IsNullOrWhiteSpace(accountLastname))
             {
                 return "Lastname is required.";
             }

@@ -1,8 +1,6 @@
-using AutoKosova.Business.Models;
 using AutoKosova.DataAccess;
 using AutoKosova.Entity;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace AutoKosova.Business.Services
 {
@@ -15,145 +13,121 @@ namespace AutoKosova.Business.Services
             _context = context;
         }
 
-        public async Task<List<CarListModel>> GetAll()
+        public async Task<List<Cars>> GetAll()
         {
             return await BaseCarQuery()
                 .OrderByDescending(c => c.CarCreationDate)
-                .Select(ListProjection)
                 .ToListAsync();
         }
 
-        public async Task<ServiceResult<CarDetailsModel>> GetById(int id)
+        public async Task<ServiceResult<Cars>> GetById(int id)
         {
             var car = await BaseCarQuery()
                 .Where(c => c.CarsID == id)
-                .Select(DetailsProjection)
                 .FirstOrDefaultAsync();
 
             if (car == null)
             {
-                return ServiceResult<CarDetailsModel>.NotFound("Car not found.");
+                return ServiceResult<Cars>.NotFound("Car not found.");
             }
 
-            return ServiceResult<CarDetailsModel>.Success(car);
+            return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<CarMutationResult>> Create(CarWriteCommand command, int accountId)
+        public async Task<ServiceResult<Cars>> Create(Cars car, int accountId)
         {
-            var validationError = ValidateCar(command);
+            var validationError = ValidateCar(car);
 
             if (validationError != null)
             {
-                return ServiceResult<CarMutationResult>.BadRequest(validationError);
+                return ServiceResult<Cars>.BadRequest(validationError);
             }
 
-            var tenantValidationError = await ValidateTenant(command.TenantID);
+            var tenantValidationError = await ValidateTenant(car.TenantID);
 
             if (tenantValidationError != null)
             {
-                return ServiceResult<CarMutationResult>.BadRequest(tenantValidationError);
+                return ServiceResult<Cars>.BadRequest(tenantValidationError);
             }
 
-            var car = new Cars
-            {
-                TenantID = command.TenantID,
-                CreatedByAccountID = accountId,
-                CarTitle = command.CarTitle.Trim(),
-                CarBrand = command.CarBrand.Trim(),
-                CarModel = command.CarModel.Trim(),
-                CarYear = command.CarYear,
-                CarMileage = command.CarMileage,
-                CarFuelType = command.CarFuelType,
-                CarTransmission = command.CarTransmission,
-                CarBodyType = command.CarBodyType,
-                CarColor = command.CarColor,
-                CarDescription = command.CarDescription,
-                IsForSale = command.IsForSale,
-                SalePrice = command.SalePrice,
-                IsForRent = command.IsForRent,
-                RentalDailyPrice = command.RentalDailyPrice,
-                CarStatus = command.CarStatus,
-                CarCreationDate = DateTime.UtcNow,
-                CarDeleted = false
-            };
+            car.CreatedByAccountID = accountId;
+            car.CarTitle = car.CarTitle.Trim();
+            car.CarBrand = car.CarBrand.Trim();
+            car.CarModel = car.CarModel.Trim();
+            car.CarCreationDate = DateTime.UtcNow;
+            car.CarDeleted = false;
 
             _context.Cars.Add(car);
             await _context.SaveChangesAsync();
 
-            return ServiceResult<CarMutationResult>.Success(new CarMutationResult
-            {
-                CarID = car.CarsID
-            });
+            return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<CarMutationResult>> Update(int id, CarWriteCommand command, int accountId, string? role)
+        public async Task<ServiceResult<Cars>> Update(int id, Cars updatedCar, int accountId, string? role)
         {
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == id && !c.CarDeleted);
 
             if (car == null)
             {
-                return ServiceResult<CarMutationResult>.NotFound("Car not found.");
+                return ServiceResult<Cars>.NotFound("Car not found.");
             }
 
             if (role != "Admin" && car.CreatedByAccountID != accountId)
             {
-                return ServiceResult<CarMutationResult>.Forbidden("You can update only cars created by you.");
+                return ServiceResult<Cars>.Forbidden("You can update only cars created by you.");
             }
 
-            var validationError = ValidateCar(command);
+            var validationError = ValidateCar(updatedCar);
 
             if (validationError != null)
             {
-                return ServiceResult<CarMutationResult>.BadRequest(validationError);
+                return ServiceResult<Cars>.BadRequest(validationError);
             }
 
-            var tenantValidationError = await ValidateTenant(command.TenantID);
+            var tenantValidationError = await ValidateTenant(updatedCar.TenantID);
 
             if (tenantValidationError != null)
             {
-                return ServiceResult<CarMutationResult>.BadRequest(tenantValidationError);
+                return ServiceResult<Cars>.BadRequest(tenantValidationError);
             }
 
-            car.TenantID = command.TenantID;
-            car.CarTitle = command.CarTitle.Trim();
-            car.CarBrand = command.CarBrand.Trim();
-            car.CarModel = command.CarModel.Trim();
-            car.CarYear = command.CarYear;
-            car.CarMileage = command.CarMileage;
-            car.CarFuelType = command.CarFuelType;
-            car.CarTransmission = command.CarTransmission;
-            car.CarBodyType = command.CarBodyType;
-            car.CarColor = command.CarColor;
-            car.CarDescription = command.CarDescription;
-            car.IsForSale = command.IsForSale;
-            car.SalePrice = command.SalePrice;
-            car.IsForRent = command.IsForRent;
-            car.RentalDailyPrice = command.RentalDailyPrice;
-            car.CarStatus = command.CarStatus;
+            car.TenantID = updatedCar.TenantID;
+            car.CarTitle = updatedCar.CarTitle.Trim();
+            car.CarBrand = updatedCar.CarBrand.Trim();
+            car.CarModel = updatedCar.CarModel.Trim();
+            car.CarYear = updatedCar.CarYear;
+            car.CarMileage = updatedCar.CarMileage;
+            car.CarFuelType = updatedCar.CarFuelType;
+            car.CarTransmission = updatedCar.CarTransmission;
+            car.CarBodyType = updatedCar.CarBodyType;
+            car.CarColor = updatedCar.CarColor;
+            car.CarDescription = updatedCar.CarDescription;
+            car.IsForSale = updatedCar.IsForSale;
+            car.SalePrice = updatedCar.SalePrice;
+            car.IsForRent = updatedCar.IsForRent;
+            car.RentalDailyPrice = updatedCar.RentalDailyPrice;
+            car.CarStatus = updatedCar.CarStatus;
             car.CarUpdatedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            return ServiceResult<CarMutationResult>.Success(new CarMutationResult
-            {
-                CarID = car.CarsID
-            });
+            return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<CarMutationResult>> Delete(int id, int accountId, string? role)
+        public async Task<ServiceResult<Cars>> Delete(int id, int accountId, string? role)
         {
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == id && !c.CarDeleted);
 
             if (car == null)
             {
-                return ServiceResult<CarMutationResult>.NotFound("Car not found.");
+                return ServiceResult<Cars>.NotFound("Car not found.");
             }
 
             if (role != "Admin" && car.CreatedByAccountID != accountId)
             {
-                return ServiceResult<CarMutationResult>.Forbidden("You can delete only cars created by you.");
+                return ServiceResult<Cars>.Forbidden("You can delete only cars created by you.");
             }
 
             car.CarDeleted = true;
@@ -161,35 +135,63 @@ namespace AutoKosova.Business.Services
 
             await _context.SaveChangesAsync();
 
-            return ServiceResult<CarMutationResult>.Success(new CarMutationResult
-            {
-                CarID = car.CarsID
-            });
+            return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<List<CarListModel>> GetForSale()
+        public async Task<List<Cars>> GetForSale()
         {
             return await BaseCarQuery()
                 .Where(c => c.IsForSale)
                 .OrderByDescending(c => c.CarCreationDate)
-                .Select(ListProjection)
                 .ToListAsync();
         }
 
-        public async Task<List<CarListModel>> GetForRent()
+        public async Task<List<Cars>> GetForRent()
         {
             return await BaseCarQuery()
                 .Where(c => c.IsForRent)
                 .OrderByDescending(c => c.CarCreationDate)
-                .Select(ListProjection)
                 .ToListAsync();
         }
 
-        public async Task<PagedResult<CarListModel>> Search(CarSearchCommand command)
+        public async Task<(int PageNumber, int PageSize, int TotalRecords, int TotalPages, List<Cars> Data)> Search(
+            string? searchTerm,
+            string? brand,
+            string? model,
+            int? minYear,
+            int? maxYear,
+            int? maxMileage,
+            string? fuelType,
+            string? transmission,
+            string? bodyType,
+            string? color,
+            bool? isForSale,
+            bool? isForRent,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string? status,
+            int pageNumber,
+            int pageSize)
         {
-            var query = ApplySearch(BaseCarQuery(), command);
-            var pageNumber = command.PageNumber <= 0 ? 1 : command.PageNumber;
-            var pageSize = command.PageSize <= 0 ? 10 : command.PageSize;
+            var query = ApplySearch(
+                BaseCarQuery(),
+                searchTerm,
+                brand,
+                model,
+                minYear,
+                maxYear,
+                maxMileage,
+                fuelType,
+                transmission,
+                bodyType,
+                color,
+                isForSale,
+                isForRent,
+                minPrice,
+                maxPrice,
+                status);
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
             pageSize = pageSize > 50 ? 50 : pageSize;
 
             var totalRecords = await query.CountAsync();
@@ -197,34 +199,24 @@ namespace AutoKosova.Business.Services
                 .OrderByDescending(c => c.CarCreationDate)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Select(ListProjection)
                 .ToListAsync();
 
-            return new PagedResult<CarListModel>
-            {
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalRecords = totalRecords,
-                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
-                Data = cars
-            };
+            return (pageNumber, pageSize, totalRecords, (int)Math.Ceiling(totalRecords / (double)pageSize), cars);
         }
 
-        public async Task<List<CarListModel>> GetMyCars(int accountId)
+        public async Task<List<Cars>> GetMyCars(int accountId)
         {
             return await BaseCarQuery()
                 .Where(c => c.CreatedByAccountID == accountId)
                 .OrderByDescending(c => c.CarCreationDate)
-                .Select(ListProjection)
                 .ToListAsync();
         }
 
-        public async Task<List<CarListModel>> GetByTenant(int tenantId)
+        public async Task<List<Cars>> GetByTenant(int tenantId)
         {
             return await BaseCarQuery()
                 .Where(c => c.TenantID == tenantId)
                 .OrderByDescending(c => c.CarCreationDate)
-                .Select(ListProjection)
                 .ToListAsync();
         }
 
@@ -246,11 +238,27 @@ namespace AutoKosova.Business.Services
             return tenantExists ? null : "Invalid tenant.";
         }
 
-        private static IQueryable<Cars> ApplySearch(IQueryable<Cars> query, CarSearchCommand command)
+        private static IQueryable<Cars> ApplySearch(
+            IQueryable<Cars> query,
+            string? searchTerm,
+            string? brand,
+            string? model,
+            int? minYear,
+            int? maxYear,
+            int? maxMileage,
+            string? fuelType,
+            string? transmission,
+            string? bodyType,
+            string? color,
+            bool? isForSale,
+            bool? isForRent,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string? status)
         {
-            if (!string.IsNullOrWhiteSpace(command.SearchTerm))
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var searchTerm = command.SearchTerm.Trim().ToLower();
+                searchTerm = searchTerm.Trim().ToLower();
 
                 query = query.Where(c =>
                     c.CarTitle.ToLower().Contains(searchTerm) ||
@@ -259,173 +267,128 @@ namespace AutoKosova.Business.Services
                     (c.CarDescription != null && c.CarDescription.ToLower().Contains(searchTerm)));
             }
 
-            if (!string.IsNullOrWhiteSpace(command.Brand))
+            if (!string.IsNullOrWhiteSpace(brand))
             {
-                var brand = command.Brand.Trim().ToLower();
+                brand = brand.Trim().ToLower();
                 query = query.Where(c => c.CarBrand.ToLower() == brand);
             }
 
-            if (!string.IsNullOrWhiteSpace(command.Model))
+            if (!string.IsNullOrWhiteSpace(model))
             {
-                var model = command.Model.Trim().ToLower();
+                model = model.Trim().ToLower();
                 query = query.Where(c => c.CarModel.ToLower() == model);
             }
 
-            if (command.MinYear.HasValue)
+            if (minYear.HasValue)
             {
-                query = query.Where(c => c.CarYear >= command.MinYear.Value);
+                query = query.Where(c => c.CarYear >= minYear.Value);
             }
 
-            if (command.MaxYear.HasValue)
+            if (maxYear.HasValue)
             {
-                query = query.Where(c => c.CarYear <= command.MaxYear.Value);
+                query = query.Where(c => c.CarYear <= maxYear.Value);
             }
 
-            if (command.MaxMileage.HasValue)
+            if (maxMileage.HasValue)
             {
-                query = query.Where(c => c.CarMileage <= command.MaxMileage.Value);
+                query = query.Where(c => c.CarMileage <= maxMileage.Value);
             }
 
-            if (!string.IsNullOrWhiteSpace(command.FuelType))
+            if (!string.IsNullOrWhiteSpace(fuelType))
             {
-                var fuelType = command.FuelType.Trim().ToLower();
+                fuelType = fuelType.Trim().ToLower();
                 query = query.Where(c => c.CarFuelType != null && c.CarFuelType.ToLower() == fuelType);
             }
 
-            if (!string.IsNullOrWhiteSpace(command.Transmission))
+            if (!string.IsNullOrWhiteSpace(transmission))
             {
-                var transmission = command.Transmission.Trim().ToLower();
+                transmission = transmission.Trim().ToLower();
                 query = query.Where(c => c.CarTransmission != null && c.CarTransmission.ToLower() == transmission);
             }
 
-            if (!string.IsNullOrWhiteSpace(command.BodyType))
+            if (!string.IsNullOrWhiteSpace(bodyType))
             {
-                var bodyType = command.BodyType.Trim().ToLower();
+                bodyType = bodyType.Trim().ToLower();
                 query = query.Where(c => c.CarBodyType != null && c.CarBodyType.ToLower() == bodyType);
             }
 
-            if (!string.IsNullOrWhiteSpace(command.Color))
+            if (!string.IsNullOrWhiteSpace(color))
             {
-                var color = command.Color.Trim().ToLower();
+                color = color.Trim().ToLower();
                 query = query.Where(c => c.CarColor != null && c.CarColor.ToLower() == color);
             }
 
-            if (command.IsForSale.HasValue)
+            if (isForSale.HasValue)
             {
-                query = query.Where(c => c.IsForSale == command.IsForSale.Value);
+                query = query.Where(c => c.IsForSale == isForSale.Value);
             }
 
-            if (command.IsForRent.HasValue)
+            if (isForRent.HasValue)
             {
-                query = query.Where(c => c.IsForRent == command.IsForRent.Value);
+                query = query.Where(c => c.IsForRent == isForRent.Value);
             }
 
-            if (command.MinPrice.HasValue)
+            if (minPrice.HasValue)
             {
                 query = query.Where(c =>
-                    (c.IsForSale && c.SalePrice >= command.MinPrice.Value) ||
-                    (c.IsForRent && c.RentalDailyPrice >= command.MinPrice.Value));
+                    (c.IsForSale && c.SalePrice >= minPrice.Value) ||
+                    (c.IsForRent && c.RentalDailyPrice >= minPrice.Value));
             }
 
-            if (command.MaxPrice.HasValue)
+            if (maxPrice.HasValue)
             {
                 query = query.Where(c =>
-                    (c.IsForSale && c.SalePrice <= command.MaxPrice.Value) ||
-                    (c.IsForRent && c.RentalDailyPrice <= command.MaxPrice.Value));
+                    (c.IsForSale && c.SalePrice <= maxPrice.Value) ||
+                    (c.IsForRent && c.RentalDailyPrice <= maxPrice.Value));
             }
 
-            if (!string.IsNullOrWhiteSpace(command.Status))
+            if (!string.IsNullOrWhiteSpace(status))
             {
-                var status = command.Status.Trim().ToLower();
+                status = status.Trim().ToLower();
                 query = query.Where(c => c.CarStatus.ToLower() == status);
             }
 
             return query;
         }
 
-        private static string? ValidateCar(CarWriteCommand command)
+        private static string? ValidateCar(Cars car)
         {
-            if (string.IsNullOrWhiteSpace(command.CarTitle))
+            if (string.IsNullOrWhiteSpace(car.CarTitle))
             {
                 return "Car title is required.";
             }
 
-            if (string.IsNullOrWhiteSpace(command.CarBrand))
+            if (string.IsNullOrWhiteSpace(car.CarBrand))
             {
                 return "Car brand is required.";
             }
 
-            if (string.IsNullOrWhiteSpace(command.CarModel))
+            if (string.IsNullOrWhiteSpace(car.CarModel))
             {
                 return "Car model is required.";
             }
 
-            if (command.CarYear < 1950 || command.CarYear > DateTime.UtcNow.Year + 1)
+            if (car.CarYear < 1950 || car.CarYear > DateTime.UtcNow.Year + 1)
             {
                 return "Invalid car year.";
             }
 
-            if (!command.IsForSale && !command.IsForRent)
+            if (!car.IsForSale && !car.IsForRent)
             {
                 return "Car must be marked for sale or rent.";
             }
 
-            if (command.IsForSale && (!command.SalePrice.HasValue || command.SalePrice.Value <= 0))
+            if (car.IsForSale && (!car.SalePrice.HasValue || car.SalePrice.Value <= 0))
             {
                 return "Sale price is required when car is for sale.";
             }
 
-            if (command.IsForRent && (!command.RentalDailyPrice.HasValue || command.RentalDailyPrice.Value <= 0))
+            if (car.IsForRent && (!car.RentalDailyPrice.HasValue || car.RentalDailyPrice.Value <= 0))
             {
                 return "Rental daily price is required when car is for rent.";
             }
 
             return null;
         }
-
-        private static readonly Expression<Func<Cars, CarListModel>> ListProjection = car => new CarListModel
-        {
-            CarsID = car.CarsID,
-            TenantID = car.TenantID,
-            CarTitle = car.CarTitle,
-            CarBrand = car.CarBrand,
-            CarModel = car.CarModel,
-            CarYear = car.CarYear,
-            CarMileage = car.CarMileage,
-            CarFuelType = car.CarFuelType,
-            CarTransmission = car.CarTransmission,
-            CarBodyType = car.CarBodyType,
-            CarColor = car.CarColor,
-            IsForSale = car.IsForSale,
-            SalePrice = car.SalePrice,
-            IsForRent = car.IsForRent,
-            RentalDailyPrice = car.RentalDailyPrice,
-            CarStatus = car.CarStatus,
-            CarCreationDate = car.CarCreationDate
-        };
-
-        private static readonly Expression<Func<Cars, CarDetailsModel>> DetailsProjection = car => new CarDetailsModel
-        {
-            CarsID = car.CarsID,
-            TenantID = car.TenantID,
-            CreatedByAccountID = car.CreatedByAccountID,
-            CarTitle = car.CarTitle,
-            CarBrand = car.CarBrand,
-            CarModel = car.CarModel,
-            CarYear = car.CarYear,
-            CarMileage = car.CarMileage,
-            CarFuelType = car.CarFuelType,
-            CarTransmission = car.CarTransmission,
-            CarBodyType = car.CarBodyType,
-            CarColor = car.CarColor,
-            CarDescription = car.CarDescription,
-            IsForSale = car.IsForSale,
-            SalePrice = car.SalePrice,
-            IsForRent = car.IsForRent,
-            RentalDailyPrice = car.RentalDailyPrice,
-            CarStatus = car.CarStatus,
-            CarCreationDate = car.CarCreationDate,
-            CarUpdatedDate = car.CarUpdatedDate
-        };
     }
 }

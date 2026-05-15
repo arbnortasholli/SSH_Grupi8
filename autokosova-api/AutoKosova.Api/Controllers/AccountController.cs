@@ -1,5 +1,4 @@
 using AutoKosova.Api.DTOs;
-using AutoKosova.Business.Models;
 using AutoKosova.Business.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,18 +18,16 @@ namespace AutoKosova.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequestDto request)
         {
-            var result = await _authService.Register(new RegisterAccountCommand
-            {
-                AccountRoleID = request.AccountRoleID,
-                AccountUsername = request.AccountUsername,
-                AccountEmail = request.AccountEmail,
-                Password = request.Password,
-                AccountName = request.AccountName,
-                AccountLastname = request.AccountLastname,
-                AccountPhoneNumber = request.AccountPhoneNumber,
-                AccountAddress = request.AccountAddress,
-                AccountCity = request.AccountCity
-            });
+            var result = await _authService.Register(
+                request.AccountRoleID,
+                request.AccountUsername,
+                request.AccountEmail,
+                request.Password,
+                request.AccountName,
+                request.AccountLastname,
+                request.AccountPhoneNumber,
+                request.AccountAddress,
+                request.AccountCity);
 
             if (!result.IsSuccess)
             {
@@ -47,11 +44,7 @@ namespace AutoKosova.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequestDto request)
         {
-            var result = await _authService.Login(new LoginCommand
-            {
-                EmailOrUsername = request.EmailOrUsername,
-                Password = request.Password
-            });
+            var result = await _authService.Login(request.EmailOrUsername, request.Password);
 
             if (!result.IsSuccess)
             {
@@ -59,18 +52,19 @@ namespace AutoKosova.Api.Controllers
             }
 
             var auth = result.Data!;
+            var account = auth.Account;
 
             return Ok(new AuthResponseDto
             {
                 Token = auth.Token,
                 ExpiresAt = auth.ExpiresAt,
-                AccountID = auth.AccountID,
-                AccountRoleID = auth.AccountRoleID,
+                AccountID = account.AccountID,
+                AccountRoleID = account.AccountRoleID,
                 Role = auth.Role,
-                AccountUsername = auth.AccountUsername,
-                AccountEmail = auth.AccountEmail,
-                AccountName = auth.AccountName,
-                AccountLastname = auth.AccountLastname
+                AccountUsername = account.AccountUsername,
+                AccountEmail = account.AccountEmail,
+                AccountName = account.AccountName,
+                AccountLastname = account.AccountLastname
             });
         }
     }

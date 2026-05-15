@@ -1,8 +1,6 @@
-using AutoKosova.Business.Models;
 using AutoKosova.DataAccess;
 using AutoKosova.Entity;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace AutoKosova.Business.Services
 {
@@ -15,50 +13,50 @@ namespace AutoKosova.Business.Services
             _context = context;
         }
 
-        public async Task<ServiceResult<List<CarImageModel>>> GetImagesByCarId(int carId)
+        public async Task<ServiceResult<List<CarImage>>> GetImagesByCarId(int carId)
         {
             var carExists = await _context.Cars
                 .AnyAsync(c => c.CarsID == carId && !c.CarDeleted);
 
             if (!carExists)
             {
-                return ServiceResult<List<CarImageModel>>.NotFound("Car not found.");
+                return ServiceResult<List<CarImage>>.NotFound("Car not found.");
             }
 
             var images = await _context.CarImages
                 .Where(ci => ci.CarID == carId && !ci.CarImageDeleted)
                 .OrderByDescending(ci => ci.CarImageIsMain)
                 .ThenBy(ci => ci.CarImageOrderNumber)
-                .Select(ModelProjection)
                 .ToListAsync();
 
-            return ServiceResult<List<CarImageModel>>.Success(images);
+            return ServiceResult<List<CarImage>>.Success(images);
         }
 
-        public async Task<ServiceResult<CarImageModel>> GetImageById(int imageId)
+        public async Task<ServiceResult<CarImage>> GetImageById(int imageId)
         {
             var image = await _context.CarImages
                 .Where(ci => ci.CarImageID == imageId && !ci.CarImageDeleted)
-                .Select(ModelProjection)
                 .FirstOrDefaultAsync();
 
             if (image == null)
             {
-                return ServiceResult<CarImageModel>.NotFound("Car image not found.");
+                return ServiceResult<CarImage>.NotFound("Car image not found.");
             }
 
-            return ServiceResult<CarImageModel>.Success(image);
+            return ServiceResult<CarImage>.Success(image);
         }
 
-        public async Task<ServiceResult<CarImageMutationResult>> AddImage(
+        public async Task<ServiceResult<CarImage>> AddImage(
             int carId,
-            CarImageCreateCommand command,
+            string carImageUrl,
+            bool carImageIsMain,
+            int carImageOrderNumber,
             int accountId,
             string? role)
         {
-            if (string.IsNullOrWhiteSpace(command.CarImageUrl))
+            if (string.IsNullOrWhiteSpace(carImageUrl))
             {
-                return ServiceResult<CarImageMutationResult>.BadRequest("Car image URL is required.");
+                return ServiceResult<CarImage>.BadRequest("Car image URL is required.");
             }
 
             var car = await _context.Cars
@@ -66,15 +64,15 @@ namespace AutoKosova.Business.Services
 
             if (car == null)
             {
-                return ServiceResult<CarImageMutationResult>.NotFound("Car not found.");
+                return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
             if (role != "Admin" && car.CreatedByAccountID != accountId)
             {
-                return ServiceResult<CarImageMutationResult>.Forbidden("You can add images only to cars created by you.");
+                return ServiceResult<CarImage>.Forbidden("You can add images only to cars created by you.");
             }
 
-            if (command.CarImageIsMain)
+            if (carImageIsMain)
             {
                 await ClearMainImages(carId);
             }
@@ -83,9 +81,9 @@ namespace AutoKosova.Business.Services
             {
                 CarID = carId,
                 Car = car,
-                CarImageUrl = command.CarImageUrl.Trim(),
-                CarImageIsMain = command.CarImageIsMain,
-                CarImageOrderNumber = command.CarImageOrderNumber,
+                CarImageUrl = carImageUrl.Trim(),
+                CarImageIsMain = carImageIsMain,
+                CarImageOrderNumber = carImageOrderNumber,
                 CarImageCreationDate = DateTime.UtcNow,
                 CarImageDeleted = false
             };
@@ -93,13 +91,10 @@ namespace AutoKosova.Business.Services
             _context.CarImages.Add(image);
             await _context.SaveChangesAsync();
 
-            return ServiceResult<CarImageMutationResult>.Success(new CarImageMutationResult
-            {
-                CarImageID = image.CarImageID
-            });
+            return ServiceResult<CarImage>.Success(image);
         }
 
-        public async Task<ServiceResult<CarImageMutationResult>> SetMainImage(int imageId, int accountId, string? role)
+        public async Task<ServiceResult<CarImage>> SetMainImage(int imageId, int accountId, string? role)
         {
             var image = await _context.CarImages
                 .Include(ci => ci.Car)
@@ -107,17 +102,17 @@ namespace AutoKosova.Business.Services
 
             if (image == null)
             {
-                return ServiceResult<CarImageMutationResult>.NotFound("Car image not found.");
+                return ServiceResult<CarImage>.NotFound("Car image not found.");
             }
 
             if (image.Car == null || image.Car.CarDeleted)
             {
-                return ServiceResult<CarImageMutationResult>.NotFound("Car not found.");
+                return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
             if (role != "Admin" && image.Car.CreatedByAccountID != accountId)
             {
-                return ServiceResult<CarImageMutationResult>.Forbidden("You can update images only for cars created by you.");
+                return ServiceResult<CarImage>.Forbidden("You can update images only for cars created by you.");
             }
 
             await ClearMainImages(image.CarID);
@@ -125,13 +120,10 @@ namespace AutoKosova.Business.Services
 
             await _context.SaveChangesAsync();
 
-            return ServiceResult<CarImageMutationResult>.Success(new CarImageMutationResult
-            {
-                CarImageID = image.CarImageID
-            });
+            return ServiceResult<CarImage>.Success(image);
         }
 
-        public async Task<ServiceResult<CarImageMutationResult>> DeleteImage(int imageId, int accountId, string? role)
+        public async Task<ServiceResult<CarImage>> DeleteImage(int imageId, int accountId, string? role)
         {
             var image = await _context.CarImages
                 .Include(ci => ci.Car)
@@ -139,17 +131,17 @@ namespace AutoKosova.Business.Services
 
             if (image == null)
             {
-                return ServiceResult<CarImageMutationResult>.NotFound("Car image not found.");
+                return ServiceResult<CarImage>.NotFound("Car image not found.");
             }
 
             if (image.Car == null || image.Car.CarDeleted)
             {
-                return ServiceResult<CarImageMutationResult>.NotFound("Car not found.");
+                return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
             if (role != "Admin" && image.Car.CreatedByAccountID != accountId)
             {
-                return ServiceResult<CarImageMutationResult>.Forbidden("You can delete images only for cars created by you.");
+                return ServiceResult<CarImage>.Forbidden("You can delete images only for cars created by you.");
             }
 
             image.CarImageDeleted = true;
@@ -157,10 +149,7 @@ namespace AutoKosova.Business.Services
 
             await _context.SaveChangesAsync();
 
-            return ServiceResult<CarImageMutationResult>.Success(new CarImageMutationResult
-            {
-                CarImageID = image.CarImageID
-            });
+            return ServiceResult<CarImage>.Success(image);
         }
 
         private async Task ClearMainImages(int carId)
@@ -174,15 +163,5 @@ namespace AutoKosova.Business.Services
                 existingImage.CarImageIsMain = false;
             }
         }
-
-        private static readonly Expression<Func<CarImage, CarImageModel>> ModelProjection = image => new CarImageModel
-        {
-            CarImageID = image.CarImageID,
-            CarID = image.CarID,
-            CarImageUrl = image.CarImageUrl,
-            CarImageIsMain = image.CarImageIsMain,
-            CarImageOrderNumber = image.CarImageOrderNumber,
-            CarImageCreationDate = image.CarImageCreationDate
-        };
     }
 }
