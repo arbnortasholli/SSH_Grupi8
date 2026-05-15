@@ -4,6 +4,7 @@ using AutoKosova.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoKosova.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513221042_AddCarFavorites")]
+    partial class AddCarFavorites
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -183,74 +186,6 @@ namespace AutoKosova.DataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("CarFavorites");
-                });
-
-            modelBuilder.Entity("AutoKosova.Entity.CarFeature", b =>
-                {
-                    b.Property<int>("CarFeatureID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CarFeatureID"));
-
-                    b.Property<DateTime>("CarFeatureCreationDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("CarFeatureDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("CarFeatureDeletedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CarFeatureDescription")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("CarFeatureIsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("CarFeatureName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("CarFeatureOrderNumber")
-                        .HasColumnType("int");
-
-                    b.HasKey("CarFeatureID");
-
-                    b.ToTable("CarFeatures");
-                });
-
-            modelBuilder.Entity("AutoKosova.Entity.CarFeatureMapping", b =>
-                {
-                    b.Property<int>("CarFeatureMappingID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CarFeatureMappingID"));
-
-                    b.Property<int>("CarFeatureID")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CarFeatureMappingCreationDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("CarFeatureMappingDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("CarFeatureMappingDeletedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CarID")
-                        .HasColumnType("int");
-
-                    b.HasKey("CarFeatureMappingID");
-
-                    b.HasIndex("CarFeatureID");
-
-                    b.HasIndex("CarID", "CarFeatureID")
-                        .IsUnique();
-
-                    b.ToTable("CarFeatureMappings");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.CarImage", b =>
@@ -505,25 +440,6 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("Car");
                 });
 
-            modelBuilder.Entity("AutoKosova.Entity.CarFeatureMapping", b =>
-                {
-                    b.HasOne("AutoKosova.Entity.CarFeature", "CarFeature")
-                        .WithMany("CarFeatureMappings")
-                        .HasForeignKey("CarFeatureID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("AutoKosova.Entity.Cars", "Car")
-                        .WithMany("CarFeatureMappings")
-                        .HasForeignKey("CarID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Car");
-
-                    b.Navigation("CarFeature");
-                });
-
             modelBuilder.Entity("AutoKosova.Entity.CarImage", b =>
                 {
                     b.HasOne("AutoKosova.Entity.Cars", "Car")
@@ -587,15 +503,8 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("RentalBookings");
                 });
 
-            modelBuilder.Entity("AutoKosova.Entity.CarFeature", b =>
-                {
-                    b.Navigation("CarFeatureMappings");
-                });
-
             modelBuilder.Entity("AutoKosova.Entity.Cars", b =>
                 {
-                    b.Navigation("CarFeatureMappings");
-
                     b.Navigation("CarImages");
 
                     b.Navigation("RentalBookings");
