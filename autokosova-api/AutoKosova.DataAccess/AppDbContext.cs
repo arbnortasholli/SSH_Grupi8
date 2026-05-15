@@ -16,6 +16,14 @@ namespace AutoKosova.DataAccess
         public DbSet<CarImage> CarImages { get; set; }
         public DbSet<RentalBooking> RentalBookings { get; set; }
 
+        public DbSet<CarFavorite> CarFavorites { get; set; }
+
+        public DbSet<CarFeature> CarFeatures { get; set; }
+
+        public DbSet<CarFeatureMapping> CarFeatureMappings { get; set; }
+
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -49,6 +57,38 @@ namespace AutoKosova.DataAccess
                 .WithMany(c => c.CarImages)
                 .HasForeignKey(ci => ci.CarID)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<CarFavorite>()
+.HasOne(cf => cf.Account)
+.WithMany()
+.HasForeignKey(cf => cf.AccountID)
+.OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<CarFavorite>()
+                .HasOne(cf => cf.Car)
+                .WithMany()
+                .HasForeignKey(cf => cf.CarID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<CarFavorite>()
+                .HasIndex(cf => new { cf.AccountID, cf.CarID })
+                .IsUnique();
+
+            modelBuilder.Entity<CarFeatureMapping>()
+                .HasOne(cfm => cfm.Car)
+                .WithMany(c => c.CarFeatureMappings)
+                .HasForeignKey(cfm => cfm.CarID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<CarFeatureMapping>()
+                .HasOne(cfm => cfm.CarFeature)
+                .WithMany(cf => cf.CarFeatureMappings)
+                .HasForeignKey(cfm => cfm.CarFeatureID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<CarFeatureMapping>()
+                .HasIndex(cfm => new { cfm.CarID, cfm.CarFeatureID })
+                .IsUnique();
 
             modelBuilder.Entity<RentalBooking>()
                 .HasOne(rb => rb.Tenant)
