@@ -47,7 +47,7 @@ export const DashboardPage: React.FC = () => {
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
-                <p className="text-gray-600">Welcome, {user?.firstName} {user?.lastName}!</p>
+                <p className="text-gray-600">Welcome, {user?.accountName} {user?.accountLastname}!</p>
             </div>
 
             {error && (
@@ -156,7 +156,7 @@ export const DashboardPage: React.FC = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Email
                             </label>
-                            <p className="text-gray-800">{user?.email}</p>
+                            <p className="text-gray-800">{user?.accountEmail}</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,13 +164,13 @@ export const DashboardPage: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     First Name
                                 </label>
-                                <p className="text-gray-800">{user?.firstName}</p>
+                                <p className="text-gray-800">{user?.accountName}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Last Name
                                 </label>
-                                <p className="text-gray-800">{user?.lastName}</p>
+                                <p className="text-gray-800">{user?.accountLastname}</p>
                             </div>
                         </div>
 

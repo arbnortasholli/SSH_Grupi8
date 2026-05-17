@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { useForm } from '../hooks/useForm';
 import { getErrorMessage, isValidEmail } from '../utils/helpers';
+import { authService } from '../services/authService';
 
 const benefits = [
   'Save and compare cars across Kosovo cities',
@@ -13,33 +13,45 @@ const benefits = [
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
   const [apiError, setApiError] = useState<string | null>(null);
 
   const { values, handleChange, handleSubmit, isSubmitting } = useForm({
-    email: '',
+    accountRoleID: 2,
+    accountUsername: '',
+    accountEmail: '',
     password: '',
     confirmPassword: '',
-    firstName: '',
-    lastName: '',
+    accountName: '',
+    accountLastname: '',
+    accountPhoneNumber: '',
+    accountAddress: '',
+    accountCity: '',
     agreeTerms: false,
   });
 
   const onSubmit = async () => {
     setApiError(null);
 
-    const firstName = values.firstName.trim();
-    const lastName = values.lastName.trim();
-    const email = values.email.trim();
+    const accountUsername = values.accountUsername.trim();
+    const accountEmail = values.accountEmail.trim();
     const password = values.password.trim();
     const confirmPassword = values.confirmPassword.trim();
+    const accountName = values.accountName.trim();
+    const accountLastname = values.accountLastname.trim();
 
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (
+      !accountUsername ||
+      !accountEmail ||
+      !password ||
+      !confirmPassword ||
+      !accountName ||
+      !accountLastname
+    ) {
       setApiError('Please fill in all required fields.');
       return;
     }
 
-    if (!isValidEmail(email)) {
+    if (!isValidEmail(accountEmail)) {
       setApiError('Please enter a valid email address.');
       return;
     }
@@ -60,8 +72,19 @@ export const RegisterPage: React.FC = () => {
     }
 
     try {
-      await register(email, password, firstName, lastName);
-      navigate('/dashboard');
+      await authService.register({
+        accountRoleID: Number(values.accountRoleID),
+        accountUsername,
+        accountEmail,
+        password,
+        accountName,
+        accountLastname,
+        accountPhoneNumber: values.accountPhoneNumber.trim(),
+        accountAddress: values.accountAddress.trim(),
+        accountCity: values.accountCity.trim(),
+      });
+
+      navigate('/login');
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Registration failed.'));
     }
@@ -72,14 +95,19 @@ export const RegisterPage: React.FC = () => {
       <div className="ak-container auth-shell auth-shell--register">
         <aside className="auth-visual" aria-label="AutoKosova account benefits">
           <div className="auth-visual__content">
-            <Link to="/" className="auth-brand">AutoKosova</Link>
+            <Link to="/" className="auth-brand">
+              AutoKosova
+            </Link>
+
             <div>
               <p className="eyebrow">Create account</p>
               <h1>Build your AutoKosova profile.</h1>
               <p>
-                One account for buying, renting, saving cars, and preparing seller features as the platform grows.
+                One account for buying, renting, saving cars, and preparing seller
+                features as the platform grows.
               </p>
             </div>
+
             <div className="auth-benefit-list">
               {benefits.map((benefit) => (
                 <div key={benefit}>
@@ -92,11 +120,17 @@ export const RegisterPage: React.FC = () => {
         </aside>
 
         <main className="auth-panel">
-          <Link to="/" className="auth-back">Back to home</Link>
+          <Link to="/" className="auth-back">
+            Back to home
+          </Link>
+
           <div className="auth-heading">
             <p className="eyebrow">Register</p>
             <h2>Create your account</h2>
-            <p>Registration currently uses mock auth, with the form structure ready for the real API.</p>
+            <p>
+              Create an AutoKosova account to buy, rent, save cars, and contact
+              sellers.
+            </p>
           </div>
 
           {apiError && (
@@ -106,14 +140,16 @@ export const RegisterPage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="auth-form" noValidate>
+
+
             <div className="auth-form-grid">
-              <label className="auth-field" htmlFor="firstName">
+              <label className="auth-field" htmlFor="accountName">
                 <span>First name</span>
                 <input
-                  id="firstName"
+                  id="accountName"
                   type="text"
-                  name="firstName"
-                  value={values.firstName}
+                  name="accountName"
+                  value={values.accountName}
                   onChange={handleChange}
                   required
                   autoComplete="given-name"
@@ -121,13 +157,13 @@ export const RegisterPage: React.FC = () => {
                 />
               </label>
 
-              <label className="auth-field" htmlFor="lastName">
+              <label className="auth-field" htmlFor="accountLastname">
                 <span>Last name</span>
                 <input
-                  id="lastName"
+                  id="accountLastname"
                   type="text"
-                  name="lastName"
-                  value={values.lastName}
+                  name="accountLastname"
+                  value={values.accountLastname}
                   onChange={handleChange}
                   required
                   autoComplete="family-name"
@@ -136,13 +172,27 @@ export const RegisterPage: React.FC = () => {
               </label>
             </div>
 
-            <label className="auth-field" htmlFor="email">
+            <label className="auth-field" htmlFor="accountUsername">
+              <span>Username</span>
+              <input
+                id="accountUsername"
+                type="text"
+                name="accountUsername"
+                value={values.accountUsername}
+                onChange={handleChange}
+                required
+                autoComplete="username"
+                placeholder="arber123"
+              />
+            </label>
+
+            <label className="auth-field" htmlFor="accountEmail">
               <span>Email address</span>
               <input
-                id="email"
+                id="accountEmail"
                 type="email"
-                name="email"
-                value={values.email}
+                name="accountEmail"
+                value={values.accountEmail}
                 onChange={handleChange}
                 required
                 autoComplete="email"
@@ -182,6 +232,47 @@ export const RegisterPage: React.FC = () => {
               </label>
             </div>
 
+            <label className="auth-field" htmlFor="accountPhoneNumber">
+              <span>Phone number</span>
+              <input
+                id="accountPhoneNumber"
+                type="text"
+                name="accountPhoneNumber"
+                value={values.accountPhoneNumber}
+                onChange={handleChange}
+                autoComplete="tel"
+                placeholder="044123456"
+              />
+            </label>
+
+            <div className="auth-form-grid">
+              <label className="auth-field" htmlFor="accountAddress">
+                <span>Address</span>
+                <input
+                  id="accountAddress"
+                  type="text"
+                  name="accountAddress"
+                  value={values.accountAddress}
+                  onChange={handleChange}
+                  autoComplete="street-address"
+                  placeholder="Rr. B"
+                />
+              </label>
+
+              <label className="auth-field" htmlFor="accountCity">
+                <span>City</span>
+                <input
+                  id="accountCity"
+                  type="text"
+                  name="accountCity"
+                  value={values.accountCity}
+                  onChange={handleChange}
+                  autoComplete="address-level2"
+                  placeholder="Prishtine"
+                />
+              </label>
+            </div>
+
             <label className="auth-terms">
               <input
                 type="checkbox"
@@ -191,7 +282,8 @@ export const RegisterPage: React.FC = () => {
                 required
               />
               <span>
-                I agree to the terms and understand this account is currently connected to a demo authentication flow.
+                I agree to the terms and conditions and understand this account
+                will be created in AutoKosova.
               </span>
             </label>
 

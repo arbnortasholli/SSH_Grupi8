@@ -1,31 +1,4 @@
 // Auth types
-export interface User {
-    accountID: number;
-    accountRoleID: number;
-    role: string;
-    accountUsername: string;
-    accountEmail: string;
-    accountName: string;
-    accountLastname: string;
-}
-
-export interface AuthResponse {
-    token: string;
-    expiresAt: string;
-    accountID: number;
-    accountRoleID: number;
-    role: string;
-    accountUsername: string;
-    accountEmail: string;
-    accountName: string;
-    accountLastname: string;
-}
-
-export interface LoginRequest {
-    emailOrUsername: string;
-    password: string;
-}
-
 export interface RegisterRequest {
     accountRoleID: number;
     accountUsername: string;
@@ -41,6 +14,33 @@ export interface RegisterRequest {
 export interface RegisterResponse {
     message: string;
     accountID: number;
+}
+
+export interface LoginRequest {
+    emailOrUsername: string;
+    password: string;
+}
+
+export interface AuthResponse {
+    token: string;
+    expiresAt: string;
+    accountID: number;
+    accountRoleID: number;
+    role: string;
+    accountUsername: string;
+    accountEmail: string;
+    accountName: string;
+    accountLastname: string;
+}
+
+export interface User {
+    accountID: number;
+    accountRoleID: number;
+    role: string;
+    accountUsername: string;
+    accountEmail: string;
+    accountName: string;
+    accountLastname: string;
 }
 
 // Car types

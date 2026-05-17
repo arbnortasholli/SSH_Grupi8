@@ -1,38 +1,61 @@
 import apiClient from './apiClient';
-import type { LoginRequest, RegisterRequest, AuthResponse, User } from '../lib/types';
-import { API_CONFIG } from '../config/api';
-import { mockAuthService } from './mockAuthService';
+import type { LoginRequest, RegisterRequest, RegisterResponse, AuthResponse, User } from '../lib/types';
+
+const toUser = (authData: AuthResponse): User => ({
+    accountID: authData.accountID,
+    accountRoleID: authData.accountRoleID,
+    role: authData.role,
+    accountUsername: authData.accountUsername,
+    accountEmail: authData.accountEmail,
+    accountName: authData.accountName,
+    accountLastname: authData.accountLastname,
+});
+
+const notifyAuthChanged = () => {
+1    window.dispatchEvent(new Event('authChanged'));
+};
 
 export const authService = {
-    login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-        if (API_CONFIG.USE_MOCK_DATA) {
-            return mockAuthService.login(credentials);
-        }
-        const response = await apiClient.post('/auth/login', credentials);
+    async register(data: RegisterRequest): Promise<RegisterResponse> {
+        const response = await apiClient.post<RegisterResponse>('/account/register', data);
         return response.data;
     },
 
-    register: async (data: RegisterRequest): Promise<AuthResponse> => {
-        if (API_CONFIG.USE_MOCK_DATA) {
-            return mockAuthService.register(data);
-        }
-        const response = await apiClient.post('/auth/register', data);
-        return response.data;
+    async login(data: LoginRequest): Promise<AuthResponse> {
+        const response = await apiClient.post<AuthResponse>('/account/login', data);
+        const authData = response.data;
+        const user = toUser(authData);
+
+        localStorage.setItem('token', authData.token);
+        localStorage.setItem('user', JSON.stringify(user));
+        notifyAuthChanged();
+
+        return authData;
     },
 
-    logout: async (): Promise<void> => {
-        if (API_CONFIG.USE_MOCK_DATA) {
-            return mockAuthService.logout();
-        }
+    logout(): void {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        notifyAuthChanged();
     },
 
-    me: async (): Promise<User> => {
-        if (API_CONFIG.USE_MOCK_DATA) {
-            return mockAuthService.me();
+    getToken(): string | null {
+        return localStorage.getItem('token');
+    },
+
+    getCurrentUser(): User | null {
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) return null;
+
+        try {
+            return JSON.parse(storedUser) as User;
+        } catch {
+            localStorage.removeItem('user');
+            return null;
         }
-        const response = await apiClient.get('/auth/me');
-        return response.data;
+    },
+
+    isAuthenticated(): boolean {
+        return Boolean(this.getToken());
     },
 };

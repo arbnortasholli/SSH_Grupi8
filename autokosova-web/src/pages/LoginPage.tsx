@@ -2,62 +2,37 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useForm } from '../hooks/useForm';
-import { getErrorMessage, isValidEmail } from '../utils/helpers';
-
-const demoAccounts = [
-  {
-    role: 'Buyer',
-    email: 'user@autokosova.com',
-    password: 'password',
-    description: 'Save favorites and compare listings.',
-  },
-  {
-    role: 'Rental host',
-    email: 'seller@autokosova.com',
-    password: 'password',
-    description: 'List cars for rent and manage requests.',
-  },
-];
+import { getErrorMessage } from '../utils/helpers';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const { values, handleChange, handleSubmit, setValues, isSubmitting } = useForm({
-    email: '',
+  const { values, handleChange, handleSubmit, isSubmitting } = useForm({
+    emailOrUsername: '',
     password: '',
     rememberMe: true,
   });
 
-  const selectDemoAccount = (email: string, password: string) => {
-    setApiError(null);
-    setValues({
-      ...values,
-      email,
-      password,
-    });
-  };
-
   const onSubmit = async () => {
     setApiError(null);
 
-    const email = values.email.trim();
+    const emailOrUsername = values.emailOrUsername.trim();
     const password = values.password.trim();
 
-    if (!email || !password) {
-      setApiError('Email and password are required.');
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      setApiError('Please enter a valid email address.');
+    if (!emailOrUsername || !password) {
+      setApiError('Email/username and password are required.');
       return;
     }
 
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      await login({
+        emailOrUsername,
+        password,
+      });
+
+      navigate('/dashboard', { replace: true });
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Login failed.'));
     }
@@ -68,48 +43,41 @@ export const LoginPage: React.FC = () => {
       <div className="ak-container auth-shell">
         <aside className="auth-visual" aria-label="AutoKosova account overview">
           <div className="auth-visual__content">
-            <Link to="/" className="auth-brand">AutoKosova</Link>
+            <Link to="/" className="auth-brand">
+              AutoKosova
+            </Link>
+
             <div>
               <p className="eyebrow">Secure access</p>
               <h1>Sign in to manage your car journey.</h1>
               <p>
-                Keep favorite cars, continue rental requests, and manage seller activity from one focused dashboard.
+                Keep favorite cars, continue rental requests, and manage seller
+                activity from one focused dashboard.
               </p>
             </div>
+
             <div className="auth-proof-grid">
               <div>
-                <strong>2</strong>
-                <span>demo account types</span>
+                <strong>JWT</strong>
+                <span>secure auth token</span>
               </div>
               <div>
                 <strong>API</strong>
-                <span>ready auth flow</span>
+                <span>real .NET login flow</span>
               </div>
             </div>
           </div>
         </aside>
 
         <main className="auth-panel">
-          <Link to="/" className="auth-back">Back to home</Link>
+          <Link to="/" className="auth-back">
+            Back to home
+          </Link>
+
           <div className="auth-heading">
             <p className="eyebrow">Login</p>
             <h2>Welcome back</h2>
-            <p>Use a demo account while authentication is connected to mock data.</p>
-          </div>
-
-          <div className="demo-account-grid" aria-label="Demo accounts">
-            {demoAccounts.map((account) => (
-              <button
-                key={account.email}
-                type="button"
-                className="demo-account"
-                onClick={() => selectDemoAccount(account.email, account.password)}
-              >
-                <span>{account.role}</span>
-                <strong>{account.email}</strong>
-                <small>{account.description}</small>
-              </button>
-            ))}
+            <p>Sign in with your AutoKosova email or username.</p>
           </div>
 
           {apiError && (
@@ -119,17 +87,17 @@ export const LoginPage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="auth-form" noValidate>
-            <label className="auth-field" htmlFor="email">
-              <span>Email address</span>
+            <label className="auth-field" htmlFor="emailOrUsername">
+              <span>Email or username</span>
               <input
-                id="email"
-                type="email"
-                name="email"
-                value={values.email}
+                id="emailOrUsername"
+                type="text"
+                name="emailOrUsername"
+                value={values.emailOrUsername}
                 onChange={handleChange}
                 required
-                autoComplete="email"
-                placeholder="user@autokosova.com"
+                autoComplete="username"
+                placeholder="name@example.com or arber123"
               />
             </label>
 
@@ -157,6 +125,7 @@ export const LoginPage: React.FC = () => {
                 />
                 <span>Remember me</span>
               </label>
+
               <button type="button" className="auth-link-button">
                 Forgot password?
               </button>

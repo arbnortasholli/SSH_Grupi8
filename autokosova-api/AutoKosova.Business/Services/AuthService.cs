@@ -120,21 +120,6 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Invalid credentials.");
             }
 
-            if (account.AccountDeleted)
-            {
-                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Account does not exist.");
-            }
-
-            if (!account.AccountIsActive)
-            {
-                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Account is inactive.");
-            }
-
-            if (account.AccountLocked)
-            {
-                return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Account is locked.");
-            }
-
             var passwordIsValid = _passwordService.VerifyPasswordHash(
                 password,
                 account.AccountPasswordHash,
@@ -143,21 +128,9 @@ namespace AutoKosova.Business.Services
 
             if (!passwordIsValid)
             {
-                account.AccountFailPasswordCount += 1;
-                account.AccountLastFailedLoginDate = DateTime.UtcNow;
-
-                if (account.AccountFailPasswordCount >= 5)
-                {
-                    account.AccountLocked = true;
-                    account.AccountLockDate = DateTime.UtcNow;
-                }
-
-                await _context.SaveChangesAsync();
-
                 return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Unauthorized("Invalid credentials.");
             }
 
-            account.AccountFailPasswordCount = 0;
             account.AccountLastLoginDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

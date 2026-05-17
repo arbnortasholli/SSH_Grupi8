@@ -52,11 +52,11 @@ export const Navbar: React.FC = () => {
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-                                        {user && getInitials(user.firstName, user.lastName)}
+                                        {user && getInitials(user.accountName, user.accountLastname)}
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-gray-900">
-                                            {user?.firstName} {user?.lastName}
+                                            {user?.accountName} {user?.accountLastname}
                                         </p>
                                         <p className="text-xs text-gray-500">{user?.role}</p>
                                     </div>
