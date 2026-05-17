@@ -20,8 +20,10 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            // Token expired or unauthorized
+        const requestUrl = String(error.config?.url ?? '');
+        const isAuthRequest = requestUrl.includes('/account/login') || requestUrl.includes('/account/register');
+
+        if (error.response?.status === 401 && !isAuthRequest) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';

@@ -50,23 +50,68 @@ export const truncateText = (text: string, maxLength: number): string => {
 };
 
 export const getErrorMessage = (error: unknown, fallback: string): string => {
-    if (error instanceof Error) {
-        return error.message || fallback;
-    }
-
     if (typeof error === 'object' && error !== null) {
         const maybeError = error as {
             message?: unknown;
-            response?: { data?: { message?: unknown } };
+            response?: {
+                data?: unknown;
+                statusText?: unknown;
+            };
         };
 
-        if (typeof maybeError.response?.data?.message === 'string') {
-            return maybeError.response.data.message;
+        const data = maybeError.response?.data;
+
+        if (typeof data === 'string') {
+            return data;
+        }
+
+        if (typeof data === 'object' && data !== null) {
+            const responseData = data as {
+                message?: unknown;
+                title?: unknown;
+                error?: unknown;
+                detail?: unknown;
+                errors?: unknown;
+            };
+
+            if (typeof responseData.message === 'string') {
+                return responseData.message;
+            }
+
+            if (typeof responseData.error === 'string') {
+                return responseData.error;
+            }
+
+            if (typeof responseData.detail === 'string') {
+                return responseData.detail;
+            }
+
+            if (responseData.errors && typeof responseData.errors === 'object') {
+                const validationMessages = Object.values(responseData.errors)
+                    .flatMap((value) => Array.isArray(value) ? value : [value])
+                    .filter((value): value is string => typeof value === 'string');
+
+                if (validationMessages.length > 0) {
+                    return validationMessages.join(' ');
+                }
+            }
+
+            if (typeof responseData.title === 'string') {
+                return responseData.title;
+            }
         }
 
         if (typeof maybeError.message === 'string') {
             return maybeError.message;
         }
+
+        if (typeof maybeError.response?.statusText === 'string') {
+            return maybeError.response.statusText;
+        }
+    }
+
+    if (error instanceof Error) {
+        return error.message || fallback;
     }
 
     return fallback;

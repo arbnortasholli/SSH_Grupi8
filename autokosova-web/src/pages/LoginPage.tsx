@@ -2,32 +2,61 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useForm } from '../hooks/useForm';
-import { getErrorMessage } from '../utils/helpers';
+import { getErrorMessage, isValidEmail } from '../utils/helpers';
+
+const demoAccounts = [
+  {
+    role: 'Buyer',
+    email: 'user@autokosova.com',
+    password: 'password',
+    description: 'Save favorites and compare listings.',
+  },
+  {
+    role: 'Rental host',
+    email: 'seller@autokosova.com',
+    password: 'password',
+    description: 'List cars for rent and manage requests.',
+  },
+];
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const { values, handleChange, handleSubmit, isSubmitting } = useForm({
-    emailOrUsername: '',
+  const { values, handleChange, handleSubmit, setValues, isSubmitting } = useForm({
+    email: '',
     password: '',
     rememberMe: true,
   });
 
+  const selectDemoAccount = (email: string, password: string) => {
+    setApiError(null);
+    setValues({
+      ...values,
+      email,
+      password,
+    });
+  };
+
   const onSubmit = async () => {
     setApiError(null);
 
-    const emailOrUsername = values.emailOrUsername.trim();
+    const email = values.email.trim();
     const password = values.password.trim();
 
-    if (!emailOrUsername || !password) {
-      setApiError('Email/username and password are required.');
+    if (!email || !password) {
+      setApiError('Email and password are required.');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setApiError('Please enter a valid email address.');
       return;
     }
 
     try {
-      await login(emailOrUsername, password);
+      await login(email, password);
       navigate('/dashboard');
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Login failed.'));
@@ -49,12 +78,12 @@ export const LoginPage: React.FC = () => {
             </div>
             <div className="auth-proof-grid">
               <div>
-                <strong>JWT</strong>
-                <span>secure access</span>
+                <strong>2</strong>
+                <span>demo account types</span>
               </div>
               <div>
                 <strong>API</strong>
-                <span>connected auth flow</span>
+                <span>ready auth flow</span>
               </div>
             </div>
           </div>
@@ -65,7 +94,22 @@ export const LoginPage: React.FC = () => {
           <div className="auth-heading">
             <p className="eyebrow">Login</p>
             <h2>Welcome back</h2>
-            <p>Use your email or username to continue.</p>
+            <p>Use a demo account while authentication is connected to mock data.</p>
+          </div>
+
+          <div className="demo-account-grid" aria-label="Demo accounts">
+            {demoAccounts.map((account) => (
+              <button
+                key={account.email}
+                type="button"
+                className="demo-account"
+                onClick={() => selectDemoAccount(account.email, account.password)}
+              >
+                <span>{account.role}</span>
+                <strong>{account.email}</strong>
+                <small>{account.description}</small>
+              </button>
+            ))}
           </div>
 
           {apiError && (
@@ -75,17 +119,17 @@ export const LoginPage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="auth-form" noValidate>
-            <label className="auth-field" htmlFor="emailOrUsername">
-              <span>Email or username</span>
+            <label className="auth-field" htmlFor="email">
+              <span>Email address</span>
               <input
-                id="emailOrUsername"
-                type="text"
-                name="emailOrUsername"
-                value={values.emailOrUsername}
+                id="email"
+                type="email"
+                name="email"
+                value={values.email}
                 onChange={handleChange}
                 required
-                autoComplete="username"
-                placeholder="name@example.com or username"
+                autoComplete="email"
+                placeholder="user@autokosova.com"
               />
             </label>
 

@@ -1,75 +1,38 @@
 import apiClient from './apiClient';
-import type { LoginRequest, RegisterRequest, RegisterResponse, AuthResponse, User } from '../lib/types';
-
-const toUser = (authData: AuthResponse): User => ({
-    accountID: authData.accountID,
-    accountRoleID: authData.accountRoleID,
-    role: authData.role || 'User',
-    accountUsername: authData.accountUsername,
-    accountEmail: authData.accountEmail,
-    accountName: authData.accountName,
-    accountLastname: authData.accountLastname,
-    email: authData.accountEmail,
-    firstName: authData.accountName,
-    lastName: authData.accountLastname,
-});
-
-const notifyAuthChanged = () => {
-    window.dispatchEvent(new Event('authChanged'));
-};
+import type { LoginRequest, RegisterRequest, AuthResponse, User } from '../lib/types';
+import { API_CONFIG } from '../config/api';
+import { mockAuthService } from './mockAuthService';
 
 export const authService = {
-    async register(data: RegisterRequest): Promise<RegisterResponse> {
-        const response = await apiClient.post<RegisterResponse>('/account/register', data);
+    login: async (credentials: LoginRequest): Promise<AuthResponse> => {
+        if (API_CONFIG.USE_MOCK_DATA) {
+            return mockAuthService.login(credentials);
+        }
+        const response = await apiClient.post('/auth/login', credentials);
         return response.data;
     },
 
-    async login(data: LoginRequest): Promise<AuthResponse> {
-        const response = await apiClient.post<AuthResponse>('/account/login', data);
-        const authData = response.data;
-        const user = toUser(authData);
-
-        localStorage.setItem('token', authData.token);
-        localStorage.setItem('user', JSON.stringify(user));
-        notifyAuthChanged();
-
-        return authData;
+    register: async (data: RegisterRequest): Promise<AuthResponse> => {
+        if (API_CONFIG.USE_MOCK_DATA) {
+            return mockAuthService.register(data);
+        }
+        const response = await apiClient.post('/auth/register', data);
+        return response.data;
     },
 
-    async logout(): Promise<void> {
+    logout: async (): Promise<void> => {
+        if (API_CONFIG.USE_MOCK_DATA) {
+            return mockAuthService.logout();
+        }
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        notifyAuthChanged();
     },
 
-    getToken(): string | null {
-        return localStorage.getItem('token');
-    },
-
-    getCurrentUser(): User | null {
-        const storedUser = localStorage.getItem('user');
-        if (!storedUser) {
-            return null;
+    me: async (): Promise<User> => {
+        if (API_CONFIG.USE_MOCK_DATA) {
+            return mockAuthService.me();
         }
-
-        try {
-            return JSON.parse(storedUser) as User;
-        } catch {
-            localStorage.removeItem('user');
-            return null;
-        }
-    },
-
-    isAuthenticated(): boolean {
-        return Boolean(localStorage.getItem('token'));
-    },
-
-    async me(): Promise<User> {
-        const user = this.getCurrentUser();
-        if (!user) {
-            throw new Error('User is not authenticated.');
-        }
-
-        return user;
+        const response = await apiClient.get('/auth/me');
+        return response.data;
     },
 };

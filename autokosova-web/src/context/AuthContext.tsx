@@ -18,22 +18,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
     const [isLoading, setIsLoading] = useState(false);
 
-    const login = async (emailOrUsername: string, password: string) => {
+    const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
-            const response: AuthResponse = await authService.login({ emailOrUsername, password });
-            setUser({
-                accountID: response.accountID,
-                accountRoleID: response.accountRoleID,
-                role: response.role || 'User',
-                accountUsername: response.accountUsername,
-                accountEmail: response.accountEmail,
-                accountName: response.accountName,
-                accountLastname: response.accountLastname,
-                email: response.accountEmail,
-                firstName: response.accountName,
-                lastName: response.accountLastname,
+            const response: AuthResponse = await authService.login({ email, password });
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            setUser(response.user);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const register = async (email: string, password: string, firstName: string, lastName: string) => {
+        setIsLoading(true);
+        try {
+            const response: AuthResponse = await authService.register({
+                email,
+                password,
+                firstName,
+                lastName,
             });
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            setUser(response.user);
         } finally {
             setIsLoading(false);
         }
@@ -71,6 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 isAuthenticated: !!user,
                 isLoading,
                 login,
+                register,
                 logout,
                 checkAuth,
             }}
