@@ -5,7 +5,7 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/buy', label: 'Buy Cars' },
   { to: '/rent', label: 'Rent Cars' },
-  { to: '/seller', label: 'Sell Your Car' },
+  { to: '/rent-your-car', label: 'Rent Your Car' },
 ];
 
 export const Navbar: React.FC = () => {
