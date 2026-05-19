@@ -8,7 +8,7 @@ namespace AutoKosova.Business.Services
 
         public bool IsSuccess => Status == ServiceStatus.Success;
 
-        public static ServiceResult<T> Success(T data)
+        public static ServiceResult<T> Success(T data, string? message = null)
         {
             return new ServiceResult<T>
             {

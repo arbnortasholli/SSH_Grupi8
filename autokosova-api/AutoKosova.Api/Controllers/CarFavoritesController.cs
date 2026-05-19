@@ -1,4 +1,4 @@
-using AutoKosova.Api.DTOs.CarFavorites;
+using AutoKosova.Business.DTOs.CarFavorites;
 using AutoKosova.DataAccess;
 using AutoKosova.Entity;
 using Microsoft.AspNetCore.Authorization;

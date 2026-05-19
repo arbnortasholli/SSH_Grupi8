@@ -1,17 +1,13 @@
 import axios from 'axios';
+import { API_CONFIG } from '../config/api';
 
-// API Base URL - Update this to match your backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// Create axios instance
 const apiClient = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: API_CONFIG.API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Add JWT token to requests
 apiClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
