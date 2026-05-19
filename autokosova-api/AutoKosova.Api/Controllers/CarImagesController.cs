@@ -1,4 +1,4 @@
-using AutoKosova.Api.DTOs.CarImages;
+using AutoKosova.Business.DTOs.CarImages;
 using AutoKosova.Business.Services;
 using AutoKosova.Entity;
 using Microsoft.AspNetCore.Authorization;

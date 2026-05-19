@@ -1,4 +1,4 @@
-using AutoKosova.Api.DTOs.RentalBookings;
+using AutoKosova.Business.DTOs.RentalBookings;
 using AutoKosova.Business.Services;
 using AutoKosova.Entity;
 using Microsoft.AspNetCore.Authorization;

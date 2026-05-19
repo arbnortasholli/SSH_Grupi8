@@ -22,6 +22,9 @@ namespace AutoKosova.DataAccess
 
         public DbSet<CarFeatureMapping> CarFeatureMappings { get; set; }
 
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<AccountRolePermission> AccountRolePermissions { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -59,10 +62,10 @@ namespace AutoKosova.DataAccess
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<CarFavorite>()
-.HasOne(cf => cf.Account)
-.WithMany()
-.HasForeignKey(cf => cf.AccountID)
-.OnDelete(DeleteBehavior.NoAction);
+                .HasOne(cf => cf.Account)
+                .WithMany()
+                .HasForeignKey(cf => cf.AccountID)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<CarFavorite>()
                 .HasOne(cf => cf.Car)

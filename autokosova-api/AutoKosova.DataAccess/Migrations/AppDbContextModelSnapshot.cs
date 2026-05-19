@@ -152,6 +152,32 @@ namespace AutoKosova.DataAccess.Migrations
                     b.ToTable("AccountRoles");
                 });
 
+            modelBuilder.Entity("AutoKosova.Entity.AccountRolePermission", b =>
+                {
+                    b.Property<int>("AccountRolePermissionID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AccountRolePermissionID"));
+
+                    b.Property<int>("AccountRoleID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("AccountRolePermissionCreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PermissionID")
+                        .HasColumnType("int");
+
+                    b.HasKey("AccountRolePermissionID");
+
+                    b.HasIndex("AccountRoleID");
+
+                    b.HasIndex("PermissionID");
+
+                    b.ToTable("AccountRolePermissions");
+                });
+
             modelBuilder.Entity("AutoKosova.Entity.CarFavorite", b =>
                 {
                     b.Property<int>("CarFavoriteID")
@@ -374,6 +400,32 @@ namespace AutoKosova.DataAccess.Migrations
                     b.ToTable("Cars");
                 });
 
+            modelBuilder.Entity("AutoKosova.Entity.Permission", b =>
+                {
+                    b.Property<int>("PermissionID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PermissionID"));
+
+                    b.Property<string>("PermissionDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PermissionGroup")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PermissionName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PersmissionIsActive")
+                        .HasColumnType("bit");
+
+                    b.HasKey("PermissionID");
+
+                    b.ToTable("Permissions");
+                });
+
             modelBuilder.Entity("AutoKosova.Entity.RentalBooking", b =>
                 {
                     b.Property<int>("RentalBookingID")
@@ -484,6 +536,25 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("AccountDeletedBy");
 
                     b.Navigation("AccountRole");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.AccountRolePermission", b =>
+                {
+                    b.HasOne("AutoKosova.Entity.AccountRole", "AccountRole")
+                        .WithMany()
+                        .HasForeignKey("AccountRoleID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AutoKosova.Entity.Permission", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccountRole");
+
+                    b.Navigation("Permission");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.CarFavorite", b =>
