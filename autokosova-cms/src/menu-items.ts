@@ -24,6 +24,14 @@ const menuItems = {
           url: '/account-roles'
         },
         {
+          id: 'role-permissions',
+          title: 'Role Permissions',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'link',
+          url: '/role-permissions'
+        },
+        {
           id: 'permissions',
           title: 'Permissions',
           type: 'item',
