@@ -1,14 +1,17 @@
 // Auth types
 export interface RegisterRequest {
-    accountRoleID: number;
-    accountUsername: string;
-    accountEmail: string;
+    accountRoleID?: number;
+    accountUsername?: string;
+    accountEmail?: string;
     password: string;
-    accountName: string;
-    accountLastname: string;
-    accountPhoneNumber: string;
-    accountAddress: string;
-    accountCity: string;
+    accountName?: string;
+    accountLastname?: string;
+    accountPhoneNumber?: string;
+    accountAddress?: string;
+    accountCity?: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
 }
 
 export interface RegisterResponse {
@@ -18,29 +21,36 @@ export interface RegisterResponse {
 
 export interface LoginRequest {
     emailOrUsername: string;
+    email?: string;
     password: string;
 }
 
 export interface AuthResponse {
     token: string;
-    expiresAt: string;
-    accountID: number;
-    accountRoleID: number;
-    role: string;
-    accountUsername: string;
-    accountEmail: string;
-    accountName: string;
-    accountLastname: string;
+    expiresAt?: string;
+    accountID?: number;
+    accountRoleID?: number;
+    role?: 'Guest' | 'User' | 'Seller' | 'Admin' | string;
+    accountUsername?: string;
+    accountEmail?: string;
+    accountName?: string;
+    accountLastname?: string;
+    user?: User;
 }
 
 export interface User {
-    accountID: number;
-    accountRoleID: number;
-    role: string;
-    accountUsername: string;
-    accountEmail: string;
-    accountName: string;
-    accountLastname: string;
+    accountID?: number;
+    accountRoleID?: number;
+    role: 'Guest' | 'User' | 'Seller' | 'Admin' | string;
+    accountUsername?: string;
+    accountEmail?: string;
+    accountName?: string;
+    accountLastname?: string;
+    id?: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
 }
 
 // Car types

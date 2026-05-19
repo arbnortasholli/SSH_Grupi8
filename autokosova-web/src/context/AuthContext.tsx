@@ -1,5 +1,5 @@
-import React, { useState, type ReactNode } from 'react';
-import type { User, AuthResponse } from '../lib/types';
+import React, { useEffect, useState, type ReactNode } from 'react';
+import type { AuthResponse, RegisterRequest, User } from '../lib/types';
 import { authService } from '../services/authService';
 import { AuthContext } from './authContextValue';
 
@@ -17,31 +17,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return null;
     });
     const [isLoading, setIsLoading] = useState(false);
+    const isAuthenticated = Boolean(user || authService.getToken());
 
-    const login = async (email: string, password: string) => {
+    useEffect(() => {
+        const syncUser = () => {
+            setUser(authService.getCurrentUser());
+        };
+
+        window.addEventListener('authChanged', syncUser);
+        window.addEventListener('storage', syncUser);
+
+        return () => {
+            window.removeEventListener('authChanged', syncUser);
+            window.removeEventListener('storage', syncUser);
+        };
+    }, []);
+
+    const login = async (emailOrUsername: string, password: string) => {
         setIsLoading(true);
         try {
-            const response: AuthResponse = await authService.login({ email, password });
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            setUser(response.user);
+            const response: AuthResponse = await authService.login({ emailOrUsername, password });
+            setUser({
+                accountID: response.accountID,
+                accountRoleID: response.accountRoleID,
+                role: response.role || 'User',
+                accountUsername: response.accountUsername,
+                accountEmail: response.accountEmail,
+                accountName: response.accountName,
+                accountLastname: response.accountLastname,
+                email: response.accountEmail,
+                firstName: response.accountName,
+                lastName: response.accountLastname,
+            });
         } finally {
             setIsLoading(false);
         }
     };
 
-    const register = async (email: string, password: string, firstName: string, lastName: string) => {
+    const register = async (data: RegisterRequest) => {
         setIsLoading(true);
         try {
-            const response: AuthResponse = await authService.register({
-                email,
-                password,
-                firstName,
-                lastName,
-            });
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            setUser(response.user);
+            await authService.register(data);
         } finally {
             setIsLoading(false);
         }
@@ -58,25 +74,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const checkAuth = async () => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const userData = await authService.me();
-                setUser(userData);
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                setUser(null);
-            }
-        }
+        await Promise.resolve();
+        setUser(authService.getCurrentUser());
     };
 
     return (
         <AuthContext.Provider
             value={{
                 user,
-                isAuthenticated: !!user,
+                isAuthenticated,
                 isLoading,
                 login,
                 register,
