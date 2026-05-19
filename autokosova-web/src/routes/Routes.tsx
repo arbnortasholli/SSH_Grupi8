@@ -7,6 +7,7 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { HomePage } from '../pages/HomePage';
 import { BuyCarsPage } from '../pages/BuyCarsPage';
 import { RentCarsPage } from '../pages/RentCarsPage';
+import { RentYourCarPage } from '../pages/RentYourCarPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { CarDetailsPage } from '../pages/CarDetailsPage';
@@ -21,6 +22,7 @@ export const AppRoutes: React.FC = () => (
         <Route path="/" element={<MainLayout><HomePage /></MainLayout>} />
         <Route path="/buy" element={<MainLayout><BuyCarsPage /></MainLayout>} />
         <Route path="/rent" element={<MainLayout><RentCarsPage /></MainLayout>} />
+        <Route path="/rent-your-car" element={<MainLayout><RentYourCarPage /></MainLayout>} />
         <Route path="/login" element={<MainLayout><LoginPage /></MainLayout>} />
         <Route path="/register" element={<MainLayout><RegisterPage /></MainLayout>} />
         <Route path="/cars/:id" element={<MainLayout><CarDetailsPage /></MainLayout>} />

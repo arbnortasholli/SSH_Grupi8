@@ -1403,6 +1403,96 @@ textarea {
     url("https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1800&q=82") right center / cover no-repeat;
 }
 
+.page-hero--owner {
+  padding-block: 56px;
+  background:
+    linear-gradient(90deg, rgba(17, 24, 39, 0.88) 0%, rgba(17, 24, 39, 0.66) 48%, rgba(17, 24, 39, 0.22) 100%),
+    url("https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1800&q=82") center / cover no-repeat;
+}
+
+.page-hero--owner .eyebrow,
+.page-hero--owner h1,
+.page-hero--owner p {
+  color: #ffffff;
+}
+
+.owner-hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(330px, 0.46fr);
+  gap: 34px;
+  align-items: center;
+}
+
+.owner-hero-copy h1 {
+  max-width: 740px;
+  margin: 0;
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1.05;
+}
+
+.owner-hero-copy p {
+  max-width: 620px;
+  margin-top: 16px;
+  color: #e5edf7;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.owner-hero-card {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.18);
+  padding: 20px;
+}
+
+.owner-hero-card > span,
+.owner-form-heading > span {
+  display: inline-block;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #12365f;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.owner-hero-card strong {
+  display: block;
+  margin-top: 12px;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.22;
+}
+
+.owner-hero-card dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.owner-hero-card div {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+  padding: 11px;
+}
+
+.owner-hero-card dt {
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.owner-hero-card dd {
+  margin: 4px 0 0;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 850;
+}
+
 .rent-hero-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.72fr) minmax(320px, 0.42fr);
@@ -1441,6 +1531,207 @@ textarea {
   color: #4b5563;
   font-size: 14px;
   line-height: 1.55;
+}
+
+.owner-flow-section {
+  padding-block: 32px;
+}
+
+.owner-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.owner-step-card,
+.owner-form-panel,
+.owner-listing-copy {
+  border: 1px solid #dfe6ef;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.06);
+}
+
+.owner-step-card {
+  padding: 18px;
+}
+
+.owner-step-card span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #0f4c81;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.owner-step-card h2 {
+  margin: 14px 0 0;
+  color: #111827;
+  font-size: 19px;
+}
+
+.owner-step-card p {
+  margin: 8px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.owner-listing-shell {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.44fr) minmax(0, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.owner-listing-copy,
+.owner-form-panel {
+  padding: 24px;
+}
+
+.owner-listing-copy {
+  position: sticky;
+  top: 92px;
+}
+
+.owner-listing-copy h2,
+.owner-form-heading h2 {
+  margin: 0;
+  color: #111827;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.12;
+}
+
+.owner-listing-copy p {
+  margin: 12px 0 0;
+  color: #6b7280;
+  line-height: 1.65;
+}
+
+.owner-listing-copy .reason-list {
+  margin-top: 20px;
+}
+
+.owner-form-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.owner-form-success {
+  margin-bottom: 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.owner-form {
+  display: grid;
+  gap: 15px;
+}
+
+.owner-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.owner-form-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.owner-image-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.owner-image-preview {
+  position: relative;
+  overflow: hidden;
+  min-height: 126px;
+  border: 1px solid #d1d8e3;
+  border-radius: 12px;
+  background: #e5e7eb;
+}
+
+.owner-image-preview img {
+  width: 100%;
+  height: 100%;
+  min-height: 126px;
+  object-fit: cover;
+}
+
+.owner-image-preview span {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #12365f;
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.owner-field {
+  display: grid;
+  gap: 7px;
+}
+
+.owner-field span {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.owner-field input,
+.owner-field select,
+.owner-field textarea {
+  width: 100%;
+  border: 1px solid #d1d8e3;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111827;
+  padding: 0 13px;
+  outline: 0;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.owner-field input,
+.owner-field select {
+  min-height: 46px;
+}
+
+.owner-field textarea {
+  min-height: 116px;
+  padding-block: 12px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.owner-field input:focus,
+.owner-field select:focus,
+.owner-field textarea:focus {
+  border-color: #0f4c81;
+  box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.12);
+}
+
+.owner-form .auth-submit {
+  justify-self: end;
+  min-width: 210px;
+  padding-inline: 18px;
 }
 
 .marketplace-toolbar {
@@ -1738,7 +2029,9 @@ textarea {
   .home-rentals,
   .marketplace-layout,
   .buy-hero-layout,
-  .rent-hero-layout {
+  .rent-hero-layout,
+  .owner-hero-layout,
+  .owner-listing-shell {
     grid-template-columns: 1fr;
   }
 
@@ -1751,7 +2044,8 @@ textarea {
   .brand-grid,
   .info-grid,
   .footer-grid,
-  .buy-market-strip {
+  .buy-market-strip,
+  .owner-flow-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1786,6 +2080,10 @@ textarea {
   }
 
   .home-rentals__panel {
+    position: static;
+  }
+
+  .owner-listing-copy {
     position: static;
   }
 
@@ -1849,8 +2147,15 @@ textarea {
       url("https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=82") center / cover no-repeat;
   }
 
+  .page-hero--owner {
+    background:
+      linear-gradient(180deg, rgba(17, 24, 39, 0.88) 0%, rgba(17, 24, 39, 0.7) 100%),
+      url("https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=82") center / cover no-repeat;
+  }
+
   .hero-copy h1,
-  .page-hero h1 {
+  .page-hero h1,
+  .owner-hero-copy h1 {
     font-size: 34px;
   }
 
@@ -1881,7 +2186,11 @@ textarea {
   .brand-grid,
   .info-grid,
   .footer-grid,
-  .buy-market-strip {
+  .buy-market-strip,
+  .owner-flow-grid,
+  .owner-form-grid,
+  .owner-form-grid--three,
+  .owner-image-row {
     grid-template-columns: 1fr;
   }
 
@@ -1960,7 +2269,8 @@ textarea {
     text-align: left;
   }
 
-  .search-form__button {
+  .search-form__button,
+  .owner-form .auth-submit {
     justify-self: stretch;
   }
 }
