@@ -19,6 +19,12 @@ const menuItems = {
           url: '/account-roles'
         },
         {
+          id: 'role-permissions',
+          title: 'Role Permissions',
+          type: 'item',
+          url: '/role-permissions'
+        },
+        {
           id: 'permissions',
           title: 'Permissions',
           type: 'item',

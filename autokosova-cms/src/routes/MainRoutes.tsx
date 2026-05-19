@@ -10,6 +10,7 @@ const Register = lazy(() => import('../views/auth/register'));
 const PermissionsPage = lazy(() => import('../views/permissions/PermissionsPage'));
 const AccountRolesPage = lazy(() => import('../views/account-roles/AccountRolesPage'));
 const AccountsPage = lazy(() => import('../views/accounts/AccountsPage'));
+const AccountRolePermissionsPage = lazy(() => import('../views/account-role-permissions/AccountRolePermissionsPage'));
 
 const MainRoutes = {
   path: '/',
@@ -29,6 +30,10 @@ const MainRoutes = {
         {
           path: '/account-roles',
           element: <AccountRolesPage />
+        },
+        {
+          path: '/role-permissions',
+          element: <AccountRolePermissionsPage />
         },
         {
           path: '/accounts',
