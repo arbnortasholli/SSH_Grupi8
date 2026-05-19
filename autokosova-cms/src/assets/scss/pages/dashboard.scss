@@ -173,6 +173,110 @@
   line-height: 1.55;
 }
 
+.ak-permission-stat .card-body {
+  display: grid;
+  gap: 8px;
+}
+
+.ak-permission-stat span {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ak-permission-stat strong {
+  color: #111827;
+  font-size: 28px;
+  font-weight: 850;
+}
+
+.ak-permissions-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.ak-permissions-toolbar h5 {
+  margin: 0;
+  color: #111827;
+  font-weight: 850;
+}
+
+.ak-permissions-toolbar p {
+  margin: 4px 0 0;
+  color: #6b7280;
+}
+
+.ak-permissions-toolbar .ak-admin-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.ak-permissions-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 180px;
+  justify-content: center;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.ak-permissions-table {
+  margin-bottom: 0;
+}
+
+.ak-permissions-table thead th {
+  border-bottom: 1px solid #dfe6ef;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.ak-permissions-table tbody td {
+  vertical-align: middle;
+  color: #4b5563;
+}
+
+.ak-permissions-table tbody td strong {
+  color: #111827;
+}
+
+.ak-table-muted {
+  display: block;
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ak-table-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ak-table-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  font-weight: 750;
+}
+
+.ak-empty-cell {
+  height: 140px;
+  text-align: center;
+  color: #6b7280 !important;
+  font-weight: 700;
+}
+
 .autokosova-layout-brand,
 .autokosova-auth-brand {
   display: inline-flex;

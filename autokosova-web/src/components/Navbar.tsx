@@ -14,6 +14,10 @@ export const Navbar: React.FC = () => {
     };
 
     const canSeeSellerArea = user?.role === 'Seller' || user?.role === 'Admin';
+    const firstName = user?.firstName || user?.accountName || '';
+    const lastName = user?.lastName || user?.accountLastname || '';
+    const fullName = `${firstName} ${lastName}`.trim() || user?.accountUsername || user?.email || 'User';
+    const initials = firstName && lastName ? getInitials(firstName, lastName) : fullName.slice(0, 2).toUpperCase();
 
     return (
         <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 shadow-sm">
@@ -52,11 +56,11 @@ export const Navbar: React.FC = () => {
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-                                        {user && getInitials(user.firstName, user.lastName)}
+                                        {initials}
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-gray-900">
-                                            {user?.firstName} {user?.lastName}
+                                            {fullName}
                                         </p>
                                         <p className="text-xs text-gray-500">{user?.role}</p>
                                     </div>
