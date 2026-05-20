@@ -4,6 +4,8 @@ namespace AutoKosova.Api.DTOs.Cars
     {
         public int? TenantID { get; set; }
 
+        public int CreatedByAccountID { get; set; }
+
         public string CarTitle { get; set; } = string.Empty;
 
         public string CarBrand { get; set; } = string.Empty;
