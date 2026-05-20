@@ -50,9 +50,7 @@ namespace AutoKosova.Business.Services
             int carId,
             string carImageUrl,
             bool carImageIsMain,
-            int carImageOrderNumber,
-            int accountId,
-            string? role)
+            int carImageOrderNumber)
         {
             if (string.IsNullOrWhiteSpace(carImageUrl))
             {
@@ -65,11 +63,6 @@ namespace AutoKosova.Business.Services
             if (car == null)
             {
                 return ServiceResult<CarImage>.NotFound("Car not found.");
-            }
-
-            if (role != "Admin" && car.CreatedByAccountID != accountId)
-            {
-                return ServiceResult<CarImage>.Forbidden("You can add images only to cars created by you.");
             }
 
             if (carImageIsMain)
@@ -94,7 +87,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<CarImage>.Success(image);
         }
 
-        public async Task<ServiceResult<CarImage>> SetMainImage(int imageId, int accountId, string? role)
+        public async Task<ServiceResult<CarImage>> SetMainImage(int imageId)
         {
             var image = await _context.CarImages
                 .Include(ci => ci.Car)
@@ -108,11 +101,6 @@ namespace AutoKosova.Business.Services
             if (image.Car == null || image.Car.CarDeleted)
             {
                 return ServiceResult<CarImage>.NotFound("Car not found.");
-            }
-
-            if (role != "Admin" && image.Car.CreatedByAccountID != accountId)
-            {
-                return ServiceResult<CarImage>.Forbidden("You can update images only for cars created by you.");
             }
 
             await ClearMainImages(image.CarID);
@@ -123,7 +111,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<CarImage>.Success(image);
         }
 
-        public async Task<ServiceResult<CarImage>> DeleteImage(int imageId, int accountId, string? role)
+        public async Task<ServiceResult<CarImage>> DeleteImage(int imageId)
         {
             var image = await _context.CarImages
                 .Include(ci => ci.Car)
@@ -137,11 +125,6 @@ namespace AutoKosova.Business.Services
             if (image.Car == null || image.Car.CarDeleted)
             {
                 return ServiceResult<CarImage>.NotFound("Car not found.");
-            }
-
-            if (role != "Admin" && image.Car.CreatedByAccountID != accountId)
-            {
-                return ServiceResult<CarImage>.Forbidden("You can delete images only for cars created by you.");
             }
 
             image.CarImageDeleted = true;
