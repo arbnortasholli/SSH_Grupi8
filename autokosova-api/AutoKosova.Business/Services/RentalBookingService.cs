@@ -22,7 +22,7 @@ namespace AutoKosova.Business.Services
                 .Where(rb => !rb.RentalBookingDeleted)
                 .AsQueryable();
 
-            if (role != "Admin")
+            if (role != "SuperAdmin")
             {
                 query = query.Where(rb => rb.Car != null && rb.Car.CreatedByAccountID == accountId);
             }
@@ -171,7 +171,7 @@ namespace AutoKosova.Business.Services
                 .Where(rb => !rb.RentalBookingDeleted && rb.TenantID == tenantId)
                 .AsQueryable();
 
-            if (role != "Admin")
+            if (role != "SuperAdmin")
             {
                 query = query.Where(rb => rb.Car != null && rb.Car.CreatedByAccountID == accountId);
             }
@@ -199,7 +199,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<RentalBooking>.NotFound("Rental booking not found.");
             }
 
-            if (role != "Admin" &&
+            if (role != "SuperAdmin" &&
                 (booking.Car == null || booking.Car.CreatedByAccountID != accountId))
             {
                 return ServiceResult<RentalBooking>.Forbidden("You can update only bookings for cars created by you.");
@@ -274,7 +274,7 @@ namespace AutoKosova.Business.Services
         {
             var isCustomer = booking.CustomerAccountID == accountId;
             var isCarOwner = booking.Car != null && booking.Car.CreatedByAccountID == accountId;
-            var isAdmin = role == "Admin";
+            var isAdmin = role == "SuperAdmin";
 
             return isCustomer || isCarOwner || isAdmin;
         }

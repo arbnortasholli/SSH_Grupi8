@@ -38,9 +38,21 @@ namespace AutoKosova.DataAccess
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Account>()
+                .HasOne(a => a.Tenant)
+                .WithMany()
+                .HasForeignKey(a => a.TenantID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Account>()
                 .HasOne(a => a.AccountDeletedBy)
                 .WithMany()
                 .HasForeignKey(a => a.AccountDeletedByID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Tenant>()
+                .HasOne(t => t.OwnerAccount)
+                .WithMany()
+                .HasForeignKey(t => t.OwnerAccountID)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Cars>()

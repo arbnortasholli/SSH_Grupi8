@@ -11,6 +11,8 @@ namespace AutoKosova.Entity
 
         public int AccountRoleID { get; set; }
 
+        public int? TenantID { get; set; }
+
         public required string AccountUsername { get; set; }
 
         public required string AccountEmail { get; set; }
@@ -68,6 +70,8 @@ namespace AutoKosova.Entity
         public string? AccountTimeZone { get; set; }
 
         public  AccountRole? AccountRole { get; set; }
+
+        public Tenant? Tenant { get; set; }
 
         public Account? AccountDeletedBy { get; set; }
 

@@ -14,6 +14,9 @@ const authService = {
         const user: AuthUser = {
             accountID: authData.accountID,
             accountRoleID: authData.accountRoleID,
+            tenantID: authData.tenantID ?? null,
+            tenantName: authData.tenantName ?? null,
+            ownerAccountID: authData.ownerAccountID ?? null,
             role: authData.role,
             accountUsername: authData.accountUsername,
             accountEmail: authData.accountEmail,

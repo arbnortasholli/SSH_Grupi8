@@ -1,64 +1,55 @@
-import type { LoginRequest, RegisterRequest, AuthResponse } from '../lib/types';
+import type { AuthResponse, LoginRequest, RegisterRequest, RegisterResponse } from '../lib/types';
 import { mockUsers } from './mockData';
 
-// Simple mock implementation
+const expiresAt = () => new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+// Kept only for legacy imports; register/login now use authService against the real API.
 export const mockAuthService = {
     login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-        // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Check if it's a valid demo account
-        if (credentials.email === 'seller@autokosova.com' && credentials.password === 'password') {
+        if (credentials.emailOrUsername === 'seller@autokosova.com' && credentials.password === 'password') {
             return {
                 token: 'mock_jwt_token_seller_' + Date.now(),
-                user: mockUsers.seller,
+                expiresAt: expiresAt(),
+                ...mockUsers.seller,
             };
         }
 
-        if (credentials.email === 'user@autokosova.com' && credentials.password === 'password') {
+        if (credentials.emailOrUsername === 'customer@autokosova.com' && credentials.password === 'password') {
             return {
-                token: 'mock_jwt_token_user_' + Date.now(),
-                user: mockUsers.user,
+                token: 'mock_jwt_token_customer_' + Date.now(),
+                expiresAt: expiresAt(),
+                ...mockUsers.customer,
             };
         }
 
-        if (credentials.email === 'admin@autokosova.com' && credentials.password === 'password') {
+        if (credentials.emailOrUsername === 'superadmin@autokosova.com' && credentials.password === 'password') {
             return {
-                token: 'mock_jwt_token_admin_' + Date.now(),
-                user: mockUsers.admin,
+                token: 'mock_jwt_token_superadmin_' + Date.now(),
+                expiresAt: expiresAt(),
+                ...mockUsers.superAdmin,
             };
         }
 
         throw new Error('Invalid credentials');
     },
 
-    register: async (data: RegisterRequest): Promise<AuthResponse> => {
-        // Simulate API delay
+    register: async (data: RegisterRequest): Promise<RegisterResponse> => {
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const newUser = {
-            id: String(Date.now()),
-            email: data.email,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            role: 'User' as const,
-            avatar: undefined,
-        };
-
         return {
-            token: 'mock_jwt_token_' + Date.now(),
-            user: newUser,
+            message: `Account ${data.accountUsername} registered successfully.`,
+            accountID: Date.now(),
         };
     },
 
     logout: async (): Promise<void> => {
-        // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 300));
     },
 
     me: async () => {
-        // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 300));
-        return mockUsers.user;
+        return mockUsers.customer;
     },
 };

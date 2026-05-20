@@ -4,7 +4,10 @@ import type { LoginRequest, RegisterRequest, RegisterResponse, AuthResponse, Use
 const toUser = (authData: AuthResponse): User => ({
     accountID: authData.accountID,
     accountRoleID: authData.accountRoleID,
-    role: authData.role || 'User',
+    tenantID: authData.tenantID ?? null,
+    tenantName: authData.tenantName ?? null,
+    ownerAccountID: authData.ownerAccountID ?? null,
+    role: authData.role || 'Customer',
     accountUsername: authData.accountUsername,
     accountEmail: authData.accountEmail,
     accountName: authData.accountName,

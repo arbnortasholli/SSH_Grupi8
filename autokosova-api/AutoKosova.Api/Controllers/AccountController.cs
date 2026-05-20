@@ -1,6 +1,8 @@
+using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs;
 using AutoKosova.Business.DTOs.Accounts;
 using AutoKosova.Business.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AutoKosova.Api.Controllers
@@ -18,6 +20,7 @@ namespace AutoKosova.Api.Controllers
             _accountService = accountService;
         }
 
+        [HasPermission("Accounts.View")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -31,6 +34,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [HasPermission("Accounts.View")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -44,6 +48,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [HasPermission("Accounts.Create")]
         [HttpPost]
         public async Task<IActionResult> Create(AccountCreateRequestDto request)
         {
@@ -57,6 +62,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [HasPermission("Accounts.Update")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, AccountUpdateRequestDto request)
         {
@@ -70,6 +76,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [HasPermission("Accounts.Delete")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -83,6 +90,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequestDto request)
         {
@@ -109,6 +117,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequestDto request)
         {
@@ -128,6 +137,9 @@ namespace AutoKosova.Api.Controllers
                 ExpiresAt = auth.ExpiresAt,
                 AccountID = account.AccountID,
                 AccountRoleID = account.AccountRoleID,
+                TenantID = account.TenantID,
+                TenantName = account.Tenant?.TenantName,
+                OwnerAccountID = account.Tenant?.OwnerAccountID,
                 Role = auth.Role,
                 AccountUsername = account.AccountUsername,
                 AccountEmail = account.AccountEmail,

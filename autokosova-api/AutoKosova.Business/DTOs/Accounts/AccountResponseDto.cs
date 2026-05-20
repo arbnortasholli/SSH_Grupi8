@@ -4,6 +4,8 @@ namespace AutoKosova.Business.DTOs.Accounts
     {
         public int AccountID { get; set; }
         public int AccountRoleID { get; set; }
+        public int? TenantID { get; set; }
+        public string? TenantName { get; set; }
         public string? Role { get; set; }
         public string AccountUsername { get; set; } = string.Empty;
         public string AccountEmail { get; set; } = string.Empty;

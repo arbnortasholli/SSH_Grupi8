@@ -58,13 +58,13 @@ export default function SignIn1() {
 
       const role = response.role?.toLowerCase();
 
-      if (role !== 'admin') {
+      if (role !== 'superadmin') {
         authService.logout();
-        setErrorMessage('You are not allowed to access the admin dashboard.');
+        setErrorMessage('Only SuperAdmin accounts can access the admin dashboard.');
         return;
       }
 
-      navigate('/dashboard');
+      navigate('/dashboard/sales');
     } catch (error: unknown) {
       let message = 'Login failed. Please check your credentials.';
 
@@ -107,7 +107,7 @@ export default function SignIn1() {
                 <span className="autokosova-brand-wordmark">AutoKosova</span>
               </div>
 
-              <span className="autokosova-admin-badge">Admin</span>
+              <span className="autokosova-admin-badge">SuperAdmin</span>
             </div>
 
             <h4>Welcome back</h4>

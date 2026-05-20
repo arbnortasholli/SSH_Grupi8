@@ -1,10 +1,9 @@
+using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs.CarFeatures;
 using AutoKosova.DataAccess;
 using AutoKosova.Entity;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace AutoKosova.Api.Controllers
 {
@@ -62,7 +61,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(feature);
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("CarFeatures.Create")]
         [HttpPost("api/car-features")]
         public async Task<IActionResult> Create(CarFeatureCreateRequestDto request)
         {
@@ -104,7 +103,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("CarFeatures.Update")]
         [HttpPut("api/car-features/{id:int}")]
         public async Task<IActionResult> Update(int id, CarFeatureUpdateRequestDto request)
         {
@@ -149,7 +148,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        [Authorize(Roles = "Admin")]
+        [HasPermission("CarFeatures.Delete")]
         [HttpDelete("api/car-features/{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -218,28 +217,16 @@ namespace AutoKosova.Api.Controllers
             return Ok(features);
         }
 
-        [Authorize(Roles = "Admin,Seller")]
+        [HasPermission("Cars.Features.Manage")]
         [HttpPost("api/cars/{carId:int}/features/{featureId:int}")]
         public async Task<IActionResult> AssignFeatureToCar(int carId, int featureId)
         {
-            var accountId = GetCurrentAccountId();
-
-            if (accountId == null)
-            {
-                return Unauthorized("Invalid token.");
-            }
-
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == carId && !c.CarDeleted);
 
             if (car == null)
             {
                 return NotFound("Car not found.");
-            }
-
-            if (!User.IsInRole("Admin") && car.CreatedByAccountID != accountId.Value)
-            {
-                return StatusCode(403, "You can assign features only to cars created by you.");
             }
 
             var feature = await _context.CarFeatures
@@ -296,28 +283,16 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        [Authorize(Roles = "Admin,Seller")]
+        [HasPermission("Cars.Features.Manage")]
         [HttpDelete("api/cars/{carId:int}/features/{featureId:int}")]
         public async Task<IActionResult> RemoveFeatureFromCar(int carId, int featureId)
         {
-            var accountId = GetCurrentAccountId();
-
-            if (accountId == null)
-            {
-                return Unauthorized("Invalid token.");
-            }
-
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == carId && !c.CarDeleted);
 
             if (car == null)
             {
                 return NotFound("Car not found.");
-            }
-
-            if (!User.IsInRole("Admin") && car.CreatedByAccountID != accountId.Value)
-            {
-                return StatusCode(403, "You can remove features only from cars created by you.");
             }
 
             var mapping = await _context.CarFeatureMappings
@@ -344,16 +319,5 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        private int? GetCurrentAccountId()
-        {
-            var accountIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (int.TryParse(accountIdValue, out var accountId))
-            {
-                return accountId;
-            }
-
-            return null;
-        }
     }
 }

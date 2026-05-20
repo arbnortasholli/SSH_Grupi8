@@ -30,6 +30,9 @@ export interface AuthResponse {
     expiresAt?: string;
     accountID?: number;
     accountRoleID?: number;
+    tenantID?: number | null;
+    tenantName?: string | null;
+    ownerAccountID?: number | null;
     role?: 'Guest' | 'Customer' | 'Seller' | 'SuperAdmin' | string;
     accountUsername?: string;
     accountEmail?: string;
@@ -41,6 +44,9 @@ export interface AuthResponse {
 export interface User {
     accountID?: number;
     accountRoleID?: number;
+    tenantID?: number | null;
+    tenantName?: string | null;
+    ownerAccountID?: number | null;
     role: 'Guest' | 'Customer' | 'Seller' | 'SuperAdmin' | string;
     accountUsername?: string;
     accountEmail?: string;

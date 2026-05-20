@@ -1,7 +1,7 @@
+using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs.Cars;
 using AutoKosova.Business.Services;
 using AutoKosova.Entity;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AutoKosova.Api.Controllers
@@ -38,7 +38,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(ToDetailsDto(result.Data!));
         }
 
-        [Authorize(Roles = "Admin,Seller")]
+        [HasPermission("Cars.Create")]
         [HttpPost]
         public async Task<IActionResult> Create(CarCreateRequestDto request)
         {
@@ -61,7 +61,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        [Authorize(Roles = "Admin,Seller")]
+        [HasPermission("Cars.Update")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, CarUpdateRequestDto request)
         {
@@ -84,7 +84,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        [Authorize(Roles = "Admin,Seller")]
+        [HasPermission("Cars.Delete")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -155,16 +155,15 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        [Authorize(Roles = "Admin,Seller")]
         [HttpGet("my-cars")]
-        public async Task<IActionResult> GetMyCars()
+        public async Task<IActionResult> GetMyCars([FromQuery] int accountId)
         {
-            if (CurrentAccountId == null)
+            if (accountId <= 0)
             {
-                return Unauthorized("Invalid token.");
+                return BadRequest("accountId is required.");
             }
 
-            var cars = await _carService.GetMyCars(CurrentAccountId.Value);
+            var cars = await _carService.GetMyCars(accountId);
 
             return Ok(cars.Select(ToListDto));
         }

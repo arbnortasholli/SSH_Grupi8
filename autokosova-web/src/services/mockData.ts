@@ -3,28 +3,31 @@ import type { Car, Booking, User } from '../lib/types';
 // Mock Users
 export const mockUsers = {
     seller: {
-        id: '1',
-        email: 'seller@autokosova.com',
-        firstName: 'Arben',
-        lastName: 'Nortasholli',
+        accountID: 1,
+        accountRoleID: 3,
+        accountUsername: 'seller',
+        accountEmail: 'seller@autokosova.com',
+        accountName: 'Arben',
+        accountLastname: 'Nortasholli',
         role: 'Seller' as const,
-        avatar: undefined,
     } as User,
-    user: {
-        id: '2',
-        email: 'user@autokosova.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        role: 'User' as const,
-        avatar: undefined,
+    customer: {
+        accountID: 2,
+        accountRoleID: 3,
+        accountUsername: 'customer',
+        accountEmail: 'customer@autokosova.com',
+        accountName: 'John',
+        accountLastname: 'Doe',
+        role: 'Customer' as const,
     } as User,
-    admin: {
-        id: '3',
-        email: 'admin@autokosova.com',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'Admin' as const,
-        avatar: undefined,
+    superAdmin: {
+        accountID: 3,
+        accountRoleID: 1,
+        accountUsername: 'superadmin',
+        accountEmail: 'superadmin@autokosova.com',
+        accountName: 'Super',
+        accountLastname: 'User',
+        role: 'SuperAdmin' as const,
     } as User,
 };
 

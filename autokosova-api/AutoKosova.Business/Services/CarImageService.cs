@@ -67,7 +67,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
-            if (role != "Admin" && car.CreatedByAccountID != accountId)
+            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
             {
                 return ServiceResult<CarImage>.Forbidden("You can add images only to cars created by you.");
             }
@@ -110,7 +110,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
-            if (role != "Admin" && image.Car.CreatedByAccountID != accountId)
+            if (role != "SuperAdmin" && image.Car.CreatedByAccountID != accountId)
             {
                 return ServiceResult<CarImage>.Forbidden("You can update images only for cars created by you.");
             }
@@ -139,7 +139,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
-            if (role != "Admin" && image.Car.CreatedByAccountID != accountId)
+            if (role != "SuperAdmin" && image.Car.CreatedByAccountID != accountId)
             {
                 return ServiceResult<CarImage>.Forbidden("You can delete images only for cars created by you.");
             }

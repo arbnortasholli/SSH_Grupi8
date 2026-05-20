@@ -36,7 +36,7 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/seller"
           element={
-            <ProtectedRoute requiredRoles={['Seller', 'Admin']}>
+            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
               <MainLayout><SellerDashboardPage /></MainLayout>
             </ProtectedRoute>
           }

@@ -9,6 +9,9 @@ export interface AuthResponse {
 
     accountID: number;
     accountRoleID: number;
+    tenantID?: number | null;
+    tenantName?: string | null;
+    ownerAccountID?: number | null;
     role: string;
 
     accountUsername: string;
@@ -20,6 +23,9 @@ export interface AuthResponse {
 export interface AuthUser {
     accountID: number;
     accountRoleID: number;
+    tenantID?: number | null;
+    tenantName?: string | null;
+    ownerAccountID?: number | null;
     role: string;
 
     accountUsername: string;

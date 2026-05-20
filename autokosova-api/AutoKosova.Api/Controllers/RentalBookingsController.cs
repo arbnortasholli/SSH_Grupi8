@@ -1,3 +1,4 @@
+using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs.RentalBookings;
 using AutoKosova.Business.Services;
 using AutoKosova.Entity;
@@ -16,7 +17,7 @@ namespace AutoKosova.Api.Controllers
             _rentalBookingService = rentalBookingService;
         }
 
-        [Authorize(Roles = "Admin,Seller")]
+        [HasPermission("RentalBookings.View")]
         [HttpGet("api/rental-bookings")]
         public async Task<IActionResult> GetAll()
         {
@@ -125,7 +126,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
-        [Authorize(Roles = "Admin,Seller")]
+        [HasPermission("RentalBookings.ViewByTenant")]
         [HttpGet("api/tenants/{tenantId:int}/bookings")]
         public async Task<IActionResult> GetByTenant(int tenantId)
         {
@@ -144,7 +145,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result.Data!.Select(ToListDto));
         }
 
-        [Authorize(Roles = "Admin,Seller")]
+        [HasPermission("RentalBookings.UpdateStatus")]
         [HttpPut("api/rental-bookings/{id:int}/status")]
         public async Task<IActionResult> UpdateStatus(int id, RentalBookingStatusUpdateDto request)
         {

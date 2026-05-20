@@ -73,7 +73,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<Cars>.NotFound("Car not found.");
             }
 
-            if (role != "Admin" && car.CreatedByAccountID != accountId)
+            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
             {
                 return ServiceResult<Cars>.Forbidden("You can update only cars created by you.");
             }
@@ -125,7 +125,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<Cars>.NotFound("Car not found.");
             }
 
-            if (role != "Admin" && car.CreatedByAccountID != accountId)
+            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
             {
                 return ServiceResult<Cars>.Forbidden("You can delete only cars created by you.");
             }
