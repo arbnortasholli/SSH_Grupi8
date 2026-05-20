@@ -42,7 +42,7 @@ namespace AutoKosova.Api.Controllers
         }
 
         [HttpPost("api/cars/{carId:int}/images")]
-        public async Task<IActionResult> AddImage(int carId, CarImageCreateRequestDto request)
+        public async Task<IActionResult> AddImage(int carId, [FromBody] CarImageCreateRequestDto request)
         {
             var result = await _carImageService.AddImage(
                 carId,
@@ -64,9 +64,10 @@ namespace AutoKosova.Api.Controllers
         }
 
         [HttpPost("api/cars/{carId:int}/images/upload")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadImage(
             int carId,
-            [FromForm] IFormFile image,
+            IFormFile image,
             [FromForm] bool carImageIsMain,
             [FromForm] int carImageOrderNumber)
         {
@@ -101,6 +102,7 @@ namespace AutoKosova.Api.Controllers
             }
 
             var imageUrl = $"/uploads/cars/{fileName}";
+
             var result = await _carImageService.AddImage(
                 carId,
                 imageUrl,

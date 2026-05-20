@@ -8,6 +8,22 @@ const menuItems = {
       icon: 'icon-navigation',
       children: [
         {
+          id: 'cars',
+          title: 'Cars',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'directions_car',
+          url: '/cars'
+        },
+        {
+          id: 'car-features',
+          title: 'Car Features',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'tune',
+          url: '/car-features'
+        },
+        {
           id: 'accounts',
           title: 'Accounts',
           type: 'item',
