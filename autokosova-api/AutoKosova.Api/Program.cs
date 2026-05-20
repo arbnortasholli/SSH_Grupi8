@@ -65,7 +65,10 @@ builder.Services.AddScoped<CarImageService>();
 builder.Services.AddScoped<RentalBookingService>();
 builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<JwtService>();
-
+builder.Services.AddScoped<PermissionService>();
+builder.Services.AddScoped<AccountRoleService>();
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<AccountRolePermissionService>();
 // JWT settings
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
@@ -114,6 +117,8 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:3000",
                 "https://localhost:3000",
+                "http://localhost:3001",
+                "https://localhost:3001",
                 "http://localhost:5173",
                 "https://localhost:5173",
                 "http://localhost:5174",

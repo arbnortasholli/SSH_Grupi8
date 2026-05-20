@@ -1,4 +1,5 @@
-using AutoKosova.Api.DTOs;
+using AutoKosova.Business.DTOs;
+using AutoKosova.Business.DTOs.Accounts;
 using AutoKosova.Business.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +10,77 @@ namespace AutoKosova.Api.Controllers
     public class AccountController : BaseApiController
     {
         private readonly AuthService _authService;
+        private readonly AccountService _accountService;
 
-        public AccountController(AuthService authService)
+        public AccountController(AuthService authService, AccountService accountService)
         {
             _authService = authService;
+            _accountService = accountService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _accountService.GetAllAsync();
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _accountService.GetByIdAsync(id);
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
+            }
+
+            return Ok(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(AccountCreateRequestDto request)
+        {
+            var result = await _accountService.CreateAsync(request);
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
+            }
+
+            return Ok(result);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, AccountUpdateRequestDto request)
+        {
+            var result = await _accountService.UpdateAsync(id, request);
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
+            }
+
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _accountService.DeleteAsync(id);
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
+            }
+
+            return Ok(result);
         }
 
         [HttpPost("register")]
