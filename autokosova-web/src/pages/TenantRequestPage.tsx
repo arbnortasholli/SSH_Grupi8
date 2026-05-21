@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { tenantRequestService, type TenantRequestResponse } from '../services/tenantRequestService';
+import { tenantRequestService, type TenantRequestResponse } from '../services/tenantRequestService.ts';
 import { getErrorMessage, isValidEmail } from '../utils/helpers';
 
 const emptyForm = {
