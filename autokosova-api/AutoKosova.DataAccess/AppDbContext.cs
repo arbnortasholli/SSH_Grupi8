@@ -16,6 +16,8 @@ namespace AutoKosova.DataAccess
         public DbSet<CarImage> CarImages { get; set; }
         public DbSet<RentalBooking> RentalBookings { get; set; }
 
+        public DbSet<TenantRequest> TenantRequests { get; set; }
+
         public DbSet<CarFavorite> CarFavorites { get; set; }
 
         public DbSet<CarFeature> CarFeatures { get; set; }
@@ -53,6 +55,24 @@ namespace AutoKosova.DataAccess
                 .HasOne(t => t.OwnerAccount)
                 .WithMany()
                 .HasForeignKey(t => t.OwnerAccountID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<TenantRequest>()
+                .HasOne(tr => tr.Account)
+                .WithMany(a => a.TenantRequests)
+                .HasForeignKey(tr => tr.AccountID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<TenantRequest>()
+                .HasOne(tr => tr.ReviewedByAccount)
+                .WithMany(a => a.ReviewedTenantRequests)
+                .HasForeignKey(tr => tr.ReviewedByAccountID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<TenantRequest>()
+                .HasOne(tr => tr.CreatedTenant)
+                .WithMany(t => t.TenantRequests)
+                .HasForeignKey(tr => tr.CreatedTenantID)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Cars>()

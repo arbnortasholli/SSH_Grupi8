@@ -11,6 +11,7 @@ const PermissionsPage = lazy(() => import('../views/permissions/PermissionsPage'
 const AccountRolesPage = lazy(() => import('../views/account-roles/AccountRolesPage'));
 const AccountsPage = lazy(() => import('../views/accounts/AccountsPage'));
 const AccountRolePermissionsPage = lazy(() => import('../views/account-role-permissions/AccountRolePermissionsPage'));
+const TenantRequestsPage = lazy(() => import('../views/tenant-requests/TenantRequestsPage'));
 
 const MainRoutes = {
   path: '/',
@@ -34,6 +35,10 @@ const MainRoutes = {
         {
           path: '/role-permissions',
           element: <AccountRolePermissionsPage />
+        },
+        {
+          path: '/tenant-requests',
+          element: <TenantRequestsPage />
         },
         {
           path: '/accounts',

@@ -25,6 +25,12 @@ const menuItems = {
           url: '/role-permissions'
         },
         {
+          id: 'tenant-requests',
+          title: 'Tenant Requests',
+          type: 'item',
+          url: '/tenant-requests'
+        },
+        {
           id: 'permissions',
           title: 'Permissions',
           type: 'item',
