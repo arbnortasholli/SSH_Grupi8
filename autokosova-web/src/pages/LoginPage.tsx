@@ -28,7 +28,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       await login(emailOrUsername, password);
-      navigate('/dashboard');
+      navigate('/');
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Login failed.'));
     }

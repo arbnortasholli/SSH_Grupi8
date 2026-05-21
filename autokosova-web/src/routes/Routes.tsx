@@ -15,6 +15,7 @@ import { CarDetailsPage } from '../pages/CarDetailsPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { FavoritesPage } from '../pages/FavoritesPage';
 import { SellerDashboardPage } from '../pages/SellerDashboardPage';
+import { TenantRequestPage } from '../pages/TenantRequestPage';
 
 export const AppRoutes: React.FC = () => (
   <Router>
@@ -36,6 +37,10 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/favorites"
           element={<ProtectedRoute><MainLayout><FavoritesPage /></MainLayout></ProtectedRoute>}
+        />
+        <Route
+          path="/tenant-request"
+          element={<ProtectedRoute><MainLayout><TenantRequestPage /></MainLayout></ProtectedRoute>}
         />
         <Route
           path="/seller"

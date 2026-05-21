@@ -530,6 +530,69 @@ namespace AutoKosova.DataAccess.Migrations
                     b.ToTable("Tenants");
                 });
 
+            modelBuilder.Entity("AutoKosova.Entity.TenantRequest", b =>
+                {
+                    b.Property<int>("TenantRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TenantRequestID"));
+
+                    b.Property<int>("AccountID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdminComment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessCity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessPhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedTenantID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ReviewedByAccountID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("TenantRequestID");
+
+                    b.HasIndex("AccountID");
+
+                    b.HasIndex("CreatedTenantID");
+
+                    b.HasIndex("ReviewedByAccountID");
+
+                    b.ToTable("TenantRequests");
+                });
+
             modelBuilder.Entity("AutoKosova.Entity.Account", b =>
                 {
                     b.HasOne("AutoKosova.Entity.Account", "AccountDeletedBy")
@@ -678,11 +741,40 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("OwnerAccount");
                 });
 
+            modelBuilder.Entity("AutoKosova.Entity.TenantRequest", b =>
+                {
+                    b.HasOne("AutoKosova.Entity.Account", "Account")
+                        .WithMany("TenantRequests")
+                        .HasForeignKey("AccountID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AutoKosova.Entity.Tenant", "CreatedTenant")
+                        .WithMany("TenantRequests")
+                        .HasForeignKey("CreatedTenantID")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("AutoKosova.Entity.Account", "ReviewedByAccount")
+                        .WithMany("ReviewedTenantRequests")
+                        .HasForeignKey("ReviewedByAccountID")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Account");
+
+                    b.Navigation("CreatedTenant");
+
+                    b.Navigation("ReviewedByAccount");
+                });
+
             modelBuilder.Entity("AutoKosova.Entity.Account", b =>
                 {
                     b.Navigation("CreatedCars");
 
                     b.Navigation("RentalBookings");
+
+                    b.Navigation("ReviewedTenantRequests");
+
+                    b.Navigation("TenantRequests");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.CarFeature", b =>
@@ -704,6 +796,8 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("Cars");
 
                     b.Navigation("RentalBookings");
+
+                    b.Navigation("TenantRequests");
                 });
 #pragma warning restore 612, 618
         }

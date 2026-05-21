@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import type { Booking } from '../lib/types';
 import { bookingService } from '../services/bookingService';
+import { tenantRequestService, type TenantRequestResponse } from '../services/tenantRequestService';
 import { formatCurrency, formatDate, getErrorMessage } from '../utils/helpers';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
@@ -11,6 +13,11 @@ export const DashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedTab, setSelectedTab] = useState<'bookings' | 'profile'>('bookings');
+    const [tenantRequests, setTenantRequests] = useState<TenantRequestResponse[]>([]);
+
+    const hasTenant = Boolean(user?.tenantID);
+    const isSeller = user?.role === 'Seller' || user?.role === 'SuperAdmin';
+    const latestTenantRequest = tenantRequests[0];
 
     const loadBookings = useCallback(async () => {
         await Promise.resolve();
@@ -25,11 +32,23 @@ export const DashboardPage: React.FC = () => {
         }
     }, []);
 
+    const loadTenantRequests = useCallback(async () => {
+        if (!user || hasTenant || isSeller) return;
+
+        try {
+            const data = await tenantRequestService.getMine();
+            setTenantRequests(data);
+        } catch {
+            setTenantRequests([]);
+        }
+    }, [hasTenant, isSeller, user]);
+
     useEffect(() => {
         queueMicrotask(() => {
             void loadBookings();
+            void loadTenantRequests();
         });
-    }, [loadBookings]);
+    }, [loadBookings, loadTenantRequests]);
 
     const handleCancelBooking = async (bookingId: string) => {
         if (!window.confirm('Are you sure you want to cancel this booking?')) return;
@@ -49,6 +68,50 @@ export const DashboardPage: React.FC = () => {
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
                 <p className="text-gray-600">Welcome, {user?.accountName} {user?.accountLastname}!</p>
             </div>
+
+            {isSeller && hasTenant && (
+                <div className="mb-6 bg-white rounded-lg shadow-md p-6 border border-blue-100">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <p className="text-sm font-semibold text-primary uppercase tracking-wide">Renter account</p>
+                            <h2 className="text-2xl font-bold text-gray-800 mt-1">
+                                {user?.tenantName || 'Your rental business'}
+                            </h2>
+                            <p className="text-gray-600 mt-1">Manage your cars and renter activity from the seller dashboard.</p>
+                        </div>
+                        <Link
+                            to="/seller"
+                            className="inline-flex justify-center px-5 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition font-semibold"
+                        >
+                            Open seller dashboard
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {!hasTenant && !isSeller && (
+                <div className="mb-6 bg-white rounded-lg shadow-md p-6 border border-gray-100">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <p className="text-sm font-semibold text-primary uppercase tracking-wide">Rent with AutoKosova</p>
+                            <h2 className="text-2xl font-bold text-gray-800 mt-1">Want to list cars for rent?</h2>
+                            {latestTenantRequest?.status === 'Pending' ? (
+                                <p className="text-gray-600 mt-1">Your renter request is pending review.</p>
+                            ) : latestTenantRequest?.status === 'Rejected' ? (
+                                <p className="text-gray-600 mt-1">Your last request was rejected. You can update your details and send a new request.</p>
+                            ) : (
+                                <p className="text-gray-600 mt-1">Send your business details and wait for SuperAdmin approval.</p>
+                            )}
+                        </div>
+                        <Link
+                            to="/tenant-request"
+                            className="inline-flex justify-center px-5 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition font-semibold"
+                        >
+                            {latestTenantRequest?.status === 'Pending' ? 'View request' : 'Become a renter'}
+                        </Link>
+                    </div>
+                </div>
+            )}
 
             {error && (
                 <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">

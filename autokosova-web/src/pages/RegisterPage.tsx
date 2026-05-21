@@ -76,7 +76,7 @@ export const RegisterPage: React.FC = () => {
         accountAddress: values.accountAddress.trim(),
         accountCity: values.accountCity.trim(),
       });
-      navigate('/login');
+      navigate('/');
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Registration failed.'));
     }

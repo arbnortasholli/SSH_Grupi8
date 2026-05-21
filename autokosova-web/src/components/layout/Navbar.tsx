@@ -1,15 +1,30 @@
 import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/buy', label: 'Buy Cars' },
   { to: '/rent', label: 'Rent Cars' },
-  { to: '/rent-your-car', label: 'Rent Your Car' },
 ];
 
 export const Navbar: React.FC = () => {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
+  const canRequestTenant = isAuthenticated && !user?.tenantID && user?.role !== 'Seller' && user?.role !== 'SuperAdmin';
+  const canListCars = !isAuthenticated || user?.role === 'Seller' || user?.role === 'SuperAdmin';
+  const accountLink = user?.role === 'Seller'
+    ? { to: '/seller', label: 'My cars' }
+    : user?.role === 'SuperAdmin'
+      ? { to: '/dashboard', label: 'Admin area' }
+      : { to: '/dashboard', label: 'My rentals' };
+
+  const handleLogout = async () => {
+    await logout();
+    setIsOpen(false);
+    navigate('/login');
+  };
 
   return (
     <header className="site-header">
@@ -24,15 +39,38 @@ export const Navbar: React.FC = () => {
               {link.label}
             </NavLink>
           ))}
+          {canListCars && (
+            <NavLink to="/rent-your-car" className={({ isActive }) => (isActive ? 'active' : undefined)}>
+              Rent Your Car
+            </NavLink>
+          )}
         </nav>
 
         <div className="nav-actions">
-          <Link to="/login" className="nav-login">
-            Login
-          </Link>
-          <Link to="/register" className="nav-register">
-            Register
-          </Link>
+          {isAuthenticated ? (
+            <>
+              {canRequestTenant && (
+                <Link to="/tenant-request" className="nav-tenant">
+                  Tenant request
+                </Link>
+              )}
+              <Link to={accountLink.to} className="nav-login">
+                {accountLink.label}
+              </Link>
+              <button type="button" className="nav-logout" onClick={handleLogout}>
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="nav-login">
+                Login
+              </Link>
+              <Link to="/register" className="nav-register">
+                Register
+              </Link>
+            </>
+          )}
         </div>
 
         <button className="nav-toggle" type="button" onClick={() => setIsOpen((current) => !current)}>
@@ -49,13 +87,36 @@ export const Navbar: React.FC = () => {
               {link.label}
             </NavLink>
           ))}
+          {canListCars && (
+            <NavLink to="/rent-your-car" onClick={() => setIsOpen(false)}>
+              Rent Your Car
+            </NavLink>
+          )}
           <div className="mobile-nav__actions">
-            <Link to="/login" onClick={() => setIsOpen(false)}>
-              Login
-            </Link>
-            <Link to="/register" onClick={() => setIsOpen(false)}>
-              Register
-            </Link>
+            {isAuthenticated ? (
+              <>
+                {canRequestTenant && (
+                  <Link to="/tenant-request" onClick={() => setIsOpen(false)}>
+                    Tenant request
+                  </Link>
+                )}
+                <Link to={accountLink.to} onClick={() => setIsOpen(false)}>
+                  {accountLink.label}
+                </Link>
+                <button type="button" onClick={handleLogout}>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setIsOpen(false)}>
+                  Login
+                </Link>
+                <Link to="/register" onClick={() => setIsOpen(false)}>
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

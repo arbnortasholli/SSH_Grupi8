@@ -215,16 +215,18 @@ export const TenantRequestPage: React.FC = () => {
               />
             </label>
 
-            <label className="auth-field" htmlFor="message">
-              <span>Message</span>
+            <label className="auth-field auth-field--message" htmlFor="message">
+              <span>Message to AutoKosova</span>
               <textarea
                 id="message"
                 name="message"
                 value={values.message}
                 onChange={handleChange}
-                placeholder="Tell us about your rental business."
-                rows={4}
+                placeholder="Write a short description about your rental business, how many cars you plan to list, and any details the admin should know."
+                rows={5}
+                maxLength={600}
               />
+              <small>{values.message.length}/600 characters</small>
             </label>
 
             <button type="submit" className="auth-submit" disabled={isSubmitting}>
