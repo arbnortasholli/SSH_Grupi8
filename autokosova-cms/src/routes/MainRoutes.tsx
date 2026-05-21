@@ -11,7 +11,8 @@ const PermissionsPage = lazy(() => import('../views/permissions/PermissionsPage'
 const AccountRolesPage = lazy(() => import('../views/account-roles/AccountRolesPage'));
 const AccountsPage = lazy(() => import('../views/accounts/AccountsPage'));
 const AccountRolePermissionsPage = lazy(() => import('../views/account-role-permissions/AccountRolePermissionsPage'));
-const TenantRequestsPage = lazy(() => import('../views/tenant-requests/TenantRequestsPage'));
+const CarsPage = lazy(() => import('../views/cars/CarsPage'));
+const CarFeaturesPage = lazy(() => import('../views/car-features/CarFeaturesPage'));
 
 const MainRoutes = {
   path: '/',
@@ -25,6 +26,14 @@ const MainRoutes = {
           element: <AdminDashboard />
         },
         {
+          path: '/cars',
+          element: <CarsPage />
+        },
+        {
+          path: '/car-features',
+          element: <CarFeaturesPage />
+        },
+        {
           path: '/permissions',
           element: <PermissionsPage />
         },
@@ -35,10 +44,6 @@ const MainRoutes = {
         {
           path: '/role-permissions',
           element: <AccountRolePermissionsPage />
-        },
-        {
-          path: '/tenant-requests',
-          element: <TenantRequestsPage />
         },
         {
           path: '/accounts',

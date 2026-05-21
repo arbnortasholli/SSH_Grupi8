@@ -87,14 +87,19 @@ export const RegisterPage: React.FC = () => {
       <div className="ak-container auth-shell auth-shell--register">
         <aside className="auth-visual" aria-label="AutoKosova account benefits">
           <div className="auth-visual__content">
-            <Link to="/" className="auth-brand">AutoKosova</Link>
+            <Link to="/" className="auth-brand">
+              AutoKosova
+            </Link>
+
             <div>
               <p className="eyebrow">Create account</p>
               <h1>Build your AutoKosova profile.</h1>
               <p>
-                One account for buying, renting, saving cars, and preparing seller features as the platform grows.
+                One account for buying, renting, saving cars, and preparing seller
+                features as the platform grows.
               </p>
             </div>
+
             <div className="auth-benefit-list">
               {benefits.map((benefit) => (
                 <div key={benefit}>
@@ -107,7 +112,10 @@ export const RegisterPage: React.FC = () => {
         </aside>
 
         <main className="auth-panel">
-          <Link to="/" className="auth-back">Back to home</Link>
+          <Link to="/" className="auth-back">
+            Back to home
+          </Link>
+
           <div className="auth-heading">
             <p className="eyebrow">Register</p>
             <h2>Create your account</h2>

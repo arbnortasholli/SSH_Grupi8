@@ -39,14 +39,19 @@ export const LoginPage: React.FC = () => {
       <div className="ak-container auth-shell">
         <aside className="auth-visual" aria-label="AutoKosova account overview">
           <div className="auth-visual__content">
-            <Link to="/" className="auth-brand">AutoKosova</Link>
+            <Link to="/" className="auth-brand">
+              AutoKosova
+            </Link>
+
             <div>
               <p className="eyebrow">Secure access</p>
               <h1>Sign in to manage your car journey.</h1>
               <p>
-                Keep favorite cars, continue rental requests, and manage seller activity from one focused dashboard.
+                Keep favorite cars, continue rental requests, and manage seller
+                activity from one focused dashboard.
               </p>
             </div>
+
             <div className="auth-proof-grid">
               <div>
                 <strong>JWT</strong>
@@ -61,7 +66,10 @@ export const LoginPage: React.FC = () => {
         </aside>
 
         <main className="auth-panel">
-          <Link to="/" className="auth-back">Back to home</Link>
+          <Link to="/" className="auth-back">
+            Back to home
+          </Link>
+
           <div className="auth-heading">
             <p className="eyebrow">Login</p>
             <h2>Welcome back</h2>
@@ -113,6 +121,7 @@ export const LoginPage: React.FC = () => {
                 />
                 <span>Remember me</span>
               </label>
+
               <button type="button" className="auth-link-button">
                 Forgot password?
               </button>

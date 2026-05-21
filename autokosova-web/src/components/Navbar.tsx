@@ -42,9 +42,6 @@ export const Navbar: React.FC = () => {
                                 <Link to="/favorites" className="text-sm font-medium text-gray-600 transition hover:text-primary">
                                     Favorites
                                 </Link>
-                                <Link to="/tenant-request" className="text-sm font-medium text-gray-600 transition hover:text-primary">
-                                    Become Renter
-                                </Link>
                                 {canSeeSellerArea && (
                                     <Link to="/seller" className="text-sm font-medium text-gray-600 transition hover:text-primary">
                                         My Cars
@@ -118,9 +115,6 @@ export const Navbar: React.FC = () => {
                                 </Link>
                                 <Link to="/favorites" className="block rounded-lg px-4 py-2 text-gray-600 hover:bg-gray-100">
                                     Favorites
-                                </Link>
-                                <Link to="/tenant-request" className="block rounded-lg px-4 py-2 text-gray-600 hover:bg-gray-100">
-                                    Become Renter
                                 </Link>
                             </>
                         )}

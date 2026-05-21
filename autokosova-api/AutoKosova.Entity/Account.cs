@@ -78,9 +78,5 @@ namespace AutoKosova.Entity
         public ICollection<Cars> CreatedCars { get; set; } = new List<Cars>();
 
         public ICollection<RentalBooking> RentalBookings { get; set; } = new List<RentalBooking>();
-
-        public ICollection<TenantRequest> TenantRequests { get; set; } = new List<TenantRequest>();
-
-        public ICollection<TenantRequest> ReviewedTenantRequests { get; set; } = new List<TenantRequest>();
     }
 }

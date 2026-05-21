@@ -7,13 +7,14 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { HomePage } from '../pages/HomePage';
 import { BuyCarsPage } from '../pages/BuyCarsPage';
 import { RentCarsPage } from '../pages/RentCarsPage';
+import { CreateCarPage } from '../pages/CreateCarPage';
+import { RentYourCarPage } from '../pages/RentYourCarPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { CarDetailsPage } from '../pages/CarDetailsPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { FavoritesPage } from '../pages/FavoritesPage';
 import { SellerDashboardPage } from '../pages/SellerDashboardPage';
-import { TenantRequestPage } from '../pages/TenantRequestPage';
 
 export const AppRoutes: React.FC = () => (
   <Router>
@@ -22,6 +23,8 @@ export const AppRoutes: React.FC = () => (
         <Route path="/" element={<MainLayout><HomePage /></MainLayout>} />
         <Route path="/buy" element={<MainLayout><BuyCarsPage /></MainLayout>} />
         <Route path="/rent" element={<MainLayout><RentCarsPage /></MainLayout>} />
+        <Route path="/create-car" element={<MainLayout><CreateCarPage /></MainLayout>} />
+        <Route path="/rent-your-car" element={<MainLayout><RentYourCarPage /></MainLayout>} />
         <Route path="/login" element={<MainLayout><LoginPage /></MainLayout>} />
         <Route path="/register" element={<MainLayout><RegisterPage /></MainLayout>} />
         <Route path="/cars/:id" element={<MainLayout><CarDetailsPage /></MainLayout>} />
@@ -33,10 +36,6 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/favorites"
           element={<ProtectedRoute><MainLayout><FavoritesPage /></MainLayout></ProtectedRoute>}
-        />
-        <Route
-          path="/tenant-request"
-          element={<ProtectedRoute><MainLayout><TenantRequestPage /></MainLayout></ProtectedRoute>}
         />
         <Route
           path="/seller"

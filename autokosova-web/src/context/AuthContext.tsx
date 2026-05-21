@@ -1,5 +1,5 @@
-import React, { useState, type ReactNode } from 'react';
-import type { User, AuthResponse } from '../lib/types';
+import React, { useEffect, useState, type ReactNode } from 'react';
+import type { AuthResponse, RegisterRequest, User } from '../lib/types';
 import { authService } from '../services/authService';
 import { AuthContext } from './authContextValue';
 
@@ -17,6 +17,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return null;
     });
     const [isLoading, setIsLoading] = useState(false);
+    const isAuthenticated = Boolean(user || authService.getToken());
+
+    useEffect(() => {
+        const syncUser = () => {
+            setUser(authService.getCurrentUser());
+        };
+
+        window.addEventListener('authChanged', syncUser);
+        window.addEventListener('storage', syncUser);
+
+        return () => {
+            window.removeEventListener('authChanged', syncUser);
+            window.removeEventListener('storage', syncUser);
+        };
+    }, []);
 
     const login = async (emailOrUsername: string, password: string) => {
         setIsLoading(true);
@@ -42,6 +57,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const register = async (data: RegisterRequest) => {
+        setIsLoading(true);
+        try {
+            await authService.register(data);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const logout = async () => {
         setIsLoading(true);
         try {
@@ -53,27 +77,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const checkAuth = async () => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const userData = await authService.me();
-                setUser(userData);
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                setUser(null);
-            }
-        }
+        await Promise.resolve();
+        setUser(authService.getCurrentUser());
     };
 
     return (
         <AuthContext.Provider
             value={{
                 user,
-                isAuthenticated: !!user,
+                isAuthenticated,
                 isLoading,
                 login,
+                register,
                 logout,
                 checkAuth,
             }}
