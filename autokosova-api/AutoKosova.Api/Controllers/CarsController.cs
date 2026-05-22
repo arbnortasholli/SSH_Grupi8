@@ -44,13 +44,12 @@ namespace AutoKosova.Api.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> Create([FromForm] CarCreateRequestDto request)
         {
-            var result = await _carService.Create(ToCar(request), request.Images);
             if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carService.Create(ToCar(request), CurrentAccountId.Value);
+            var result = await _carService.Create(ToCar(request), CurrentAccountId.Value, request.Images);
 
             if (!result.IsSuccess)
             {

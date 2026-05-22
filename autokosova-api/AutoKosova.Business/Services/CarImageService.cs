@@ -103,6 +103,8 @@ namespace AutoKosova.Business.Services
         public async Task<ServiceResult<List<CarImage>>> UploadImages(
             int carId,
             List<IFormFile>? images,
+            int accountId,
+            string? role,
             int? mainImageIndex = null)
         {
             if (images == null || images.Count == 0)
@@ -117,6 +119,11 @@ namespace AutoKosova.Business.Services
             if (car == null)
             {
                 return ServiceResult<List<CarImage>>.NotFound("Car not found.");
+            }
+
+            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
+            {
+                return ServiceResult<List<CarImage>>.Forbidden("You can upload images only for cars created by you.");
             }
 
             var existingImageCount = car.CarImages.Count;
@@ -210,7 +217,6 @@ namespace AutoKosova.Business.Services
             var image = await _context.CarImages
                 .Include(ci => ci.Car)
                 .FirstOrDefaultAsync(ci =>
-                    ci.CarID == carId &&
                     ci.CarImageID == imageId &&
                     !ci.CarImageDeleted);
 
@@ -243,9 +249,16 @@ namespace AutoKosova.Business.Services
                 .Where(ci => ci.CarImageID == imageId && !ci.CarImageDeleted)
                 .FirstOrDefaultAsync();
 
-            return image == null
-                ? ServiceResult<CarImage>.NotFound("Car image not found.")
-                : await SetMainImage(image.CarID, imageId);
+            if (image == null)
+            {
+                return ServiceResult<CarImage>.NotFound("Car image not found.");
+            }
+
+            await ClearMainImages(image.CarID);
+            image.CarImageIsMain = true;
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<CarImage>.Success(image);
         }
 
         public async Task<ServiceResult<List<CarImage>>> ReorderImages(int carId, Dictionary<int, int> imageOrders)
@@ -288,7 +301,6 @@ namespace AutoKosova.Business.Services
             var image = await _context.CarImages
                 .Include(ci => ci.Car)
                 .FirstOrDefaultAsync(ci =>
-                    ci.CarID == carId &&
                     ci.CarImageID == imageId &&
                     !ci.CarImageDeleted);
 
@@ -312,7 +324,7 @@ namespace AutoKosova.Business.Services
             var deletedImageWasMain = image.CarImageIsMain;
             image.CarImageIsMain = false;
 
-            if (deleteLocalFile && !string.IsNullOrWhiteSpace(image.CarImageUrl))
+            if (!string.IsNullOrWhiteSpace(image.CarImageUrl))
             {
                 try
                 {
@@ -327,7 +339,7 @@ namespace AutoKosova.Business.Services
             if (deletedImageWasMain)
             {
                 var nextMainImage = await _context.CarImages
-                    .Where(ci => ci.CarID == carId && ci.CarImageID != imageId && !ci.CarImageDeleted)
+                    .Where(ci => ci.CarID == image.CarID && ci.CarImageID != imageId && !ci.CarImageDeleted)
                     .OrderBy(ci => ci.CarImageOrderNumber)
                     .FirstOrDefaultAsync();
 
@@ -348,9 +360,42 @@ namespace AutoKosova.Business.Services
                 .Where(ci => ci.CarImageID == imageId && !ci.CarImageDeleted)
                 .FirstOrDefaultAsync();
 
-            return image == null
-                ? ServiceResult<CarImage>.NotFound("Car image not found.")
-                : await DeleteImage(image.CarID, imageId);
+            if (image == null)
+            {
+                return ServiceResult<CarImage>.NotFound("Car image not found.");
+            }
+
+            image.CarImageDeleted = true;
+            image.CarImageDeletedDate = DateTime.UtcNow;
+            var deletedImageWasMain = image.CarImageIsMain;
+            image.CarImageIsMain = false;
+
+            if (!string.IsNullOrWhiteSpace(image.CarImageUrl))
+            {
+                try
+                {
+                    _localImageStorageService.DeleteImage(image.CarImageUrl);
+                }
+                catch
+                {
+                }
+            }
+
+            if (deletedImageWasMain)
+            {
+                var nextMainImage = await _context.CarImages
+                    .Where(ci => ci.CarID == image.CarID && ci.CarImageID != imageId && !ci.CarImageDeleted)
+                    .OrderBy(ci => ci.CarImageOrderNumber)
+                    .FirstOrDefaultAsync();
+
+                if (nextMainImage != null)
+                {
+                    nextMainImage.CarImageIsMain = true;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return ServiceResult<CarImage>.Success(image);
         }
 
         private async Task ClearMainImages(int carId)
