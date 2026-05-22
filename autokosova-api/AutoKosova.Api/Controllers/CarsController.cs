@@ -1,5 +1,6 @@
 using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs.Cars;
+using AutoKosova.Business.DTOs.CarImages;
 using AutoKosova.Business.Services;
 using AutoKosova.Entity;
 using Microsoft.AspNetCore.Mvc;
@@ -40,8 +41,10 @@ namespace AutoKosova.Api.Controllers
 
         [HasPermission("Cars.Create")]
         [HttpPost]
-        public async Task<IActionResult> Create(CarCreateRequestDto request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Create([FromForm] CarCreateRequestDto request)
         {
+            var result = await _carService.Create(ToCar(request), request.Images);
             if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
@@ -57,7 +60,12 @@ namespace AutoKosova.Api.Controllers
             return Ok(new
             {
                 message = "Car created successfully.",
-                carID = result.Data!.CarsID
+                carID = result.Data!.CarsID,
+                images = result.Data.CarImages
+                    .Where(image => !image.CarImageDeleted)
+                    .OrderByDescending(image => image.CarImageIsMain)
+                    .ThenBy(image => image.CarImageOrderNumber)
+                    .Select(ToImageDto)
             });
         }
 
@@ -242,7 +250,13 @@ namespace AutoKosova.Api.Controllers
                 IsForRent = car.IsForRent,
                 RentalDailyPrice = car.RentalDailyPrice,
                 CarStatus = car.CarStatus,
-                CarCreationDate = car.CarCreationDate
+                CarCreationDate = car.CarCreationDate,
+                MainImageUrl = car.CarImages
+                    .Where(image => !image.CarImageDeleted)
+                    .OrderByDescending(image => image.CarImageIsMain)
+                    .ThenBy(image => image.CarImageOrderNumber)
+                    .Select(image => image.CarImageUrl)
+                    .FirstOrDefault()
             };
         }
 
@@ -269,7 +283,29 @@ namespace AutoKosova.Api.Controllers
                 RentalDailyPrice = car.RentalDailyPrice,
                 CarStatus = car.CarStatus,
                 CarCreationDate = car.CarCreationDate,
-                CarUpdatedDate = car.CarUpdatedDate
+                CarUpdatedDate = car.CarUpdatedDate,
+                Images = car.CarImages
+                    .Where(image => !image.CarImageDeleted)
+                    .OrderByDescending(image => image.CarImageIsMain)
+                    .ThenBy(image => image.CarImageOrderNumber)
+                    .Select(ToImageDto)
+                    .ToList()
+            };
+        }
+
+        private static CarImageResponseDto ToImageDto(CarImage image)
+        {
+            return new CarImageResponseDto
+            {
+                CarImageID = image.CarImageID,
+                CarID = image.CarID,
+                CarImageUrl = image.CarImageUrl,
+                CarImageOriginalFileName = image.CarImageOriginalFileName,
+                CarImageContentType = image.CarImageContentType,
+                CarImageSizeBytes = image.CarImageSizeBytes,
+                CarImageIsMain = image.CarImageIsMain,
+                CarImageOrderNumber = image.CarImageOrderNumber,
+                CarImageCreationDate = image.CarImageCreationDate
             };
         }
     }

@@ -44,7 +44,25 @@ namespace AutoKosova.Api.Controllers
 
         [HasPermission("Cars.Images.Manage")]
         [HttpPost("api/cars/{carId:int}/images")]
-        public async Task<IActionResult> AddImage(int carId, [FromBody] CarImageCreateRequestDto request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadImages(int carId, [FromForm] CarImageUploadRequestDto request)
+        {
+            var result = await _carImageService.UploadImages(carId, request.Images, request.MainImageIndex);
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
+            }
+
+            return Ok(new CarImageUploadResponseDto
+            {
+                CarID = carId,
+                Images = result.Data!.Select(ToDto).ToList()
+            });
+        }
+
+        [HttpPost("api/cars/{carId:int}/images/url")]
+        public async Task<IActionResult> AddImageUrl(int carId, [FromBody] CarImageCreateRequestDto request)
         {
             if (CurrentAccountId == null)
             {
@@ -67,52 +85,58 @@ namespace AutoKosova.Api.Controllers
 
             return Ok(new
             {
-                message = "Car image added successfully.",
-                carImageID = result.Data!.CarImageID
+                message = "Car image URL added successfully.",
+                carImageID = result.Data!.CarImageID,
+                carImageUrl = result.Data.CarImageUrl
             });
         }
 
         [HasPermission("Cars.Images.Manage")]
         [HttpPost("api/cars/{carId:int}/images/upload")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadImage(
-            int carId,
-            IFormFile image,
-            [FromForm] bool carImageIsMain,
-            [FromForm] int carImageOrderNumber)
+        public async Task<IActionResult> UploadImage(int carId, [FromForm] CarImageUploadRequestDto request)
         {
-            if (image == null || image.Length == 0)
+            return await UploadImages(carId, request);
+        }
+
+        [HttpPut("api/cars/{carId:int}/images/{imageId:int}/set-main")]
+        public async Task<IActionResult> SetMainImage(int carId, int imageId)
+        {
+            var result = await _carImageService.SetMainImage(carId, imageId);
+
+            if (!result.IsSuccess)
             {
-                return BadRequest("Image file is required.");
+                return ToActionResult(result);
             }
 
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            var extension = Path.GetExtension(image.FileName).ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(extension))
+            return Ok(new
             {
-                return BadRequest("Only JPG, JPEG, PNG and WEBP images are allowed.");
+                message = "Main image updated successfully.",
+                carImageID = result.Data!.CarImageID
+            });
+        }
+
+        [HttpPut("api/cars/{carId:int}/images/reorder")]
+        public async Task<IActionResult> ReorderImages(int carId, [FromBody] CarImageReorderRequestDto request)
+        {
+            var imageOrders = request.Images.ToDictionary(
+                image => image.CarImageID,
+                image => image.CarImageOrderNumber);
+
+            var result = await _carImageService.ReorderImages(carId, imageOrders);
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
             }
 
-            var uploadsFolder = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                "uploads",
-                "cars"
-            );
+            return Ok(result.Data!.Select(ToDto));
+        }
 
-            Directory.CreateDirectory(uploadsFolder);
-
-            var fileName = $"{Guid.NewGuid()}{extension}";
-            var filePath = Path.Combine(uploadsFolder, fileName);
-
-            await using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await image.CopyToAsync(stream);
-            }
-
-            var imageUrl = $"/uploads/cars/{fileName}";
-
+        [HttpDelete("api/cars/{carId:int}/images/{imageId:int}")]
+        public async Task<IActionResult> DeleteImage(int carId, int imageId, [FromQuery] bool deleteLocalFile = true)
+        {
+            var result = await _carImageService.DeleteImage(carId, imageId, deleteLocalFile);
             if (CurrentAccountId == null)
             {
                 return Unauthorized("Invalid token.");
@@ -129,19 +153,13 @@ namespace AutoKosova.Api.Controllers
 
             if (!result.IsSuccess)
             {
-                if (System.IO.File.Exists(filePath))
-                {
-                    System.IO.File.Delete(filePath);
-                }
-
                 return ToActionResult(result);
             }
 
             return Ok(new
             {
-                message = "Car image uploaded successfully.",
-                carImageID = result.Data!.CarImageID,
-                carImageUrl = imageUrl
+                message = "Car image deleted successfully.",
+                carImageID = result.Data!.CarImageID
             });
         }
 
@@ -198,6 +216,9 @@ namespace AutoKosova.Api.Controllers
                 CarImageID = image.CarImageID,
                 CarID = image.CarID,
                 CarImageUrl = image.CarImageUrl,
+                CarImageOriginalFileName = image.CarImageOriginalFileName,
+                CarImageContentType = image.CarImageContentType,
+                CarImageSizeBytes = image.CarImageSizeBytes,
                 CarImageIsMain = image.CarImageIsMain,
                 CarImageOrderNumber = image.CarImageOrderNumber,
                 CarImageCreationDate = image.CarImageCreationDate

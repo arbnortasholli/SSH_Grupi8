@@ -49,6 +49,11 @@ appsettings.Development.json
 appsettings.Production.json
 appsettings.Local.json
 
+# Local uploaded car images
+/autokosova-api/AutoKosova.Api/wwwroot/uploads/cars/**
+!/autokosova-api/AutoKosova.Api/wwwroot/uploads/cars/
+!/autokosova-api/AutoKosova.Api/wwwroot/uploads/cars/.gitkeep
+
 # =========================
 # Logs
 # =========================

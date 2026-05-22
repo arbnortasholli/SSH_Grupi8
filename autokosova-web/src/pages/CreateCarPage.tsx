@@ -14,13 +14,19 @@ type PriceType = Car['priceType'];
 const carTypes: CarType[] = ['Sedan', 'SUV', 'Truck', 'Coupe', 'Hatchback', 'Van'];
 const fuelTypes: FuelType[] = ['Petrol', 'Diesel', 'Electric', 'Hybrid'];
 const transmissions: Transmission[] = ['Manual', 'Automatic'];
-const priceTypes: PriceType[] = ['daily', 'monthly'];
+const priceTypes: PriceType[] = ['sale', 'daily'];
 
 const fallbackCreateCarImage = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=900&q=82';
 
 export const CreateCarPage: React.FC = () => {
   const [createdCar, setCreatedCar] = React.useState<Car | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [images, setImages] = React.useState<File[]>([]);
+  const imagePreviews = React.useMemo(() => images.map((image) => URL.createObjectURL(image)), [images]);
+
+  React.useEffect(() => () => {
+    imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+  }, [imagePreviews]);
 
   const { values, handleChange, handleSubmit, isSubmitting, reset } = useForm({
     brand: '',
@@ -28,19 +34,38 @@ export const CreateCarPage: React.FC = () => {
     year: new Date().getFullYear(),
     type: 'Sedan',
     price: 45,
-    priceType: 'daily',
+    priceType: 'sale',
     mileage: 0,
     fuelType: 'Petrol',
     transmission: 'Automatic',
     seats: 5,
     sellerName: '',
-    imageUrl: '',
+    createdByAccountID: 1,
     description: '',
     isAvailable: true,
   });
 
-  const imageUrl = String(values.imageUrl).trim();
-  const previewImage = imageUrl || fallbackCreateCarImage;
+  const previewImage = imagePreviews[0] || fallbackCreateCarImage;
+
+  const handleImagesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    setError(null);
+
+    if (files.length > 10) {
+      setError('Maximum 10 images are allowed.');
+      event.target.value = '';
+      return;
+    }
+
+    const invalidFile = files.find((file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024);
+    if (invalidFile) {
+      setError('Only JPEG, PNG, or WEBP images up to 5MB are allowed.');
+      event.target.value = '';
+      return;
+    }
+
+    setImages(files);
+  };
 
   const onSubmit = async () => {
     setError(null);
@@ -54,6 +79,7 @@ export const CreateCarPage: React.FC = () => {
     const price = Number(values.price);
     const mileage = Number(values.mileage);
     const seats = Number(values.seats);
+    const createdByAccountID = Number(values.createdByAccountID);
 
     if (!brand || !model || !description || !sellerName) {
       setError('Brand, model, seller name, and description are required.');
@@ -70,26 +96,35 @@ export const CreateCarPage: React.FC = () => {
       return;
     }
 
+    if (createdByAccountID <= 0) {
+      setError('Created by account ID is required.');
+      return;
+    }
+
     try {
-      const car = await carService.createCar({
-        brand,
-        model,
-        year,
-        type: values.type as CarType,
-        price,
-        priceType: values.priceType as PriceType,
-        mileage,
-        fuelType: values.fuelType as FuelType,
-        transmission: values.transmission as Transmission,
-        seats,
-        sellerName,
-        sellerId: 'mock-seller',
-        images: [previewImage],
-        description,
-        isAvailable: Boolean(values.isAvailable),
-      });
+      const priceType = values.priceType as PriceType;
+      const formData = new FormData();
+      formData.append('createdByAccountID', String(createdByAccountID));
+      formData.append('carTitle', `${year} ${brand} ${model}`);
+      formData.append('carBrand', brand);
+      formData.append('carModel', model);
+      formData.append('carYear', String(year));
+      formData.append('carMileage', String(mileage));
+      formData.append('carFuelType', values.fuelType as FuelType);
+      formData.append('carTransmission', values.transmission as Transmission);
+      formData.append('carBodyType', values.type as CarType);
+      formData.append('carDescription', description);
+      formData.append('isForSale', String(priceType === 'sale'));
+      formData.append('isForRent', String(priceType !== 'sale'));
+      formData.append('salePrice', priceType === 'sale' ? String(price) : '');
+      formData.append('rentalDailyPrice', priceType !== 'sale' ? String(price) : '');
+      formData.append('carStatus', Boolean(values.isAvailable) ? 'Available' : 'Inactive');
+      images.forEach((image) => formData.append('images', image));
+
+      const car = await carService.createCar(formData);
 
       setCreatedCar(car);
+      setImages([]);
       reset();
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to create car.'));
@@ -153,13 +188,13 @@ export const CreateCarPage: React.FC = () => {
                 <p className="eyebrow">Vehicle data</p>
                 <h2>Create car</h2>
               </div>
-              <span>Mock create</span>
+              <span>Drive upload</span>
             </div>
 
             {error && <div className="auth-alert" role="alert">{error}</div>}
             {createdCar && (
               <div className="owner-form-success" role="status">
-                {createdCar.brand} {createdCar.model} was created locally.
+                {createdCar.brand} {createdCar.model} was created.
               </div>
             )}
 
@@ -176,10 +211,17 @@ export const CreateCarPage: React.FC = () => {
                 </label>
               </div>
 
+              <div className="owner-form-grid owner-form-grid--three">
+                <label className="owner-field" htmlFor="createdByAccountID">
+                  <span>Created by account ID</span>
+                  <input id="createdByAccountID" type="number" name="createdByAccountID" value={values.createdByAccountID} onChange={handleChange} min={1} required />
+                </label>
+              </div>
+
               <div className="owner-image-row">
-                <label className="owner-field" htmlFor="imageUrl">
-                  <span>Image URL</span>
-                  <input id="imageUrl" name="imageUrl" value={values.imageUrl} onChange={handleChange} placeholder="https://example.com/car.jpg" />
+                <label className="owner-field" htmlFor="images">
+                  <span>Car photos</span>
+                  <input id="images" type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleImagesChange} />
                 </label>
 
                 <div className="owner-image-preview">
@@ -190,9 +232,17 @@ export const CreateCarPage: React.FC = () => {
                       event.currentTarget.src = fallbackCreateCarImage;
                     }}
                   />
-                  <span>Preview</span>
+                  <span>{images.length > 0 ? `${images.length} selected` : 'Preview'}</span>
                 </div>
               </div>
+
+              {imagePreviews.length > 1 && (
+                <div className="image-preview-grid">
+                  {imagePreviews.map((preview, index) => (
+                    <img key={preview} src={preview} alt={`Selected car ${index + 1}`} />
+                  ))}
+                </div>
+              )}
 
               <div className="owner-form-grid owner-form-grid--three">
                 <label className="owner-field" htmlFor="year">

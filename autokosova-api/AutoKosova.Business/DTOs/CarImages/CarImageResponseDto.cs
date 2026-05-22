@@ -8,6 +8,12 @@ namespace AutoKosova.Business.DTOs.CarImages
 
         public string CarImageUrl { get; set; } = string.Empty;
 
+        public string? CarImageOriginalFileName { get; set; }
+
+        public string? CarImageContentType { get; set; }
+
+        public long? CarImageSizeBytes { get; set; }
+
         public bool CarImageIsMain { get; set; }
 
         public int CarImageOrderNumber { get; set; }

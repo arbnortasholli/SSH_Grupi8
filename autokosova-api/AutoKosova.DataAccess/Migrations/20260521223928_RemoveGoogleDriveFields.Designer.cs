@@ -4,6 +4,7 @@ using AutoKosova.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoKosova.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260521223928_RemoveGoogleDriveFields")]
+    partial class RemoveGoogleDriveFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -123,16 +126,11 @@ namespace AutoKosova.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("TenantID")
-                        .HasColumnType("int");
-
                     b.HasKey("AccountID");
 
                     b.HasIndex("AccountDeletedByID");
 
                     b.HasIndex("AccountRoleID");
-
-                    b.HasIndex("TenantID");
 
                     b.ToTable("Accounts");
                 });
@@ -506,9 +504,6 @@ namespace AutoKosova.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TenantID"));
 
-                    b.Property<int?>("OwnerAccountID")
-                        .HasColumnType("int");
-
                     b.Property<string>("TenantAddress")
                         .HasColumnType("nvarchar(max)");
 
@@ -536,72 +531,7 @@ namespace AutoKosova.DataAccess.Migrations
 
                     b.HasKey("TenantID");
 
-                    b.HasIndex("OwnerAccountID");
-
                     b.ToTable("Tenants");
-                });
-
-            modelBuilder.Entity("AutoKosova.Entity.TenantRequest", b =>
-                {
-                    b.Property<int>("TenantRequestID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TenantRequestID"));
-
-                    b.Property<int>("AccountID")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AdminComment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessCity")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessPhoneNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("CreatedTenantID")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ReviewedByAccountID")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("TenantRequestID");
-
-                    b.HasIndex("AccountID");
-
-                    b.HasIndex("CreatedTenantID");
-
-                    b.HasIndex("ReviewedByAccountID");
-
-                    b.ToTable("TenantRequests");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.Account", b =>
@@ -617,16 +547,9 @@ namespace AutoKosova.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("AutoKosova.Entity.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantID")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.Navigation("AccountDeletedBy");
 
                     b.Navigation("AccountRole");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.AccountRolePermission", b =>
@@ -742,50 +665,11 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("AutoKosova.Entity.Tenant", b =>
-                {
-                    b.HasOne("AutoKosova.Entity.Account", "OwnerAccount")
-                        .WithMany()
-                        .HasForeignKey("OwnerAccountID")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("OwnerAccount");
-                });
-
-            modelBuilder.Entity("AutoKosova.Entity.TenantRequest", b =>
-                {
-                    b.HasOne("AutoKosova.Entity.Account", "Account")
-                        .WithMany("TenantRequests")
-                        .HasForeignKey("AccountID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("AutoKosova.Entity.Tenant", "CreatedTenant")
-                        .WithMany("TenantRequests")
-                        .HasForeignKey("CreatedTenantID")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("AutoKosova.Entity.Account", "ReviewedByAccount")
-                        .WithMany("ReviewedTenantRequests")
-                        .HasForeignKey("ReviewedByAccountID")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Account");
-
-                    b.Navigation("CreatedTenant");
-
-                    b.Navigation("ReviewedByAccount");
-                });
-
             modelBuilder.Entity("AutoKosova.Entity.Account", b =>
                 {
                     b.Navigation("CreatedCars");
 
                     b.Navigation("RentalBookings");
-
-                    b.Navigation("ReviewedTenantRequests");
-
-                    b.Navigation("TenantRequests");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.CarFeature", b =>
@@ -807,8 +691,6 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("Cars");
 
                     b.Navigation("RentalBookings");
-
-                    b.Navigation("TenantRequests");
                 });
 #pragma warning restore 612, 618
         }

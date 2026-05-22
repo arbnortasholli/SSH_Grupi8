@@ -1,3 +1,5 @@
+using AutoKosova.Business.DTOs.CarImages;
+
 namespace AutoKosova.Business.DTOs.Cars
 {
     public class CarDetailsResponseDto
@@ -41,5 +43,7 @@ namespace AutoKosova.Business.DTOs.Cars
         public DateTime CarCreationDate { get; set; }
 
         public DateTime? CarUpdatedDate { get; set; }
+
+        public List<CarImageResponseDto> Images { get; set; } = new();
     }
 }

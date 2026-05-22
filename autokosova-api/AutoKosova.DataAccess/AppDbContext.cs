@@ -92,6 +92,14 @@ namespace AutoKosova.DataAccess
                 .HasForeignKey(ci => ci.CarID)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<CarImage>()
+                .Property(ci => ci.CarImageOriginalFileName)
+                .HasMaxLength(255);
+
+            modelBuilder.Entity<CarImage>()
+                .Property(ci => ci.CarImageContentType)
+                .HasMaxLength(100);
+
             modelBuilder.Entity<CarFavorite>()
                 .HasOne(cf => cf.Account)
                 .WithMany()
