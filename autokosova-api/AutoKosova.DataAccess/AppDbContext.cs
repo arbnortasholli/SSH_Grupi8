@@ -16,6 +16,7 @@ namespace AutoKosova.DataAccess
         public DbSet<CarImage> CarImages { get; set; }
         public DbSet<RentalBooking> RentalBookings { get; set; }
         public DbSet<TenantRequest> TenantRequests { get; set; }
+        public DbSet<EmailQueue> EmailQueues { get; set; }
 
         public DbSet<CarFavorite> CarFavorites { get; set; }
 
@@ -149,6 +150,18 @@ namespace AutoKosova.DataAccess
                 .WithMany(a => a.RentalBookings)
                 .HasForeignKey(rb => rb.CustomerAccountID)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<EmailQueue>()
+                .Property(email => email.ToEmail)
+                .HasMaxLength(255);
+
+            modelBuilder.Entity<EmailQueue>()
+                .Property(email => email.Subject)
+                .HasMaxLength(255);
+
+            modelBuilder.Entity<EmailQueue>()
+                .Property(email => email.Status)
+                .HasMaxLength(50);
         }
     }
 }
