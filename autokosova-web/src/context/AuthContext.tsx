@@ -52,6 +52,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 firstName: response.accountName,
                 lastName: response.accountLastname,
             });
+
+            return response;
         } finally {
             setIsLoading(false);
         }

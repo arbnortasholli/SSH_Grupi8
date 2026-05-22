@@ -7,6 +7,8 @@ import { saleCars, type SaleCar } from '../data/carsDummyData';
 type ApiCar = {
     carsID?: number;
     CarsID?: number;
+    tenantID?: number | null;
+    TenantID?: number | null;
     carTitle?: string;
     CarTitle?: string;
     carBrand?: string;
@@ -139,6 +141,7 @@ const normalizeApiCar = (apiCar: ApiCar, images: string[] = [], features: ApiCar
 
     return {
         id,
+        tenantID: apiCar.tenantID ?? apiCar.TenantID ?? null,
         brand: apiCar.carBrand ?? apiCar.CarBrand ?? 'Unknown',
         model: apiCar.carModel ?? apiCar.CarModel ?? 'Unknown',
         year: apiCar.carYear ?? apiCar.CarYear ?? new Date().getFullYear(),
@@ -246,6 +249,7 @@ export const carService = {
             carBodyType: carData.bodyType ?? carData.type,
             carColor: carData.color,
             carDescription: carData.description,
+            tenantID: carData.tenantID,
             isForSale,
             salePrice: isForSale ? carData.price : null,
             isForRent: !isForSale,
@@ -294,12 +298,14 @@ export const carService = {
     },
 
     // Get seller's cars
-    getSellerCars: async (): Promise<Car[]> => {
+    getSellerCars: async (accountId?: number): Promise<Car[]> => {
         if (API_CONFIG.USE_MOCK_DATA) {
             return mockCarService.getSellerCars();
         }
-        const response = await apiClient.get('/cars/seller/my-cars');
-        return response.data;
+        const response = await apiClient.get<ApiCar[]>('/cars/my-cars', {
+            params: { accountId },
+        });
+        return response.data.map((car) => normalizeApiCar(car));
     },
 
     // Add to favorites

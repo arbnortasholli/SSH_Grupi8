@@ -5,20 +5,20 @@ import { useForm } from '../hooks/useForm';
 import { carService } from '../services/carService';
 import { getErrorMessage } from '../utils/helpers';
 import type { Car } from '../lib/types';
+import { useAuth } from '../hooks/useAuth';
 
 type CarType = Car['type'];
 type FuelType = Car['fuelType'];
 type Transmission = Car['transmission'];
-type PriceType = Car['priceType'];
 
 const carTypes: CarType[] = ['Sedan', 'SUV', 'Truck', 'Coupe', 'Hatchback', 'Van'];
 const fuelTypes: FuelType[] = ['Petrol', 'Diesel', 'Electric', 'Hybrid'];
 const transmissions: Transmission[] = ['Manual', 'Automatic'];
-const priceTypes: PriceType[] = ['sale', 'daily'];
 
 const fallbackCreateCarImage = 'https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&w=900&q=82';
 
 export const CreateCarPage: React.FC = () => {
+  const { user } = useAuth();
   const [createdCar, setCreatedCar] = React.useState<Car | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [images, setImages] = React.useState<File[]>([]);
@@ -34,13 +34,13 @@ export const CreateCarPage: React.FC = () => {
     year: new Date().getFullYear(),
     type: 'Sedan',
     price: 45,
-    priceType: 'sale',
+    priceType: 'daily',
     mileage: 0,
     fuelType: 'Petrol',
     transmission: 'Automatic',
     seats: 5,
-    sellerName: '',
-    createdByAccountID: 1,
+    sellerName: user?.tenantName || user?.accountName || '',
+    createdByAccountID: user?.accountID || 0,
     description: '',
     isAvailable: true,
   });
@@ -74,15 +74,15 @@ export const CreateCarPage: React.FC = () => {
     const brand = String(values.brand).trim();
     const model = String(values.model).trim();
     const description = String(values.description).trim();
-    const sellerName = String(values.sellerName).trim();
     const year = Number(values.year);
     const price = Number(values.price);
     const mileage = Number(values.mileage);
     const seats = Number(values.seats);
-    const createdByAccountID = Number(values.createdByAccountID);
+    const createdByAccountID = Number(user?.accountID ?? values.createdByAccountID);
+    const tenantID = Number(user?.tenantID);
 
-    if (!brand || !model || !description || !sellerName) {
-      setError('Brand, model, seller name, and description are required.');
+    if (!brand || !model || !description) {
+      setError('Brand, model, and description are required.');
       return;
     }
 
@@ -97,14 +97,19 @@ export const CreateCarPage: React.FC = () => {
     }
 
     if (createdByAccountID <= 0) {
-      setError('Created by account ID is required.');
+      setError('You must be logged in as a renter to add rental cars.');
+      return;
+    }
+
+    if (!tenantID || tenantID <= 0) {
+      setError('Your renter account is not linked to a tenant yet.');
       return;
     }
 
     try {
-      const priceType = values.priceType as PriceType;
       const formData = new FormData();
       formData.append('createdByAccountID', String(createdByAccountID));
+      formData.append('tenantID', String(tenantID));
       formData.append('carTitle', `${year} ${brand} ${model}`);
       formData.append('carBrand', brand);
       formData.append('carModel', model);
@@ -114,10 +119,10 @@ export const CreateCarPage: React.FC = () => {
       formData.append('carTransmission', values.transmission as Transmission);
       formData.append('carBodyType', values.type as CarType);
       formData.append('carDescription', description);
-      formData.append('isForSale', String(priceType === 'sale'));
-      formData.append('isForRent', String(priceType !== 'sale'));
-      formData.append('salePrice', priceType === 'sale' ? String(price) : '');
-      formData.append('rentalDailyPrice', priceType !== 'sale' ? String(price) : '');
+      formData.append('isForSale', 'false');
+      formData.append('isForRent', 'true');
+      formData.append('salePrice', '');
+      formData.append('rentalDailyPrice', String(price));
       formData.append('carStatus', Boolean(values.isAvailable) ? 'Available' : 'Inactive');
       images.forEach((image) => formData.append('images', image));
 
@@ -137,14 +142,13 @@ export const CreateCarPage: React.FC = () => {
         <div className="ak-container create-car-hero">
           <div>
             <p className="eyebrow">Create car</p>
-            <h1>Create a car record for the marketplace.</h1>
+            <h1>Add a car for rent.</h1>
             <p>
-              Add the vehicle data in the same shape the frontend services use now. In mock mode, the car is created
-              locally and can later be wired to the backend database.
+              Renter accounts can publish cars for rental only. Sale listings are managed outside this renter flow.
             </p>
             <div className="hero-actions">
               <a href="#create-car-form" className="ak-button ak-button--primary">Create car</a>
-              <Button to="/rent-your-car" variant="secondary">Rent your car</Button>
+              <Button to="/seller" variant="secondary">My rental cars</Button>
             </div>
           </div>
 
@@ -159,7 +163,7 @@ export const CreateCarPage: React.FC = () => {
             <div>
               <span>{values.year || 'Year'}</span>
               <strong>{values.brand || 'Brand'} {values.model || 'Model'}</strong>
-              <p>{values.price || 0} EUR / {values.priceType}</p>
+              <p>{values.price || 0} EUR / day</p>
             </div>
           </aside>
         </div>
@@ -168,15 +172,14 @@ export const CreateCarPage: React.FC = () => {
       <section className="ak-section ak-section--soft">
         <div className="ak-container create-car-shell">
           <aside className="owner-listing-copy">
-            <p className="eyebrow">Mock database flow</p>
-            <h2>Ready for API connection later.</h2>
+            <p className="eyebrow">Rental listing</p>
+            <h2>Only rental cars can be created here.</h2>
             <p>
-              This form calls the existing `carService.createCar` method. With mock data enabled it creates a local
-              record; when the backend is connected, the same flow can post to the API.
+              Your account and tenant are taken from the logged-in renter profile, so the car is connected to your rental business.
             </p>
             <div className="reason-list">
-              <div>Uses the existing car service layer</div>
-              <div>Matches the current frontend car type</div>
+              <div>Creates rental cars only</div>
+              <div>Uses your tenant automatically</div>
               <div>Includes image preview and availability</div>
               <div>Validates required fields before submit</div>
             </div>
@@ -186,9 +189,9 @@ export const CreateCarPage: React.FC = () => {
             <div className="owner-form-heading">
               <div>
                 <p className="eyebrow">Vehicle data</p>
-                <h2>Create car</h2>
+                <h2>Add rental car</h2>
               </div>
-              <span>Drive upload</span>
+              <span>Rental only</span>
             </div>
 
             {error && <div className="auth-alert" role="alert">{error}</div>}
@@ -208,13 +211,6 @@ export const CreateCarPage: React.FC = () => {
                 <label className="owner-field" htmlFor="model">
                   <span>Model</span>
                   <input id="model" name="model" value={values.model} onChange={handleChange} placeholder="C-Class" required />
-                </label>
-              </div>
-
-              <div className="owner-form-grid owner-form-grid--three">
-                <label className="owner-field" htmlFor="createdByAccountID">
-                  <span>Created by account ID</span>
-                  <input id="createdByAccountID" type="number" name="createdByAccountID" value={values.createdByAccountID} onChange={handleChange} min={1} required />
                 </label>
               </div>
 
@@ -251,16 +247,14 @@ export const CreateCarPage: React.FC = () => {
                 </label>
 
                 <label className="owner-field" htmlFor="price">
-                  <span>Price</span>
+                  <span>Daily rental price</span>
                   <input id="price" type="number" name="price" value={values.price} onChange={handleChange} min={1} required />
                 </label>
 
-                <label className="owner-field" htmlFor="priceType">
-                  <span>Price type</span>
-                  <select id="priceType" name="priceType" value={values.priceType} onChange={handleChange}>
-                    {priceTypes.map((priceType) => <option key={priceType} value={priceType}>{priceType}</option>)}
-                  </select>
-                </label>
+                <div className="owner-field">
+                  <span>Listing type</span>
+                  <input value="Rental only" readOnly />
+                </div>
               </div>
 
               <div className="owner-form-grid owner-form-grid--three">
@@ -303,11 +297,6 @@ export const CreateCarPage: React.FC = () => {
                 </label>
               </div>
 
-              <label className="owner-field" htmlFor="sellerName">
-                <span>Seller name</span>
-                <input id="sellerName" name="sellerName" value={values.sellerName} onChange={handleChange} placeholder="AutoKosova Owner" required />
-              </label>
-
               <label className="owner-field" htmlFor="description">
                 <span>Description</span>
                 <textarea
@@ -321,9 +310,9 @@ export const CreateCarPage: React.FC = () => {
               </label>
 
               <div className="create-car-actions">
-                <Link to="/rent" className="ak-button ak-button--secondary">View marketplace</Link>
+                <Link to="/seller" className="ak-button ak-button--secondary">Back to my cars</Link>
                 <button type="submit" className="auth-submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating car...' : 'Create car'}
+                  {isSubmitting ? 'Creating rental car...' : 'Add rental car'}
                 </button>
               </div>
             </form>
