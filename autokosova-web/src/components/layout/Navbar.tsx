@@ -12,11 +12,19 @@ export const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
+  const isSeller = user?.role === 'Seller';
+  const isSuperAdmin = user?.role === 'SuperAdmin';
   const canRequestTenant = isAuthenticated && !user?.tenantID && user?.role !== 'Seller' && user?.role !== 'SuperAdmin';
-  const canListCars = !isAuthenticated || user?.role === 'Seller' || user?.role === 'SuperAdmin';
-  const accountLink = user?.role === 'Seller'
+  const canListCars = !isAuthenticated || isSuperAdmin;
+  const visibleNavLinks = isSeller
+    ? [
+      { to: '/seller', label: 'My cars' },
+      { to: '/seller/add-car', label: 'Add rental car' },
+    ]
+    : navLinks;
+  const accountLink = isSeller
     ? { to: '/seller', label: 'My cars' }
-    : user?.role === 'SuperAdmin'
+    : isSuperAdmin
       ? { to: '/dashboard', label: 'Admin area' }
       : { to: '/dashboard', label: 'My rentals' };
 
@@ -34,7 +42,7 @@ export const Navbar: React.FC = () => {
         </Link>
 
         <nav className="nav-links" aria-label="Main navigation">
-          {navLinks.map((link) => (
+          {visibleNavLinks.map((link) => (
             <NavLink key={link.to} to={link.to} className={({ isActive }) => (isActive ? 'active' : undefined)}>
               {link.label}
             </NavLink>
@@ -54,9 +62,11 @@ export const Navbar: React.FC = () => {
                   Tenant request
                 </Link>
               )}
-              <Link to={accountLink.to} className="nav-login">
-                {accountLink.label}
-              </Link>
+              {!isSeller && (
+                <Link to={accountLink.to} className="nav-login">
+                  {accountLink.label}
+                </Link>
+              )}
               <button type="button" className="nav-logout" onClick={handleLogout}>
                 Logout
               </button>
@@ -82,7 +92,7 @@ export const Navbar: React.FC = () => {
 
       {isOpen && (
         <div className="mobile-nav ak-container">
-          {navLinks.map((link) => (
+          {visibleNavLinks.map((link) => (
             <NavLink key={link.to} to={link.to} onClick={() => setIsOpen(false)}>
               {link.label}
             </NavLink>
@@ -100,9 +110,11 @@ export const Navbar: React.FC = () => {
                     Tenant request
                   </Link>
                 )}
-                <Link to={accountLink.to} onClick={() => setIsOpen(false)}>
-                  {accountLink.label}
-                </Link>
+                {!isSeller && (
+                  <Link to={accountLink.to} onClick={() => setIsOpen(false)}>
+                    {accountLink.label}
+                  </Link>
+                )}
                 <button type="button" onClick={handleLogout}>
                   Logout
                 </button>

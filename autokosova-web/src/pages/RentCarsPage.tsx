@@ -5,12 +5,36 @@ import { Button } from '../components/common/Button';
 import { EmptyState } from '../components/common/EmptyState';
 import { SectionHeader } from '../components/common/SectionHeader';
 import { RentSearchForm } from '../components/search/RentSearchForm';
-import { rentalCars } from '../data/rentalCarsDummyData';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import type { Car } from '../lib/types';
+import { carService } from '../services/carService';
+import { getErrorMessage } from '../utils/helpers';
 
 const categories = ['Economy', 'SUV', 'Luxury', 'Family', 'Electric', 'Van'];
 
 export const RentCarsPage: React.FC = () => {
   const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const [rentalCars, setRentalCars] = React.useState<Car[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const loadCars = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const rentals = await carService.getCarsForRent();
+        setRentalCars(rentals);
+      } catch (err: unknown) {
+        setError(getErrorMessage(err, 'Failed to load rental cars.'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadCars();
+  }, []);
 
   return (
     <div className="page marketplace-page rental-page">
@@ -65,7 +89,11 @@ export const RentCarsPage: React.FC = () => {
             title="Available rentals"
             description="Compare daily price, host, rating, trips, seats, and pickup location."
           />
-          {rentalCars.length > 0 ? (
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : error ? (
+            <EmptyState title="Could not load rentals" description={error} />
+          ) : rentalCars.length > 0 ? (
             <div className="card-grid rental-card-grid">
               {rentalCars.map((car) => (
                 <RentalCarCard key={car.id} car={car} />

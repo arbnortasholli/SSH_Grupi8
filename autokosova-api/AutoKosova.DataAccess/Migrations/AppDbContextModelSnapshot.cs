@@ -399,9 +399,11 @@ namespace AutoKosova.DataAccess.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal?>("RentalDailyPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("SalePrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("TenantID")
@@ -414,6 +416,216 @@ namespace AutoKosova.DataAccess.Migrations
                     b.HasIndex("TenantID");
 
                     b.ToTable("Cars");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.EmailQueue", b =>
+                {
+                    b.Property<int>("EmailQueueID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EmailQueueID"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ToEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("EmailQueueID");
+
+                    b.ToTable("EmailQueues");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.PaymentEvent", b =>
+                {
+                    b.Property<int>("PaymentEventID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentEventID"));
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PaymentOrderID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ProcessedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ReceivedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("StripeCheckoutSessionID")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("StripeEventID")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("StripePaymentIntentID")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("PaymentEventID");
+
+                    b.HasIndex("PaymentOrderID");
+
+                    b.HasIndex("StripeEventID")
+                        .IsUnique();
+
+                    b.ToTable("PaymentEvents");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.PaymentOrder", b =>
+                {
+                    b.Property<int>("PaymentOrderID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentOrderID"));
+
+                    b.Property<int>("AccountID")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("CancelledDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime?>("FailedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PaidDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentProvider")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("PaymentStatusID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RentalBookingID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StripeCheckoutSessionID")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("StripePaymentIntentID")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("PaymentOrderID");
+
+                    b.HasIndex("AccountID");
+
+                    b.HasIndex("PaymentStatusID");
+
+                    b.HasIndex("RentalBookingID");
+
+                    b.ToTable("PaymentOrders");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.PaymentStatus", b =>
+                {
+                    b.Property<int>("PaymentStatusID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentStatusID"));
+
+                    b.Property<string>("PaymentStatusDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentStatusName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("PaymentStatusID");
+
+                    b.HasIndex("PaymentStatusName")
+                        .IsUnique();
+
+                    b.ToTable("PaymentStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            PaymentStatusID = 1,
+                            PaymentStatusDescription = "Payment is waiting to be completed.",
+                            PaymentStatusName = "Pending"
+                        },
+                        new
+                        {
+                            PaymentStatusID = 2,
+                            PaymentStatusDescription = "Payment was completed successfully.",
+                            PaymentStatusName = "Paid"
+                        },
+                        new
+                        {
+                            PaymentStatusID = 3,
+                            PaymentStatusDescription = "Payment failed.",
+                            PaymentStatusName = "Failed"
+                        },
+                        new
+                        {
+                            PaymentStatusID = 4,
+                            PaymentStatusDescription = "Payment was cancelled.",
+                            PaymentStatusName = "Cancelled"
+                        },
+                        new
+                        {
+                            PaymentStatusID = 5,
+                            PaymentStatusDescription = "Payment was refunded.",
+                            PaymentStatusName = "Refunded"
+                        });
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.Permission", b =>
@@ -460,6 +672,7 @@ namespace AutoKosova.DataAccess.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("RentalBookingDailyPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("RentalBookingDeleted")
@@ -476,9 +689,11 @@ namespace AutoKosova.DataAccess.Migrations
 
                     b.Property<string>("RentalBookingStatus")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("RentalBookingTotalPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("RentalBookingUpdatedDate")
@@ -496,6 +711,56 @@ namespace AutoKosova.DataAccess.Migrations
                     b.HasIndex("TenantID");
 
                     b.ToTable("RentalBookings");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.RentalBookingStatus", b =>
+                {
+                    b.Property<int>("RentalBookingStatusID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RentalBookingStatusID"));
+
+                    b.Property<string>("RentalBookingStatusDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RentalBookingStatusName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("RentalBookingStatusID");
+
+                    b.HasIndex("RentalBookingStatusName")
+                        .IsUnique();
+
+                    b.ToTable("RentalBookingStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            RentalBookingStatusID = 1,
+                            RentalBookingStatusDescription = "Booking is waiting for payment.",
+                            RentalBookingStatusName = "PendingPayment"
+                        },
+                        new
+                        {
+                            RentalBookingStatusID = 2,
+                            RentalBookingStatusDescription = "Booking payment is confirmed.",
+                            RentalBookingStatusName = "Confirmed"
+                        },
+                        new
+                        {
+                            RentalBookingStatusID = 3,
+                            RentalBookingStatusDescription = "Booking has been cancelled.",
+                            RentalBookingStatusName = "Cancelled"
+                        },
+                        new
+                        {
+                            RentalBookingStatusID = 4,
+                            RentalBookingStatusDescription = "Booking has been completed.",
+                            RentalBookingStatusName = "Completed"
+                        });
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.Tenant", b =>
@@ -715,6 +980,43 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("AutoKosova.Entity.PaymentEvent", b =>
+                {
+                    b.HasOne("AutoKosova.Entity.PaymentOrder", "PaymentOrder")
+                        .WithMany()
+                        .HasForeignKey("PaymentOrderID")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("PaymentOrder");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.PaymentOrder", b =>
+                {
+                    b.HasOne("AutoKosova.Entity.Account", "Account")
+                        .WithMany("PaymentOrders")
+                        .HasForeignKey("AccountID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AutoKosova.Entity.PaymentStatus", "PaymentStatus")
+                        .WithMany("PaymentOrders")
+                        .HasForeignKey("PaymentStatusID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AutoKosova.Entity.RentalBooking", "RentalBooking")
+                        .WithMany("PaymentOrders")
+                        .HasForeignKey("RentalBookingID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("PaymentStatus");
+
+                    b.Navigation("RentalBooking");
+                });
+
             modelBuilder.Entity("AutoKosova.Entity.RentalBooking", b =>
                 {
                     b.HasOne("AutoKosova.Entity.Cars", "Car")
@@ -781,6 +1083,8 @@ namespace AutoKosova.DataAccess.Migrations
                 {
                     b.Navigation("CreatedCars");
 
+                    b.Navigation("PaymentOrders");
+
                     b.Navigation("RentalBookings");
 
                     b.Navigation("ReviewedTenantRequests");
@@ -800,6 +1104,16 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("CarImages");
 
                     b.Navigation("RentalBookings");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.PaymentStatus", b =>
+                {
+                    b.Navigation("PaymentOrders");
+                });
+
+            modelBuilder.Entity("AutoKosova.Entity.RentalBooking", b =>
+                {
+                    b.Navigation("PaymentOrders");
                 });
 
             modelBuilder.Entity("AutoKosova.Entity.Tenant", b =>

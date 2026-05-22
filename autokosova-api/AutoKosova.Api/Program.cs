@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using AutoKosova.Api.Authorization;
+using AutoKosova.Api.BackgroundJobs;
+using AutoKosova.Business.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -74,6 +76,10 @@ builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<AccountRolePermissionService>();
 builder.Services.AddScoped<TenantRequestService>();
 builder.Services.AddScoped<TenantService>();
+builder.Services.AddScoped<EmailQueueService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient<PaymentService>();
+builder.Services.AddHostedService<EmailQueueWorker>();
 // JWT settings
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
@@ -140,6 +146,10 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+
     app.UseSwagger();
 
     app.UseSwaggerUI(options =>
