@@ -27,8 +27,8 @@ export const LoginPage: React.FC = () => {
     }
 
     try {
-      await login(emailOrUsername, password);
-      navigate('/');
+      const authData = await login(emailOrUsername, password);
+      navigate(authData.role === 'Seller' ? '/seller' : '/');
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Login failed.'));
     }

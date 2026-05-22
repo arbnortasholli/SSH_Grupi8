@@ -62,6 +62,7 @@ export interface User {
 // Car types
 export interface Car {
     id: string;
+    tenantID?: number | null;
     brand: string;
     model: string;
     year: number;

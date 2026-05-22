@@ -25,7 +25,14 @@ export const AppRoutes: React.FC = () => (
         <Route path="/" element={<MainLayout><HomePage /></MainLayout>} />
         <Route path="/buy" element={<MainLayout><BuyCarsPage /></MainLayout>} />
         <Route path="/rent" element={<MainLayout><RentCarsPage /></MainLayout>} />
-        <Route path="/create-car" element={<MainLayout><CreateCarPage /></MainLayout>} />
+        <Route
+          path="/create-car"
+          element={
+            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
+              <MainLayout><CreateCarPage /></MainLayout>
+            </ProtectedRoute>
+          }
+        />
         <Route path="/rent-your-car" element={<MainLayout><RentYourCarPage /></MainLayout>} />
         <Route path="/login" element={<MainLayout><LoginPage /></MainLayout>} />
         <Route path="/register" element={<MainLayout><RegisterPage /></MainLayout>} />
@@ -54,7 +61,7 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/seller/add-car"
           element={
-            <ProtectedRoute requiredRoles={['Seller', 'Admin']}>
+            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
               <MainLayout><CreateCarPage /></MainLayout>
             </ProtectedRoute>
           }
@@ -62,7 +69,7 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/seller/edit-car/:id"
           element={
-            <ProtectedRoute requiredRoles={['Seller', 'Admin']}>
+            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
               <MainLayout><EditCarPage /></MainLayout>
             </ProtectedRoute>
           }

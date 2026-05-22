@@ -25,7 +25,7 @@ const toFormState = (car: Car): FormState => ({
   year: car.year,
   bodyType: car.bodyType ?? car.type,
   price: car.price,
-  priceType: car.priceType === 'sale' ? 'sale' : 'daily',
+  priceType: 'daily',
   mileage: car.mileage,
   fuelType: car.fuelType,
   transmission: car.transmission,
@@ -105,7 +105,8 @@ export const EditCarPage: React.FC = () => {
         type: form.bodyType as Car['type'],
         bodyType: form.bodyType,
         price: Number(form.price),
-        priceType: form.priceType,
+        priceType: 'daily',
+        tenantID: car.tenantID,
         mileage: Number(form.mileage),
         fuelType: form.fuelType,
         transmission: form.transmission,
@@ -191,16 +192,13 @@ export const EditCarPage: React.FC = () => {
                 <input type="number" name="year" value={form.year} onChange={handleChange} min={1950} required />
               </label>
               <label className="owner-field">
-                <span>Price</span>
+                <span>Daily rental price</span>
                 <input type="number" name="price" value={form.price} onChange={handleChange} min={1} required />
               </label>
-              <label className="owner-field">
-                <span>Price type</span>
-                <select name="priceType" value={form.priceType} onChange={handleChange}>
-                  <option value="sale">sale</option>
-                  <option value="daily">daily</option>
-                </select>
-              </label>
+              <div className="owner-field">
+                <span>Listing type</span>
+                <input value="Rental only" readOnly />
+              </div>
             </div>
 
             <div className="owner-form-grid owner-form-grid--three">
