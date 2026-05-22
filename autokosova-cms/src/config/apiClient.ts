@@ -18,7 +18,6 @@ apiClient.interceptors.request.use(
         if (config.data instanceof FormData) {
             delete config.headers['Content-Type'];
         }
-
         return config;
     },
     (error) => {

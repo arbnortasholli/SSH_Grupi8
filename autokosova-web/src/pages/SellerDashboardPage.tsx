@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Car } from '../lib/types';
 import { carService } from '../services/carService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatCurrency, getErrorMessage } from '../utils/helpers';
+import { useAuth } from '../hooks/useAuth';
 
 export const SellerDashboardPage: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [cars, setCars] = useState<Car[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -16,14 +18,19 @@ export const SellerDashboardPage: React.FC = () => {
         await Promise.resolve();
         setIsLoading(true);
         try {
-            const data = await carService.getSellerCars();
-            setCars(data);
+            if (!user?.accountID) {
+                setCars([]);
+                return;
+            }
+
+            const data = await carService.getSellerCars(user.accountID);
+            setCars(data.filter((car) => car.priceType !== 'sale'));
         } catch (err: unknown) {
             setError(getErrorMessage(err, 'Failed to load cars'));
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [user?.accountID]);
 
     useEffect(() => {
         queueMicrotask(() => {
@@ -36,107 +43,118 @@ export const SellerDashboardPage: React.FC = () => {
 
         try {
             await carService.deleteCar(carId);
-            setCars((currentCars) => currentCars.filter(car => car.id !== carId));
+            setCars((currentCars) => currentCars.filter((car) => car.id !== carId));
         } catch (err: unknown) {
             alert(getErrorMessage(err, 'Failed to delete car'));
         }
     };
 
+    const availableCars = cars.filter((car) => car.isAvailable).length;
+    const inactiveCars = cars.length - availableCars;
+
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">Seller Dashboard</h1>
+        <div className="renter-dashboard-page">
+            <section className="renter-dashboard-hero">
+                <div>
+                    <p className="eyebrow">Renter workspace</p>
+                    <h1>Rental Dashboard</h1>
+                    <p>Manage the cars your tenant offers for rent. Sale listings are not available in this renter flow.</p>
+                </div>
                 <button
+                    type="button"
                     onClick={() => navigate('/seller/add-car')}
-                    className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition"
+                    className="ak-button ak-button--primary"
                 >
-                    + Add New Car
+                    Add Rental Car
                 </button>
-            </div>
+            </section>
+
+            <section className="renter-dashboard-stats" aria-label="Rental car summary">
+                <div>
+                    <span>Total cars</span>
+                    <strong>{cars.length}</strong>
+                </div>
+                <div>
+                    <span>Available</span>
+                    <strong>{availableCars}</strong>
+                </div>
+                <div>
+                    <span>Inactive</span>
+                    <strong>{inactiveCars}</strong>
+                </div>
+            </section>
 
             {error && (
-                <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                <div className="auth-alert" role="alert">
                     {error}
                 </div>
             )}
 
-            {/* Tabs */}
-            <div className="flex gap-4 border-b border-gray-200 mb-8">
+            <div className="renter-dashboard-tabs">
                 <button
+                    type="button"
                     onClick={() => setSelectedTab('cars')}
-                    className={`px-4 py-2 font-medium transition ${selectedTab === 'cars'
-                        ? 'border-b-2 border-primary text-primary'
-                        : 'text-gray-600 hover:text-gray-800'
-                        }`}
+                    className={selectedTab === 'cars' ? 'active' : undefined}
                 >
-                    My Cars ({cars.length})
+                    My Rental Cars ({cars.length})
                 </button>
                 <button
+                    type="button"
                     onClick={() => setSelectedTab('bookings')}
-                    className={`px-4 py-2 font-medium transition ${selectedTab === 'bookings'
-                        ? 'border-b-2 border-primary text-primary'
-                        : 'text-gray-600 hover:text-gray-800'
-                        }`}
+                    className={selectedTab === 'bookings' ? 'active' : undefined}
                 >
                     Bookings
                 </button>
             </div>
 
-            {/* Cars Tab */}
             {selectedTab === 'cars' && (
                 <>
                     {isLoading ? (
                         <LoadingSpinner />
                     ) : cars.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full bg-white rounded-lg shadow-md">
-                                <thead className="bg-gray-100 border-b border-gray-200">
+                        <div className="renter-table-card">
+                            <table className="renter-cars-table">
+                                <thead>
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Car</th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Price</th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Availability</th>
-                                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                                        <th>Car</th>
+                                        <th>Price</th>
+                                        <th>Availability</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {cars.map((car) => (
-                                        <tr key={car.id} className="border-b border-gray-200 hover:bg-gray-50">
-                                            <td className="px-6 py-4">
-                                                <div>
-                                                    <p className="font-semibold text-gray-800">
-                                                        {car.year} {car.brand} {car.model}
-                                                    </p>
-                                                    <p className="text-sm text-gray-500">{car.type}</p>
+                                        <tr key={car.id}>
+                                            <td>
+                                                <div className="renter-car-cell">
+                                                    <div className="renter-car-thumb">
+                                                        {car.images[0] ? (
+                                                            <img src={car.images[0]} alt={`${car.brand} ${car.model}`} />
+                                                        ) : (
+                                                            <span>{car.brand.slice(0, 1)}{car.model.slice(0, 1)}</span>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <strong>{car.year} {car.brand} {car.model}</strong>
+                                                        <span>{car.type}</span>
+                                                    </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <p className="font-semibold text-gray-800">
-                                                    {formatCurrency(car.price)} / {car.priceType}
-                                                </p>
+                                            <td>
+                                                <strong className="renter-price">{formatCurrency(car.price)}</strong>
+                                                <span className="renter-muted">per day</span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span
-                                                    className={`px-3 py-1 rounded-full text-sm font-medium ${car.isAvailable
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                        }`}
-                                                >
+                                            <td>
+                                                <span className={car.isAvailable ? 'renter-status available' : 'renter-status inactive'}>
                                                     {car.isAvailable ? 'Available' : 'Unavailable'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => navigate(`/seller/edit-car/${car.id}`)}
-                                                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                                                    >
+                                            <td>
+                                                <div className="renter-table-actions">
+                                                    <button type="button" onClick={() => navigate(`/seller/edit-car/${car.id}`)}>
                                                         Edit
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDeleteCar(car.id)}
-                                                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                                                    >
+                                                    <button type="button" className="danger" onClick={() => handleDeleteCar(car.id)}>
                                                         Delete
                                                     </button>
                                                 </div>
@@ -147,23 +165,27 @@ export const SellerDashboardPage: React.FC = () => {
                             </table>
                         </div>
                     ) : (
-                        <div className="text-center py-12">
-                            <p className="text-gray-600 text-lg mb-4">No cars listed yet</p>
+                        <div className="empty-state renter-empty">
+                            <div className="empty-state__mark">AK</div>
+                            <h3>No rental cars listed yet</h3>
+                            <p>Add your first car for rent and it will appear here with price, status, and actions.</p>
                             <button
+                                type="button"
                                 onClick={() => navigate('/seller/add-car')}
-                                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700"
+                                className="ak-button ak-button--primary"
                             >
-                                Add Your First Car
+                                Add Your First Rental Car
                             </button>
                         </div>
                     )}
                 </>
             )}
 
-            {/* Bookings Tab */}
             {selectedTab === 'bookings' && (
-                <div className="text-center py-12">
-                    <p className="text-gray-600 text-lg">Bookings for your cars will appear here</p>
+                <div className="empty-state renter-empty">
+                    <div className="empty-state__mark">BK</div>
+                    <h3>No booking panel yet</h3>
+                    <p>Bookings for your rental cars will appear here after the booking flow is connected.</p>
                 </div>
             )}
         </div>

@@ -322,7 +322,7 @@ export const mockBookings: Booking[] = [
         startDate: '2024-02-10',
         endDate: '2024-02-15',
         totalPrice: 325,
-        status: 'Pending',
+        status: 'PendingPayment',
         createdAt: '2024-01-29T10:15:00Z',
     },
     {

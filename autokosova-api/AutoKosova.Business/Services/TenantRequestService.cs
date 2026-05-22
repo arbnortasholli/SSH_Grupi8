@@ -12,10 +12,12 @@ namespace AutoKosova.Business.Services
         private const string Rejected = "Rejected";
 
         private readonly AppDbContext _context;
+        private readonly EmailQueueService _emailQueueService;
 
-        public TenantRequestService(AppDbContext context)
+        public TenantRequestService(AppDbContext context, EmailQueueService emailQueueService)
         {
             _context = context;
+            _emailQueueService = emailQueueService;
         }
 
         public async Task<ServiceResult<TenantRequestResponseDto>> CreateAsync(int accountId, TenantRequestCreateDto dto)
@@ -176,6 +178,8 @@ namespace AutoKosova.Business.Services
                     request.CreatedTenantID = tenant.TenantID;
                 }
 
+                await QueueReviewEmailAsync(request, status);
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
@@ -189,6 +193,38 @@ namespace AutoKosova.Business.Services
             await _context.Entry(request).Reference(x => x.CreatedTenant).LoadAsync();
 
             return ServiceResult<TenantRequestResponseDto>.Success(ToResponseDto(request), "Tenant request reviewed successfully.");
+        }
+
+        private async Task QueueReviewEmailAsync(TenantRequest request, string status)
+        {
+            if (request.Account == null || string.IsNullOrWhiteSpace(request.Account.AccountEmail))
+            {
+                return;
+            }
+
+            if (status == Approved)
+            {
+                await _emailQueueService.EnqueueAsync(
+                    request.Account.AccountEmail,
+                    "Tenant request approved",
+                    $"Pershendetje {request.Account.AccountName}, kerkesa juaj per tenant \"{request.BusinessName}\" eshte aprovuar. Tani mund te shtoni vetura per qira ne AutoKosova."
+                );
+
+                return;
+            }
+
+            await _emailQueueService.EnqueueAsync(
+                request.Account.AccountEmail,
+                "Tenant request rejected",
+                $"Pershendetje {request.Account.AccountName}, kerkesa juaj per tenant \"{request.BusinessName}\" nuk eshte aprovuar.{BuildAdminCommentText(request.AdminComment)}"
+            );
+        }
+
+        private static string BuildAdminCommentText(string? adminComment)
+        {
+            return string.IsNullOrWhiteSpace(adminComment)
+                ? string.Empty
+                : $" Arsyeja: {adminComment.Trim()}";
         }
 
         private IQueryable<TenantRequest> BaseQuery()

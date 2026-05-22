@@ -27,7 +27,7 @@ export const mockBookingService = {
             startDate: bookingData.startDate,
             endDate: bookingData.endDate,
             totalPrice,
-            status: 'Pending',
+            status: 'PendingPayment',
             createdAt: new Date().toISOString(),
         };
 
