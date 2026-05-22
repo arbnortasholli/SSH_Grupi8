@@ -86,7 +86,9 @@ textarea {
 }
 
 .nav-login,
-.nav-register {
+.nav-register,
+.nav-tenant,
+.nav-logout {
   min-height: 38px;
   display: inline-flex;
   align-items: center;
@@ -104,6 +106,26 @@ textarea {
 .nav-register {
   background: #0f4c81;
   color: white;
+}
+
+.nav-tenant {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #0f4c81;
+}
+
+.nav-tenant:hover {
+  background: #dbeafe;
+}
+
+.nav-logout {
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #b91c1c;
+}
+
+.nav-logout:hover {
+  background: #fef2f2;
 }
 
 .nav-toggle {
@@ -1212,24 +1234,51 @@ textarea {
   font-weight: 850;
 }
 
-.auth-field input {
+.auth-field input,
+.auth-field textarea {
   width: 100%;
-  min-height: 46px;
   border: 1px solid #d1d8e3;
   border-radius: 10px;
   background: #ffffff;
   color: #111827;
-  padding: 0 13px;
   outline: 0;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.auth-field input:focus {
+.auth-field input {
+  min-height: 46px;
+  padding: 0 13px;
+}
+
+.auth-field textarea {
+  min-height: 132px;
+  padding: 13px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.auth-field--message {
+  border: 1px solid #e5eef8;
+  border-radius: 14px;
+  background: #f8fbff;
+  padding: 12px;
+}
+
+.auth-field--message small {
+  justify-self: end;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.auth-field input:focus,
+.auth-field textarea:focus {
   border-color: #0f4c81;
   box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.12);
 }
 
-.auth-field input::placeholder {
+.auth-field input::placeholder,
+.auth-field textarea::placeholder {
   color: #9ca3af;
 }
 
@@ -2737,12 +2786,14 @@ textarea {
     padding-bottom: 14px;
   }
 
-  .mobile-nav a {
+  .mobile-nav a,
+  .mobile-nav button {
     border-radius: 9px;
     background: #f5f7fb;
     padding: 11px;
     color: #111827;
     font-weight: 750;
+    text-align: left;
   }
 
   .mobile-nav__actions {

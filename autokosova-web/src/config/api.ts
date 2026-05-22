@@ -22,14 +22,14 @@ export const DEMO_ACCOUNTS = {
         password: 'password',
         role: 'Seller',
     },
-    user: {
-        email: 'user@autokosova.com',
+    customer: {
+        email: 'customer@autokosova.com',
         password: 'password',
-        role: 'User',
+        role: 'Customer',
     },
-    admin: {
-        email: 'admin@autokosova.com',
+    superAdmin: {
+        email: 'superadmin@autokosova.com',
         password: 'password',
-        role: 'Admin',
+        role: 'SuperAdmin',
     },
 };

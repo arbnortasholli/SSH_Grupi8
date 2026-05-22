@@ -21,11 +21,14 @@ namespace AutoKosova.Business.Services
             var accounts = await _context.Accounts
                 .AsNoTracking()
                 .Include(x => x.AccountRole)
+                .Include(x => x.Tenant)
                 .Where(x => !x.AccountDeleted)
                 .Select(x => new AccountResponseDto
                 {
                     AccountID = x.AccountID,
                     AccountRoleID = x.AccountRoleID,
+                    TenantID = x.TenantID,
+                    TenantName = x.Tenant != null ? x.Tenant.TenantName : null,
                     Role = x.AccountRole != null ? x.AccountRole.AccountRoleName : null,
                     AccountUsername = x.AccountUsername,
                     AccountEmail = x.AccountEmail,
@@ -47,11 +50,14 @@ namespace AutoKosova.Business.Services
             var account = await _context.Accounts
                 .AsNoTracking()
                 .Include(x => x.AccountRole)
+                .Include(x => x.Tenant)
                 .Where(x => x.AccountID == id && !x.AccountDeleted)
                 .Select(x => new AccountResponseDto
                 {
                     AccountID = x.AccountID,
                     AccountRoleID = x.AccountRoleID,
+                    TenantID = x.TenantID,
+                    TenantName = x.Tenant != null ? x.Tenant.TenantName : null,
                     Role = x.AccountRole != null ? x.AccountRole.AccountRoleName : null,
                     AccountUsername = x.AccountUsername,
                     AccountEmail = x.AccountEmail,
@@ -106,11 +112,18 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<AccountResponseDto>.BadRequest("Invalid account role.");
             }
 
+            var tenantValidationError = await ValidateTenantAsync(dto.TenantID);
+            if (tenantValidationError != null)
+            {
+                return ServiceResult<AccountResponseDto>.BadRequest(tenantValidationError);
+            }
+
             _passwordService.CreatePasswordHash(dto.Password, out var passwordHash, out var passwordSalt);
 
             var account = new Account
             {
                 AccountRoleID = dto.AccountRoleID,
+                TenantID = dto.TenantID,
                 AccountUsername = dto.AccountUsername.Trim(),
                 AccountEmail = dto.AccountEmail.Trim(),
                 AccountPasswordHash = passwordHash,
@@ -132,6 +145,7 @@ namespace AutoKosova.Business.Services
             await _context.SaveChangesAsync();
 
             await _context.Entry(account).Reference(x => x.AccountRole).LoadAsync();
+            await _context.Entry(account).Reference(x => x.Tenant).LoadAsync();
 
             return ServiceResult<AccountResponseDto>.Success(ToResponseDto(account), "Account created successfully.");
         }
@@ -140,6 +154,7 @@ namespace AutoKosova.Business.Services
         {
             var account = await _context.Accounts
                 .Include(x => x.AccountRole)
+                .Include(x => x.Tenant)
                 .FirstOrDefaultAsync(x => x.AccountID == id && !x.AccountDeleted);
 
             if (account == null)
@@ -173,7 +188,14 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<AccountResponseDto>.BadRequest("Invalid account role.");
             }
 
+            var tenantValidationError = await ValidateTenantAsync(dto.TenantID);
+            if (tenantValidationError != null)
+            {
+                return ServiceResult<AccountResponseDto>.BadRequest(tenantValidationError);
+            }
+
             account.AccountRoleID = dto.AccountRoleID;
+            account.TenantID = dto.TenantID;
             account.AccountUsername = dto.AccountUsername.Trim();
             account.AccountEmail = dto.AccountEmail.Trim();
             account.AccountName = dto.AccountName.Trim();
@@ -193,6 +215,7 @@ namespace AutoKosova.Business.Services
 
             await _context.SaveChangesAsync();
             await _context.Entry(account).Reference(x => x.AccountRole).LoadAsync();
+            await _context.Entry(account).Reference(x => x.Tenant).LoadAsync();
 
             return ServiceResult<AccountResponseDto>.Success(ToResponseDto(account), "Account updated successfully.");
         }
@@ -241,6 +264,20 @@ namespace AutoKosova.Business.Services
             return null;
         }
 
+        private async Task<string?> ValidateTenantAsync(int? tenantId)
+        {
+            if (!tenantId.HasValue)
+            {
+                return null;
+            }
+
+            var tenantExists = await _context.Tenants.AnyAsync(x =>
+                x.TenantID == tenantId.Value &&
+                x.TenantIsActive);
+
+            return tenantExists ? null : "Invalid tenant.";
+        }
+
         private static string? ValidateBaseFields(int accountRoleId, string accountUsername, string accountEmail, string accountName, string accountLastname)
         {
             if (accountRoleId <= 0)
@@ -277,6 +314,8 @@ namespace AutoKosova.Business.Services
             {
                 AccountID = account.AccountID,
                 AccountRoleID = account.AccountRoleID,
+                TenantID = account.TenantID,
+                TenantName = account.Tenant?.TenantName,
                 Role = account.AccountRole?.AccountRoleName,
                 AccountUsername = account.AccountUsername,
                 AccountEmail = account.AccountEmail,

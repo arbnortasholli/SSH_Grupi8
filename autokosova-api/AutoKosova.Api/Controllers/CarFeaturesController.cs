@@ -1,3 +1,4 @@
+using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs.CarFeatures;
 using AutoKosova.DataAccess;
 using AutoKosova.Entity;
@@ -60,6 +61,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(feature);
         }
 
+        [HasPermission("CarFeatures.Create")]
         [HttpPost("api/car-features")]
         public async Task<IActionResult> Create(CarFeatureCreateRequestDto request)
         {
@@ -101,6 +103,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [HasPermission("CarFeatures.Update")]
         [HttpPut("api/car-features/{id:int}")]
         public async Task<IActionResult> Update(int id, CarFeatureUpdateRequestDto request)
         {
@@ -145,6 +148,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [HasPermission("CarFeatures.Delete")]
         [HttpDelete("api/car-features/{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -213,6 +217,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(features);
         }
 
+        [HasPermission("Cars.Features.Manage")]
         [HttpPost("api/cars/{carId:int}/features/{featureId:int}")]
         public async Task<IActionResult> AssignFeatureToCar(int carId, int featureId)
         {
@@ -278,6 +283,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [HasPermission("Cars.Features.Manage")]
         [HttpDelete("api/cars/{carId:int}/features/{featureId:int}")]
         public async Task<IActionResult> RemoveFeatureFromCar(int carId, int featureId)
         {

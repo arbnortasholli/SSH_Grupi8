@@ -10,7 +10,7 @@ const router = createBrowserRouter(
   [
     {
       path: '/',
-      element: <Navigate to="/dashboard/sales" replace />
+      element: <Navigate to="/login" replace />
     },
     MainRoutes
   ],

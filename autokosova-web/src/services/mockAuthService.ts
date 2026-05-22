@@ -16,19 +16,19 @@ export const mockAuthService = {
             };
         }
 
-        if (credentials.emailOrUsername === 'user@autokosova.com' && credentials.password === 'password') {
+        if (credentials.emailOrUsername === 'customer@autokosova.com' && credentials.password === 'password') {
             return {
-                token: 'mock_jwt_token_user_' + Date.now(),
+                token: 'mock_jwt_token_customer_' + Date.now(),
                 expiresAt: expiresAt(),
-                ...mockUsers.user,
+                ...mockUsers.customer,
             };
         }
 
-        if (credentials.emailOrUsername === 'admin@autokosova.com' && credentials.password === 'password') {
+        if (credentials.emailOrUsername === 'superadmin@autokosova.com' && credentials.password === 'password') {
             return {
-                token: 'mock_jwt_token_admin_' + Date.now(),
+                token: 'mock_jwt_token_superadmin_' + Date.now(),
                 expiresAt: expiresAt(),
-                ...mockUsers.admin,
+                ...mockUsers.superAdmin,
             };
         }
 
@@ -50,6 +50,6 @@ export const mockAuthService = {
 
     me: async () => {
         await new Promise(resolve => setTimeout(resolve, 300));
-        return mockUsers.user;
+        return mockUsers.customer;
     },
 };

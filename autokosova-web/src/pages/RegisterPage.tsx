@@ -8,7 +8,7 @@ const benefits = [
   'Save and compare cars across Kosovo cities',
   'Send rental requests with pickup details',
   'Contact sellers from a single account',
-  'Ready for buyer, seller, and admin roles later',
+  'Ready for customer, seller, and rental flows later',
 ];
 
 export const RegisterPage: React.FC = () => {
@@ -16,7 +16,7 @@ export const RegisterPage: React.FC = () => {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const { values, handleChange, handleSubmit, isSubmitting } = useForm({
-    accountRoleID: 2,
+    accountRoleID: 3,
     accountUsername: '',
     accountEmail: '',
     password: '',
@@ -76,7 +76,7 @@ export const RegisterPage: React.FC = () => {
         accountAddress: values.accountAddress.trim(),
         accountCity: values.accountCity.trim(),
       });
-      navigate('/login');
+      navigate('/');
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Registration failed.'));
     }

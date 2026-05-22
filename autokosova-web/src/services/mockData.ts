@@ -11,23 +11,23 @@ export const mockUsers = {
         accountLastname: 'Nortasholli',
         role: 'Seller' as const,
     } as User,
-    user: {
+    customer: {
         accountID: 2,
-        accountRoleID: 2,
-        accountUsername: 'user',
-        accountEmail: 'user@autokosova.com',
+        accountRoleID: 3,
+        accountUsername: 'customer',
+        accountEmail: 'customer@autokosova.com',
         accountName: 'John',
         accountLastname: 'Doe',
-        role: 'User' as const,
+        role: 'Customer' as const,
     } as User,
-    admin: {
+    superAdmin: {
         accountID: 3,
         accountRoleID: 1,
-        accountUsername: 'admin',
-        accountEmail: 'admin@autokosova.com',
-        accountName: 'Admin',
+        accountUsername: 'superadmin',
+        accountEmail: 'superadmin@autokosova.com',
+        accountName: 'Super',
         accountLastname: 'User',
-        role: 'Admin' as const,
+        role: 'SuperAdmin' as const,
     } as User,
 };
 

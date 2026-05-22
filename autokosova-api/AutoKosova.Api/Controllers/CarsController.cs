@@ -1,3 +1,4 @@
+using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs.Cars;
 using AutoKosova.Business.DTOs.CarImages;
 using AutoKosova.Business.Services;
@@ -38,11 +39,18 @@ namespace AutoKosova.Api.Controllers
             return Ok(ToDetailsDto(result.Data!));
         }
 
+        [HasPermission("Cars.Create")]
         [HttpPost]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> Create([FromForm] CarCreateRequestDto request)
         {
             var result = await _carService.Create(ToCar(request), request.Images);
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            var result = await _carService.Create(ToCar(request), CurrentAccountId.Value);
 
             if (!result.IsSuccess)
             {
@@ -61,10 +69,16 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [HasPermission("Cars.Update")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, CarUpdateRequestDto request)
         {
-            var result = await _carService.Update(id, ToCar(request));
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            var result = await _carService.Update(id, ToCar(request), CurrentAccountId.Value, CurrentRole);
 
             if (!result.IsSuccess)
             {
@@ -78,10 +92,16 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [HasPermission("Cars.Delete")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _carService.Delete(id);
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            var result = await _carService.Delete(id, CurrentAccountId.Value, CurrentRole);
 
             if (!result.IsSuccess)
             {
@@ -169,7 +189,6 @@ namespace AutoKosova.Api.Controllers
             return new Cars
             {
                 TenantID = request.TenantID,
-                CreatedByAccountID = request.CreatedByAccountID,
                 CarTitle = request.CarTitle,
                 CarBrand = request.CarBrand,
                 CarModel = request.CarModel,

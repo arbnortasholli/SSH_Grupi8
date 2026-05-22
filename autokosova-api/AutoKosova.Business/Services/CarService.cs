@@ -40,7 +40,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<Cars>> Create(Cars car, List<IFormFile>? images = null)
+        public async Task<ServiceResult<Cars>> Create(Cars car, List<IFormFile>? images = null, int accountId)
         {
             var validationError = ValidateCar(car);
 
@@ -63,13 +63,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<Cars>.BadRequest(tenantValidationError);
             }
 
-            var accountValidationError = await ValidateAccount(car.CreatedByAccountID);
-
-            if (accountValidationError != null)
-            {
-                return ServiceResult<Cars>.BadRequest(accountValidationError);
-            }
-
+            car.CreatedByAccountID = accountId;
             car.CarTitle = car.CarTitle.Trim();
             car.CarBrand = car.CarBrand.Trim();
             car.CarModel = car.CarModel.Trim();
@@ -123,7 +117,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<Cars>> Update(int id, Cars updatedCar)
+        public async Task<ServiceResult<Cars>> Update(int id, Cars updatedCar, int accountId, string? role)
         {
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == id && !c.CarDeleted);
@@ -131,6 +125,11 @@ namespace AutoKosova.Business.Services
             if (car == null)
             {
                 return ServiceResult<Cars>.NotFound("Car not found.");
+            }
+
+            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
+            {
+                return ServiceResult<Cars>.Forbidden("You can update only cars created by you.");
             }
 
             var validationError = ValidateCar(updatedCar);
@@ -170,7 +169,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<Cars>> Delete(int id)
+        public async Task<ServiceResult<Cars>> Delete(int id, int accountId, string? role)
         {
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == id && !c.CarDeleted);
@@ -178,6 +177,11 @@ namespace AutoKosova.Business.Services
             if (car == null)
             {
                 return ServiceResult<Cars>.NotFound("Car not found.");
+            }
+
+            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
+            {
+                return ServiceResult<Cars>.Forbidden("You can delete only cars created by you.");
             }
 
             car.CarDeleted = true;
@@ -269,19 +273,6 @@ namespace AutoKosova.Business.Services
                 .Where(c => c.CreatedByAccountID == accountId)
                 .OrderByDescending(c => c.CarCreationDate)
                 .ToListAsync();
-        }
-
-        private async Task<string?> ValidateAccount(int accountId)
-        {
-            if (accountId <= 0)
-            {
-                return "Created by account is required.";
-            }
-
-            var accountExists = await _context.Accounts
-                .AnyAsync(a => a.AccountID == accountId && !a.AccountDeleted);
-
-            return accountExists ? null : "Invalid account.";
         }
 
         public async Task<List<Cars>> GetByTenant(int tenantId)

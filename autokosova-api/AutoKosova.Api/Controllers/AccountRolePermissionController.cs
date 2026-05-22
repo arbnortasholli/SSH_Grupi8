@@ -1,3 +1,4 @@
+using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs.AccountsRolePermission;
 using AutoKosova.Business.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ namespace AutoKosova.Api.Controllers
             _accountRolePermissionService = accountRolePermissionService;
         }
 
+        [HasPermission("RolePermissions.View")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -28,6 +30,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [HasPermission("RolePermissions.View")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -41,6 +44,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [HasPermission("RolePermissions.Create")]
         [HttpPost]
         public async Task<IActionResult> Create(AccountRolePermissionCreateRequestDto objDto)
         {
@@ -54,6 +58,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [HasPermission("RolePermissions.Update")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, AccountRolePermissionUpdateRequestDto objDto)
         {
@@ -67,6 +72,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(result);
         }
 
+        [HasPermission("RolePermissions.Delete")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

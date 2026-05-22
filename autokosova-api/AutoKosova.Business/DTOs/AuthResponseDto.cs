@@ -10,6 +10,12 @@ namespace AutoKosova.Business.DTOs
 
         public int AccountRoleID { get; set; }
 
+        public int? TenantID { get; set; }
+
+        public string? TenantName { get; set; }
+
+        public int? OwnerAccountID { get; set; }
+
         public string Role { get; set; } = string.Empty;
 
         public string AccountUsername { get; set; } = string.Empty;

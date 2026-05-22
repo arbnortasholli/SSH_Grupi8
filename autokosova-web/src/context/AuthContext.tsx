@@ -40,7 +40,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser({
                 accountID: response.accountID,
                 accountRoleID: response.accountRoleID,
-                role: response.role || 'User',
+                tenantID: response.tenantID ?? null,
+                tenantName: response.tenantName ?? null,
+                ownerAccountID: response.ownerAccountID ?? null,
+                role: response.role || 'Customer',
                 accountUsername: response.accountUsername,
                 accountEmail: response.accountEmail,
                 accountName: response.accountName,

@@ -11,6 +11,8 @@ namespace AutoKosova.Entity
 
         public int AccountRoleID { get; set; }
 
+        public int? TenantID { get; set; }
+
         public required string AccountUsername { get; set; }
 
         public required string AccountEmail { get; set; }
@@ -69,10 +71,16 @@ namespace AutoKosova.Entity
 
         public  AccountRole? AccountRole { get; set; }
 
+        public Tenant? Tenant { get; set; }
+
         public Account? AccountDeletedBy { get; set; }
 
         public ICollection<Cars> CreatedCars { get; set; } = new List<Cars>();
 
         public ICollection<RentalBooking> RentalBookings { get; set; } = new List<RentalBooking>();
+
+        public ICollection<TenantRequest> TenantRequests { get; set; } = new List<TenantRequest>();
+
+        public ICollection<TenantRequest> ReviewedTenantRequests { get; set; } = new List<TenantRequest>();
     }
 }

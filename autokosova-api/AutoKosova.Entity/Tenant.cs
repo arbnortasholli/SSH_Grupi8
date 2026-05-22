@@ -9,6 +9,8 @@ namespace AutoKosova.Entity
     {
         public int TenantID { get; set; }
 
+        public int? OwnerAccountID { get; set; }
+
         public required string TenantName { get; set; }
 
         public string? TenantBusinessNumber { get; set; }
@@ -25,8 +27,12 @@ namespace AutoKosova.Entity
 
         public DateTime TenantCreationDate { get; set; } = DateTime.UtcNow;
 
+        public Account? OwnerAccount { get; set; }
+
         public ICollection<Cars> Cars { get; set; } = new List<Cars>();
 
         public ICollection<RentalBooking> RentalBookings { get; set; } = new List<RentalBooking>();
+
+        public ICollection<TenantRequest> TenantRequests { get; set; } = new List<TenantRequest>();
     }
 }

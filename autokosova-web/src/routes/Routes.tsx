@@ -16,6 +16,7 @@ import { DashboardPage } from '../pages/DashboardPage';
 import { FavoritesPage } from '../pages/FavoritesPage';
 import { SellerDashboardPage } from '../pages/SellerDashboardPage';
 import { EditCarPage } from '../pages/EditCarPage';
+import { TenantRequestPage } from '../pages/TenantRequestPage';
 
 export const AppRoutes: React.FC = () => (
   <Router>
@@ -39,9 +40,13 @@ export const AppRoutes: React.FC = () => (
           element={<ProtectedRoute><MainLayout><FavoritesPage /></MainLayout></ProtectedRoute>}
         />
         <Route
+          path="/tenant-request"
+          element={<ProtectedRoute><MainLayout><TenantRequestPage /></MainLayout></ProtectedRoute>}
+        />
+        <Route
           path="/seller"
           element={
-            <ProtectedRoute requiredRoles={['Seller', 'Admin']}>
+            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
               <MainLayout><SellerDashboardPage /></MainLayout>
             </ProtectedRoute>
           }

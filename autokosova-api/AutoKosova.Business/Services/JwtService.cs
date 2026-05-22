@@ -27,7 +27,7 @@ namespace AutoKosova.Business.Services
                 throw new Exception("Jwt:Key is missing in appsettings.json.");
             }
 
-            var roleName = account.AccountRole?.AccountRoleName ?? "User";
+            var roleName = account.AccountRole?.AccountRoleName ?? "Customer";
 
             var claims = new List<Claim>
             {
@@ -42,6 +42,21 @@ namespace AutoKosova.Business.Services
                 new Claim("AccountEmail", account.AccountEmail),
                 new Claim("Role", roleName)
             };
+
+            if (account.TenantID.HasValue)
+            {
+                claims.Add(new Claim("TenantID", account.TenantID.Value.ToString()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(account.Tenant?.TenantName))
+            {
+                claims.Add(new Claim("TenantName", account.Tenant.TenantName));
+            }
+
+            if (account.Tenant?.OwnerAccountID.HasValue == true)
+            {
+                claims.Add(new Claim("OwnerAccountID", account.Tenant.OwnerAccountID.Value.ToString()));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 

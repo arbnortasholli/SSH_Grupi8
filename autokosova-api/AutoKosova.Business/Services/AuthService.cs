@@ -111,6 +111,7 @@ namespace AutoKosova.Business.Services
 
             var account = await _context.Accounts
                 .Include(a => a.AccountRole)
+                .Include(a => a.Tenant)
                 .FirstOrDefaultAsync(a =>
                     a.AccountEmail == emailOrUsername ||
                     a.AccountUsername == emailOrUsername);
@@ -162,7 +163,7 @@ namespace AutoKosova.Business.Services
 
             await _context.SaveChangesAsync();
 
-            var roleName = account.AccountRole?.AccountRoleName ?? "User";
+            var roleName = account.AccountRole?.AccountRoleName ?? "Customer";
 
             return ServiceResult<(Account Account, string Token, DateTime ExpiresAt, string Role)>.Success((
                 account,

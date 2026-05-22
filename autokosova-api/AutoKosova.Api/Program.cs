@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using AutoKosova.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +72,7 @@ builder.Services.AddScoped<PermissionService>();
 builder.Services.AddScoped<AccountRoleService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<AccountRolePermissionService>();
+builder.Services.AddScoped<TenantRequestService>();
 // JWT settings
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
@@ -108,6 +111,8 @@ builder.Services
 
 // Authorization
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 // CORS
 builder.Services.AddCors(options =>

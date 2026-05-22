@@ -3,6 +3,7 @@ namespace AutoKosova.Business.DTOs.Accounts
     public class AccountUpdateRequestDto
     {
         public int AccountRoleID { get; set; }
+        public int? TenantID { get; set; }
         public string AccountUsername { get; set; } = string.Empty;
         public string AccountEmail { get; set; } = string.Empty;
         public string? Password { get; set; }

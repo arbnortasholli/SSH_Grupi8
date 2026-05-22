@@ -1,3 +1,4 @@
+using AutoKosova.Api.Authorization;
 using AutoKosova.Business.DTOs.CarImages;
 using AutoKosova.Business.Services;
 using AutoKosova.Entity;
@@ -41,6 +42,7 @@ namespace AutoKosova.Api.Controllers
             return Ok(ToDto(result.Data!));
         }
 
+        [HasPermission("Cars.Images.Manage")]
         [HttpPost("api/cars/{carId:int}/images")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadImages(int carId, [FromForm] CarImageUploadRequestDto request)
@@ -62,11 +64,18 @@ namespace AutoKosova.Api.Controllers
         [HttpPost("api/cars/{carId:int}/images/url")]
         public async Task<IActionResult> AddImageUrl(int carId, [FromBody] CarImageCreateRequestDto request)
         {
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
             var result = await _carImageService.AddImage(
                 carId,
                 request.CarImageUrl,
                 request.CarImageIsMain,
-                request.CarImageOrderNumber
+                request.CarImageOrderNumber,
+                CurrentAccountId.Value,
+                CurrentRole
             );
 
             if (!result.IsSuccess)
@@ -82,6 +91,7 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [HasPermission("Cars.Images.Manage")]
         [HttpPost("api/cars/{carId:int}/images/upload")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadImage(int carId, [FromForm] CarImageUploadRequestDto request)
@@ -127,6 +137,19 @@ namespace AutoKosova.Api.Controllers
         public async Task<IActionResult> DeleteImage(int carId, int imageId, [FromQuery] bool deleteLocalFile = true)
         {
             var result = await _carImageService.DeleteImage(carId, imageId, deleteLocalFile);
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            var result = await _carImageService.AddImage(
+                carId,
+                imageUrl,
+                carImageIsMain,
+                carImageOrderNumber,
+                CurrentAccountId.Value,
+                CurrentRole
+            );
 
             if (!result.IsSuccess)
             {
@@ -140,10 +163,16 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [HasPermission("Cars.Images.Manage")]
         [HttpPut("api/car-images/{imageId:int}/set-main")]
         public async Task<IActionResult> SetMainImage(int imageId)
         {
-            var result = await _carImageService.SetMainImage(imageId);
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            var result = await _carImageService.SetMainImage(imageId, CurrentAccountId.Value, CurrentRole);
 
             if (!result.IsSuccess)
             {
@@ -157,10 +186,16 @@ namespace AutoKosova.Api.Controllers
             });
         }
 
+        [HasPermission("Cars.Images.Manage")]
         [HttpDelete("api/car-images/{imageId:int}")]
         public async Task<IActionResult> DeleteImage(int imageId)
         {
-            var result = await _carImageService.DeleteImage(imageId);
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            var result = await _carImageService.DeleteImage(imageId, CurrentAccountId.Value, CurrentRole);
 
             if (!result.IsSuccess)
             {
