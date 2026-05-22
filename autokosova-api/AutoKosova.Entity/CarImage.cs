@@ -13,6 +13,12 @@ namespace AutoKosova.Entity
 
         public required string CarImageUrl { get; set; }
 
+        public string? CarImageOriginalFileName { get; set; }
+
+        public string? CarImageContentType { get; set; }
+
+        public long? CarImageSizeBytes { get; set; }
+
         public bool CarImageIsMain { get; set; }
 
         public int CarImageOrderNumber { get; set; }

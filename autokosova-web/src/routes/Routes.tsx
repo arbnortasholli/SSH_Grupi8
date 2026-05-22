@@ -15,6 +15,7 @@ import { CarDetailsPage } from '../pages/CarDetailsPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { FavoritesPage } from '../pages/FavoritesPage';
 import { SellerDashboardPage } from '../pages/SellerDashboardPage';
+import { EditCarPage } from '../pages/EditCarPage';
 
 export const AppRoutes: React.FC = () => (
   <Router>
@@ -42,6 +43,22 @@ export const AppRoutes: React.FC = () => (
           element={
             <ProtectedRoute requiredRoles={['Seller', 'Admin']}>
               <MainLayout><SellerDashboardPage /></MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller/add-car"
+          element={
+            <ProtectedRoute requiredRoles={['Seller', 'Admin']}>
+              <MainLayout><CreateCarPage /></MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller/edit-car/:id"
+          element={
+            <ProtectedRoute requiredRoles={['Seller', 'Admin']}>
+              <MainLayout><EditCarPage /></MainLayout>
             </ProtectedRoute>
           }
         />

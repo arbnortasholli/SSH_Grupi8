@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace AutoKosova.Business.DTOs.Cars
 {
     public class CarCreateRequestDto
@@ -35,5 +37,7 @@ namespace AutoKosova.Business.DTOs.Cars
         public decimal? RentalDailyPrice { get; set; }
 
         public string CarStatus { get; set; } = "Available";
+
+        public List<IFormFile>? Images { get; set; }
     }
 }

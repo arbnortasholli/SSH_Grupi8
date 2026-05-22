@@ -6,10 +6,10 @@
 
 export const API_CONFIG = {
     // Set to true to use mock data, false to use real API
-    USE_MOCK_DATA: true,
+    USE_MOCK_DATA: false,
 
     // API Base URL (only used when USE_MOCK_DATA is false)
-    API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5265/api',
 
     // Mock data settings
     MOCK_API_DELAY: 300, // Simulated delay in ms

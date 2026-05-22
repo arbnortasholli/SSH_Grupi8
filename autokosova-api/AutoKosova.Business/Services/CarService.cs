@@ -1,16 +1,22 @@
 using AutoKosova.DataAccess;
 using AutoKosova.Entity;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace AutoKosova.Business.Services
 {
     public class CarService
     {
         private readonly AppDbContext _context;
+        private readonly LocalImageStorageService _localImageStorageService;
 
-        public CarService(AppDbContext context)
+        public CarService(
+            AppDbContext context,
+            LocalImageStorageService localImageStorageService)
         {
             _context = context;
+            _localImageStorageService = localImageStorageService;
         }
 
         public async Task<List<Cars>> GetAll()
@@ -34,13 +40,20 @@ namespace AutoKosova.Business.Services
             return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<Cars>> Create(Cars car)
+        public async Task<ServiceResult<Cars>> Create(Cars car, List<IFormFile>? images = null)
         {
             var validationError = ValidateCar(car);
 
             if (validationError != null)
             {
                 return ServiceResult<Cars>.BadRequest(validationError);
+            }
+
+            var imagesValidationError = await ValidateImagesForCreate(images);
+
+            if (imagesValidationError != null)
+            {
+                return ServiceResult<Cars>.BadRequest(imagesValidationError);
             }
 
             var tenantValidationError = await ValidateTenant(car.TenantID);
@@ -63,8 +76,49 @@ namespace AutoKosova.Business.Services
             car.CarCreationDate = DateTime.UtcNow;
             car.CarDeleted = false;
 
-            _context.Cars.Add(car);
-            await _context.SaveChangesAsync();
+            if (car.IsForSale)
+            {
+                car.RentalDailyPrice = null;
+            }
+            else if (car.IsForRent)
+            {
+                car.SalePrice = null;
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var savedFilePaths = new List<string>();
+
+            try
+            {
+                _context.Cars.Add(car);
+                await _context.SaveChangesAsync();
+
+                if (images is { Count: > 0 })
+                {
+                    savedFilePaths = await AddUploadedImages(car, images);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                foreach (var path in savedFilePaths)
+                {
+                    try
+                    {
+                        _localImageStorageService.DeleteImage(path);
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                return ServiceResult<Cars>.BadRequest($"Failed to save images: {ex.Message}");
+            }
 
             return ServiceResult<Cars>.Success(car);
         }
@@ -105,9 +159,9 @@ namespace AutoKosova.Business.Services
             car.CarColor = updatedCar.CarColor;
             car.CarDescription = updatedCar.CarDescription;
             car.IsForSale = updatedCar.IsForSale;
-            car.SalePrice = updatedCar.SalePrice;
+            car.SalePrice = updatedCar.IsForSale ? updatedCar.SalePrice : null;
             car.IsForRent = updatedCar.IsForRent;
-            car.RentalDailyPrice = updatedCar.RentalDailyPrice;
+            car.RentalDailyPrice = updatedCar.IsForRent ? updatedCar.RentalDailyPrice : null;
             car.CarStatus = updatedCar.CarStatus;
             car.CarUpdatedDate = DateTime.UtcNow;
 
@@ -128,6 +182,15 @@ namespace AutoKosova.Business.Services
 
             car.CarDeleted = true;
             car.CarDeletedDate = DateTime.UtcNow;
+
+            try
+            {
+                _localImageStorageService.DeleteCarFolder(id);
+            }
+            catch
+            {
+                // Soft delete preferred, file deletion failure shouldn't block
+            }
 
             await _context.SaveChangesAsync();
 
@@ -231,7 +294,61 @@ namespace AutoKosova.Business.Services
 
         private IQueryable<Cars> BaseCarQuery()
         {
-            return _context.Cars.Where(c => !c.CarDeleted);
+            return _context.Cars
+                .Include(c => c.CarImages.Where(ci => !ci.CarImageDeleted))
+                .Where(c => !c.CarDeleted);
+        }
+
+        private async Task<string?> ValidateImagesForCreate(List<IFormFile>? images)
+        {
+            if (images == null || images.Count == 0)
+            {
+                return null;
+            }
+
+            if (images.Count > 10)
+            {
+                return "A car can have a maximum of 10 images.";
+            }
+
+            foreach (var image in images)
+            {
+                var validationError = _localImageStorageService.ValidateImage(image);
+                if (validationError != null)
+                {
+                    return validationError;
+                }
+            }
+
+            return null;
+        }
+
+        private async Task<List<string>> AddUploadedImages(Cars car, List<IFormFile> images)
+        {
+            var savedFilePaths = new List<string>();
+            var orderNumber = 1;
+            foreach (var image in images)
+            {
+                var relativePath = await _localImageStorageService.SaveImageAsync(image, car.CarsID);
+                savedFilePaths.Add(relativePath);
+
+                car.CarImages.Add(new CarImage
+                {
+                    CarID = car.CarsID,
+                    CarImageUrl = relativePath,
+                    CarImageOriginalFileName = Path.GetFileName(image.FileName),
+                    CarImageContentType = image.ContentType,
+                    CarImageSizeBytes = image.Length,
+                    CarImageIsMain = orderNumber == 1,
+                    CarImageOrderNumber = orderNumber,
+                    CarImageCreationDate = DateTime.UtcNow,
+                    CarImageDeleted = false
+                });
+
+                orderNumber++;
+            }
+
+            return savedFilePaths;
         }
 
         private async Task<string?> ValidateTenant(int? tenantId)
@@ -382,19 +499,40 @@ namespace AutoKosova.Business.Services
                 return "Invalid car year.";
             }
 
+            if (car.IsForSale && car.IsForRent)
+            {
+                return "A car cannot be both for sale and for rent.";
+            }
+
             if (!car.IsForSale && !car.IsForRent)
             {
-                return "Car must be marked for sale or rent.";
+                return "Car must be either for sale or for rent.";
             }
 
-            if (car.IsForSale && (!car.SalePrice.HasValue || car.SalePrice.Value <= 0))
+            if (car.IsForSale)
             {
-                return "Sale price is required when car is for sale.";
+                if (!car.SalePrice.HasValue || car.SalePrice.Value <= 0)
+                {
+                    return "Sale price is required and must be greater than 0.";
+                }
+
+                if (!CarStatuses.SaleStatuses.Contains(car.CarStatus))
+                {
+                    return $"Invalid status '{car.CarStatus}' for a car for sale.";
+                }
             }
 
-            if (car.IsForRent && (!car.RentalDailyPrice.HasValue || car.RentalDailyPrice.Value <= 0))
+            if (car.IsForRent)
             {
-                return "Rental daily price is required when car is for rent.";
+                if (!car.RentalDailyPrice.HasValue || car.RentalDailyPrice.Value <= 0)
+                {
+                    return "Rental daily price is required and must be greater than 0.";
+                }
+
+                if (!CarStatuses.RentStatuses.Contains(car.CarStatus))
+                {
+                    return $"Invalid status '{car.CarStatus}' for a rental car.";
+                }
             }
 
             return null;

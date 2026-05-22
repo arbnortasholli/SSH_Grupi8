@@ -35,5 +35,7 @@ namespace AutoKosova.Business.DTOs.Cars
         public string CarStatus { get; set; } = string.Empty;
 
         public DateTime CarCreationDate { get; set; }
+
+        public string? MainImageUrl { get; set; }
     }
 }

@@ -61,18 +61,42 @@ export interface Car {
     year: number;
     type: 'Sedan' | 'SUV' | 'Truck' | 'Coupe' | 'Hatchback' | 'Van';
     price: number;
-    priceType: 'daily' | 'monthly';
+    priceType: 'daily' | 'monthly' | 'sale';
     mileage: number;
     fuelType: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid';
     transmission: 'Manual' | 'Automatic';
     seats: number;
+    bodyType?: string;
+    color?: string;
+    city?: string;
+    sellerType?: string;
+    features?: CarFeature[];
     description: string;
     images: string[];
+    imageRecords?: CarImage[];
     isFavorite?: boolean;
     isAvailable: boolean;
     sellerId: string;
     sellerName: string;
     createdAt: string;
+}
+
+export interface CarImage {
+    id: string;
+    carId: string;
+    url: string;
+    originalFileName?: string | null;
+    contentType?: string | null;
+    sizeBytes?: number | null;
+    isMain: boolean;
+    orderNumber: number;
+    createdAt: string;
+}
+
+export interface CarFeature {
+    id: string;
+    name: string;
+    description?: string | null;
 }
 
 export interface CarFilters {

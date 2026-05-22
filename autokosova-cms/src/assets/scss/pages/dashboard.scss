@@ -270,6 +270,45 @@
   font-weight: 750;
 }
 
+.ak-car-image-thumb {
+  width: 72px;
+  height: 52px;
+  border: 1px solid #dfe6ef;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f3f4f6;
+}
+
+.ak-image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.ak-image-preview-card {
+  overflow: hidden;
+  border: 1px solid #dfe6ef;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.ak-image-preview-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.ak-image-preview-card span {
+  display: block;
+  overflow: hidden;
+  padding: 8px 10px;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ak-empty-cell {
   height: 140px;
   text-align: center;

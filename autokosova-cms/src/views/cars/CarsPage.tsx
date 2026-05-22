@@ -27,9 +27,8 @@ const emptyForm = {
 };
 
 const emptyImageForm = {
-  image: null,
-  carImageIsMain: false,
-  carImageOrderNumber: 0
+  images: [],
+  mainImageIndex: ''
 };
 
 const emptyFeatureForm = {
@@ -91,7 +90,20 @@ const normalizeCar = (item) => ({
   isForRent: item.isForRent ?? item.IsForRent ?? false,
   rentalDailyPrice: item.rentalDailyPrice ?? item.RentalDailyPrice ?? '',
   carStatus: item.carStatus ?? item.CarStatus ?? 'Available',
-  carCreationDate: item.carCreationDate ?? item.CarCreationDate
+  carCreationDate: item.carCreationDate ?? item.CarCreationDate,
+  mainImageUrl: item.mainImageUrl ?? item.MainImageUrl ?? ''
+});
+
+const normalizeCarImage = (item) => ({
+  carImageID: item.carImageID ?? item.CarImageID,
+  carID: item.carID ?? item.CarID,
+  carImageUrl: item.carImageUrl ?? item.CarImageUrl ?? '',
+  carImageOriginalFileName: item.carImageOriginalFileName ?? item.CarImageOriginalFileName ?? '',
+  carImageContentType: item.carImageContentType ?? item.CarImageContentType ?? '',
+  carImageSizeBytes: item.carImageSizeBytes ?? item.CarImageSizeBytes ?? null,
+  carImageIsMain: item.carImageIsMain ?? item.CarImageIsMain ?? false,
+  carImageOrderNumber: item.carImageOrderNumber ?? item.CarImageOrderNumber ?? 0,
+  carImageCreationDate: item.carImageCreationDate ?? item.CarImageCreationDate
 });
 
 const normalizeAccount = (item) => ({
@@ -105,6 +117,7 @@ export default function CarsPage() {
   const [cars, setCars] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [formValues, setFormValues] = useState(emptyForm);
+  const [createImages, setCreateImages] = useState([]);
   const [imageFormValues, setImageFormValues] = useState(emptyImageForm);
   const [featureFormValues, setFeatureFormValues] = useState(emptyFeatureForm);
   const [selectedCarForImages, setSelectedCarForImages] = useState(null);
@@ -127,6 +140,24 @@ export default function CarsPage() {
   const [isRemovingFeatureId, setIsRemovingFeatureId] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  const createImagePreviews = useMemo(
+    () => createImages.map((image) => URL.createObjectURL(image)),
+    [createImages]
+  );
+
+  const uploadImagePreviews = useMemo(
+    () => imageFormValues.images.map((image) => URL.createObjectURL(image)),
+    [imageFormValues.images]
+  );
+
+  useEffect(() => () => {
+    createImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+  }, [createImagePreviews]);
+
+  useEffect(() => () => {
+    uploadImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+  }, [uploadImagePreviews]);
 
   const forSaleCount = useMemo(() => cars.filter((car) => car.isForSale).length, [cars]);
   const forRentCount = useMemo(() => cars.filter((car) => car.isForRent).length, [cars]);
@@ -169,7 +200,7 @@ export default function CarsPage() {
 
     try {
       const response = await apiClient.get(`/cars/${carId}/images`);
-      setCarImages(getResponseList(response.data));
+      setCarImages(getResponseList(response.data).map(normalizeCarImage));
     } catch (err) {
       setError(getErrorMessage(err, 'Car images could not be loaded.'));
     } finally {
@@ -255,6 +286,9 @@ export default function CarsPage() {
     setShowModal(false);
     setEditingCar(null);
     setFormValues(emptyForm);
+    setCreateImages([]);
+    setMessage('');
+    setError('');
   };
 
   const openImagesModal = async (car) => {
@@ -271,6 +305,8 @@ export default function CarsPage() {
     setSelectedCarForImages(null);
     setCarImages([]);
     setImageFormValues(emptyImageForm);
+    setMessage('');
+    setError('');
   };
 
   const openFeaturesModal = async (car) => {
@@ -287,6 +323,8 @@ export default function CarsPage() {
     setSelectedCarForFeatures(null);
     setCarFeatures([]);
     setFeatureFormValues(emptyFeatureForm);
+    setMessage('');
+    setError('');
   };
 
   const handleChange = (event) => {
@@ -299,12 +337,40 @@ export default function CarsPage() {
   };
 
   const handleImageChange = (event) => {
-    const { name, value, type, checked, files } = event.target;
+    const { name, value, type, files } = event.target;
 
     setImageFormValues((current) => ({
       ...current,
-      [name]: type === 'checkbox' ? checked : type === 'file' ? files?.[0] || null : value
+      [name]: type === 'file' ? Array.from(files || []) : value
     }));
+  };
+
+  const validateImages = (files) => {
+    if (!files.length) return '';
+    if (files.length > 10) return 'Maximum 10 images are allowed.';
+
+    const invalidFile = files.find((file) => {
+      const hasExtension = /\.[a-z0-9]+$/i.test(file.name);
+      const allowedType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+      return !hasExtension || !allowedType || file.size > 5 * 1024 * 1024;
+    });
+
+    return invalidFile ? 'Only JPEG, PNG, or WEBP images up to 5MB are allowed.' : '';
+  };
+
+  const handleCreateImagesChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    const validationError = validateImages(files);
+
+    if (validationError) {
+      setError(validationError);
+      event.target.value = '';
+      setCreateImages([]);
+      return;
+    }
+
+    setError('');
+    setCreateImages(files);
   };
 
   const handleFeatureChange = (event) => {
@@ -314,6 +380,33 @@ export default function CarsPage() {
       ...current,
       [name]: value
     }));
+  };
+
+  const handleListingTypeChange = (event) => {
+    const value = event.target.value;
+    const isForSale = value === 'ForSale';
+    const isForRent = value === 'ForRent';
+
+    setFormValues((current) => {
+      let carStatus = current.carStatus;
+      const saleStatuses = ['Available', 'Reserved', 'Sold', 'Inactive'];
+      const rentStatuses = ['Available', 'Rented', 'Under Maintenance', 'Inactive'];
+
+      if (isForSale && !saleStatuses.includes(carStatus)) {
+        carStatus = 'Available';
+      } else if (isForRent && !rentStatuses.includes(carStatus)) {
+        carStatus = 'Available';
+      }
+
+      return {
+        ...current,
+        isForSale,
+        isForRent,
+        carStatus,
+        salePrice: isForSale ? current.salePrice : '',
+        rentalDailyPrice: isForRent ? current.rentalDailyPrice : ''
+      };
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -346,42 +439,65 @@ export default function CarsPage() {
       return;
     }
 
-    const payload = {
-      tenantID: formValues.tenantID ? Number(formValues.tenantID) : null,
-      carTitle: formValues.carTitle.trim(),
-      carBrand: formValues.carBrand.trim(),
-      carModel: formValues.carModel.trim(),
-      carYear: Number(formValues.carYear),
-      carMileage: Number(formValues.carMileage),
-      carFuelType: formValues.carFuelType.trim() || null,
-      carTransmission: formValues.carTransmission.trim() || null,
-      carBodyType: formValues.carBodyType.trim() || null,
-      carColor: formValues.carColor.trim() || null,
-      carDescription: formValues.carDescription.trim() || null,
-      isForSale: formValues.isForSale,
-      salePrice: formValues.isForSale ? Number(formValues.salePrice) : null,
-      isForRent: formValues.isForRent,
-      rentalDailyPrice: formValues.isForRent ? Number(formValues.rentalDailyPrice) : null,
-      carStatus: formValues.carStatus || 'Available'
-    };
-
-    if (!editingCar) {
-      payload.createdByAccountID = Number(formValues.createdByAccountID);
-    }
-
     setIsSaving(true);
 
     try {
       if (editingCar) {
+        const payload = {
+          tenantID: formValues.tenantID ? Number(formValues.tenantID) : null,
+          carTitle: formValues.carTitle.trim(),
+          carBrand: formValues.carBrand.trim(),
+          carModel: formValues.carModel.trim(),
+          carYear: Number(formValues.carYear),
+          carMileage: Number(formValues.carMileage),
+          carFuelType: formValues.carFuelType.trim() || null,
+          carTransmission: formValues.carTransmission.trim() || null,
+          carBodyType: formValues.carBodyType.trim() || null,
+          carColor: formValues.carColor.trim() || null,
+          carDescription: formValues.carDescription.trim() || null,
+          isForSale: formValues.isForSale,
+          salePrice: formValues.isForSale ? Number(formValues.salePrice) : null,
+          isForRent: formValues.isForRent,
+          rentalDailyPrice: formValues.isForRent ? Number(formValues.rentalDailyPrice) : null,
+          carStatus: formValues.carStatus || 'Available'
+        };
+
         await apiClient.put(`/Cars/${editingCar.carsID}`, payload);
         setMessage('Car updated successfully.');
+        await loadCars();
+        // Wait 2 seconds before closing the modal so the user can see the success message
+        setTimeout(() => {
+          closeModal();
+        }, 2000);
       } else {
-        await apiClient.post('/Cars', payload);
-        setMessage('Car created successfully.');
-      }
+        const formData = new FormData();
+        formData.append('tenantID', formValues.tenantID ? String(Number(formValues.tenantID)) : '');
+        formData.append('createdByAccountID', String(Number(formValues.createdByAccountID)));
+        formData.append('carTitle', formValues.carTitle.trim());
+        formData.append('carBrand', formValues.carBrand.trim());
+        formData.append('carModel', formValues.carModel.trim());
+        formData.append('carYear', String(Number(formValues.carYear)));
+        formData.append('carMileage', String(Number(formValues.carMileage)));
+        formData.append('carFuelType', formValues.carFuelType.trim());
+        formData.append('carTransmission', formValues.carTransmission.trim());
+        formData.append('carBodyType', formValues.carBodyType.trim());
+        formData.append('carColor', formValues.carColor.trim());
+        formData.append('carDescription', formValues.carDescription.trim());
+        formData.append('isForSale', String(formValues.isForSale));
+        formData.append('salePrice', formValues.isForSale ? String(Number(formValues.salePrice)) : '');
+        formData.append('isForRent', String(formValues.isForRent));
+        formData.append('rentalDailyPrice', formValues.isForRent ? String(Number(formValues.rentalDailyPrice)) : '');
+        formData.append('carStatus', formValues.carStatus || 'Available');
+        createImages.forEach((image) => formData.append('images', image));
 
-      closeModal();
-      await loadCars();
+        await apiClient.post('/Cars', formData);
+        setMessage('Car created successfully.');
+        await loadCars();
+        // Wait 2 seconds before closing the modal so the user can see the success message
+        setTimeout(() => {
+          closeModal();
+        }, 2000);
+      }
     } catch (err) {
       setError(getErrorMessage(err, 'Car could not be saved.'));
     } finally {
@@ -415,8 +531,20 @@ export default function CarsPage() {
 
     if (!selectedCarForImages) return;
 
-    if (!imageFormValues.image) {
-      setError('Image file is required.');
+    if (!imageFormValues.images.length) {
+      setError('At least one image file is required.');
+      return;
+    }
+
+    const existingCount = carImages.length;
+    if (existingCount + imageFormValues.images.length > 10) {
+      setError('A car can have a maximum of 10 images.');
+      return;
+    }
+
+    const validationError = validateImages(imageFormValues.images);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -424,19 +552,17 @@ export default function CarsPage() {
 
     try {
       const formData = new FormData();
-      formData.append('image', imageFormValues.image);
-      formData.append('carImageIsMain', String(imageFormValues.carImageIsMain));
-      formData.append('carImageOrderNumber', String(imageFormValues.carImageOrderNumber));
+      imageFormValues.images.forEach((image) => formData.append('images', image));
+      if (imageFormValues.mainImageIndex !== '') {
+        formData.append('mainImageIndex', String(imageFormValues.mainImageIndex));
+      }
 
-      await apiClient.post(`/cars/${selectedCarForImages.carsID}/images/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      await apiClient.post(`/cars/${selectedCarForImages.carsID}/images`, formData);
 
       setImageFormValues(emptyImageForm);
       setMessage('Car image added successfully.');
       await loadCarImages(selectedCarForImages.carsID);
+      await loadCars(); // Refresh main list too
     } catch (err) {
       setError(getErrorMessage(err, 'Car image could not be saved.'));
     } finally {
@@ -451,9 +577,10 @@ export default function CarsPage() {
     setError('');
 
     try {
-      await apiClient.put(`/car-images/${image.carImageID}/set-main`);
+      await apiClient.put(`/cars/${selectedCarForImages.carsID}/images/${image.carImageID}/set-main`);
       setMessage('Main image updated successfully.');
       await loadCarImages(selectedCarForImages.carsID);
+      await loadCars(); // Refresh main list too
     } catch (err) {
       setError(getErrorMessage(err, 'Main image could not be updated.'));
     }
@@ -470,9 +597,10 @@ export default function CarsPage() {
     setIsDeletingImageId(image.carImageID);
 
     try {
-      await apiClient.delete(`/car-images/${image.carImageID}`);
+      await apiClient.delete(`/cars/${selectedCarForImages.carsID}/images/${image.carImageID}`);
       setMessage('Car image deleted successfully.');
       await loadCarImages(selectedCarForImages.carsID);
+      await loadCars(); // Refresh main list too
     } catch (err) {
       setError(getErrorMessage(err, 'Car image could not be deleted.'));
     } finally {
@@ -573,9 +701,6 @@ export default function CarsPage() {
         </Col>
       </Row>
 
-      {message && <Alert variant="success">{message}</Alert>}
-      {error && <Alert variant="danger">{error}</Alert>}
-
       <Card className="ak-admin-card">
         <Card.Body>
           <div className="ak-permissions-toolbar">
@@ -599,6 +724,7 @@ export default function CarsPage() {
               <Table hover className="ak-permissions-table">
                 <thead>
                   <tr>
+                    <th>Photo</th>
                     <th>Car</th>
                     <th>Year</th>
                     <th>Mileage</th>
@@ -610,13 +736,20 @@ export default function CarsPage() {
                 <tbody>
                   {cars.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="ak-empty-cell">
+                      <td colSpan={7} className="ak-empty-cell">
                         No cars found.
                       </td>
                     </tr>
                   ) : (
                     cars.map((car) => (
                       <tr key={car.carsID}>
+                        <td>
+                          {car.mainImageUrl ? (
+                            <img className="ak-car-image-thumb" src={getImageSource(car.mainImageUrl)} alt={car.carTitle} />
+                          ) : (
+                            <span className="ak-table-muted">No image</span>
+                          )}
+                        </td>
                         <td>
                           <strong>{car.carTitle}</strong>
                           <span className="ak-table-muted">{car.carBrand} {car.carModel}</span>
@@ -672,6 +805,8 @@ export default function CarsPage() {
             <Modal.Title>{editingCar ? 'Edit Car' : 'Add Car'}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
+            {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+            {message && <Alert variant="success" dismissible onClose={() => setMessage('')}>{message}</Alert>}
             <Row>
               <Col md={8}>
                 <Form.Group className="mb-3" controlId="carTitle">
@@ -742,26 +877,49 @@ export default function CarsPage() {
             </Row>
 
             <Row>
-              <Col md={4}>
+              <Col md={3}>
                 <Form.Group className="mb-3" controlId="carBodyType">
                   <Form.Label>Body type</Form.Label>
                   <Form.Control name="carBodyType" value={formValues.carBodyType} onChange={handleChange} placeholder="Sedan" />
                 </Form.Group>
               </Col>
-              <Col md={4}>
+              <Col md={3}>
                 <Form.Group className="mb-3" controlId="carColor">
                   <Form.Label>Color</Form.Label>
                   <Form.Control name="carColor" value={formValues.carColor} onChange={handleChange} placeholder="Black" />
                 </Form.Group>
               </Col>
-              <Col md={4}>
+              <Col md={3}>
+                <Form.Group className="mb-3" controlId="listingType">
+                  <Form.Label>Listing type</Form.Label>
+                  <Form.Select
+                    name="listingType"
+                    value={formValues.isForSale ? 'ForSale' : formValues.isForRent ? 'ForRent' : ''}
+                    onChange={handleListingTypeChange}
+                  >
+                    <option value="" disabled>Select type</option>
+                    <option value="ForSale">For Sale</option>
+                    <option value="ForRent">For Rent</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={3}>
                 <Form.Group className="mb-3" controlId="carStatus">
                   <Form.Label>Status</Form.Label>
                   <Form.Select name="carStatus" value={formValues.carStatus} onChange={handleChange}>
                     <option value="Available">Available</option>
-                    <option value="Reserved">Reserved</option>
-                    <option value="Sold">Sold</option>
-                    <option value="Rented">Rented</option>
+                    {formValues.isForSale && (
+                      <>
+                        <option value="Reserved">Reserved</option>
+                        <option value="Sold">Sold</option>
+                      </>
+                    )}
+                    {formValues.isForRent && (
+                      <>
+                        <option value="Rented">Rented</option>
+                        <option value="Under Maintenance">Under Maintenance</option>
+                      </>
+                    )}
                     <option value="Inactive">Inactive</option>
                   </Form.Select>
                 </Form.Group>
@@ -782,44 +940,60 @@ export default function CarsPage() {
 
             <Row>
               <Col md={6}>
-                <Form.Check
-                  className="mb-2"
-                  type="checkbox"
-                  id="isForSale"
-                  name="isForSale"
-                  label="For sale"
-                  checked={formValues.isForSale}
-                  onChange={handleChange}
-                />
-                <Form.Control
-                  type="number"
-                  name="salePrice"
-                  value={formValues.salePrice}
-                  onChange={handleChange}
-                  disabled={!formValues.isForSale}
-                  placeholder="Sale price"
-                />
-              </Col>
-              <Col md={6}>
-                <Form.Check
-                  className="mb-2"
-                  type="checkbox"
-                  id="isForRent"
-                  name="isForRent"
-                  label="For rent"
-                  checked={formValues.isForRent}
-                  onChange={handleChange}
-                />
-                <Form.Control
-                  type="number"
-                  name="rentalDailyPrice"
-                  value={formValues.rentalDailyPrice}
-                  onChange={handleChange}
-                  disabled={!formValues.isForRent}
-                  placeholder="Daily rental price"
-                />
+                {formValues.isForSale && (
+                  <Form.Group className="mb-3" controlId="salePrice">
+                    <Form.Label>Sale price</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="salePrice"
+                      value={formValues.salePrice}
+                      onChange={handleChange}
+                      placeholder="Sale price"
+                    />
+                  </Form.Group>
+                )}
+                {formValues.isForRent && (
+                  <Form.Group className="mb-3" controlId="rentalDailyPrice">
+                    <Form.Label>Daily rental price</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="rentalDailyPrice"
+                      value={formValues.rentalDailyPrice}
+                      onChange={handleChange}
+                      placeholder="Daily rental price"
+                    />
+                  </Form.Group>
+                )}
               </Col>
             </Row>
+
+            {!editingCar && (
+              <div className="mt-4">
+                <Form.Group className="mb-3" controlId="createCarImages">
+                  <Form.Label>Car photos</Form.Label>
+                  <Form.Control
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleCreateImagesChange}
+                  />
+                  <Form.Text className="text-muted">
+                    Upload up to 10 JPEG, PNG, or WEBP images. Each image must be 5MB or smaller.
+                  </Form.Text>
+                </Form.Group>
+
+                {createImagePreviews.length > 0 && (
+                  <div className="ak-image-preview-grid">
+                    {createImagePreviews.map((preview, index) => (
+                      <div key={preview} className="ak-image-preview-card">
+                        <img src={preview} alt={`Car upload preview ${index + 1}`} />
+                        <span>{index === 0 ? 'Main image' : `Image ${index + 1}`}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button type="button" variant="light" onClick={closeModal} disabled={isSaving}>
@@ -837,44 +1011,54 @@ export default function CarsPage() {
           <Modal.Title>{selectedCarForImages ? `Images - ${selectedCarForImages.carTitle}` : 'Car Images'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+          {message && <Alert variant="success" dismissible onClose={() => setMessage('')}>{message}</Alert>}
           <Form onSubmit={handleImageSubmit} className="mb-4">
             <Row>
-              <Col md={7}>
+              <Col md={8}>
                 <Form.Group className="mb-3" controlId="carImageFile">
-                  <Form.Label>Image</Form.Label>
+                  <Form.Label>Images</Form.Label>
                   <Form.Control
                     type="file"
-                    name="image"
+                    name="images"
+                    multiple
                     accept="image/jpeg,image/png,image/webp"
                     onChange={handleImageChange}
                   />
                 </Form.Group>
               </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3" controlId="carImageOrderNumber">
-                  <Form.Label>Order</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="carImageOrderNumber"
-                    value={imageFormValues.carImageOrderNumber}
+              <Col md={4}>
+                <Form.Group className="mb-3" controlId="mainImageIndex">
+                  <Form.Label>Main image index</Form.Label>
+                  <Form.Select
+                    name="mainImageIndex"
+                    value={imageFormValues.mainImageIndex}
                     onChange={handleImageChange}
-                  />
+                  >
+                    <option value="">Keep current</option>
+                    {imageFormValues.images.map((image, index) => (
+                      <option key={`${image.name}-${index}`} value={index}>
+                        {index + 1} - {image.name}
+                      </option>
+                    ))}
+                  </Form.Select>
                 </Form.Group>
-              </Col>
-              <Col md={2} className="d-flex align-items-center">
-                <Form.Check
-                  type="checkbox"
-                  id="carImageIsMain"
-                  name="carImageIsMain"
-                  label="Main"
-                  checked={imageFormValues.carImageIsMain}
-                  onChange={handleImageChange}
-                />
               </Col>
             </Row>
 
+            {uploadImagePreviews.length > 0 && (
+              <div className="ak-image-preview-grid mb-3">
+                {uploadImagePreviews.map((preview, index) => (
+                  <div key={preview} className="ak-image-preview-card">
+                    <img src={preview} alt={`New car image ${index + 1}`} />
+                    <span>{index + 1}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <Button type="submit" className="ak-admin-submit" disabled={isSavingImage}>
-              {isSavingImage ? 'Saving...' : 'Add image'}
+              {isSavingImage ? 'Saving...' : 'Add images'}
             </Button>
           </Form>
 
@@ -952,6 +1136,8 @@ export default function CarsPage() {
           <Modal.Title>{selectedCarForFeatures ? `Features - ${selectedCarForFeatures.carTitle}` : 'Car Features'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+          {message && <Alert variant="success" dismissible onClose={() => setMessage('')}>{message}</Alert>}
           <Form onSubmit={handleFeatureSubmit} className="mb-4">
             <Row>
               <Col md={9}>
