@@ -48,6 +48,22 @@ const menuItems = {
           url: '/role-permissions'
         },
         {
+          id: 'tenant-requests',
+          title: 'Tenant Requests',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'business_center',
+          url: '/tenant-requests'
+        },
+        {
+          id: 'tenants',
+          title: 'Tenants',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'storefront',
+          url: '/tenants'
+        },
+        {
           id: 'permissions',
           title: 'Permissions',
           type: 'item',

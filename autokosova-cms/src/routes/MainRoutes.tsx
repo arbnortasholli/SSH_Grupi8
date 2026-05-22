@@ -13,6 +13,8 @@ const AccountsPage = lazy(() => import('../views/accounts/AccountsPage'));
 const AccountRolePermissionsPage = lazy(() => import('../views/account-role-permissions/AccountRolePermissionsPage'));
 const CarsPage = lazy(() => import('../views/cars/CarsPage'));
 const CarFeaturesPage = lazy(() => import('../views/car-features/CarFeaturesPage'));
+const TenantRequestsPage = lazy(() => import('../views/tenant-requests/TenantRequestsPage'));
+const TenantsPage = lazy(() => import('../views/tenants/TenantsPage'));
 
 const MainRoutes = {
   path: '/',
@@ -48,6 +50,14 @@ const MainRoutes = {
         {
           path: '/accounts',
           element: <AccountsPage />
+        },
+        {
+          path: '/tenant-requests',
+          element: <TenantRequestsPage />
+        },
+        {
+          path: '/tenants',
+          element: <TenantsPage />
         },
         {
           path: '*',

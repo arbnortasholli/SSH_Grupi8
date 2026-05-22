@@ -73,6 +73,7 @@ builder.Services.AddScoped<AccountRoleService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<AccountRolePermissionService>();
 builder.Services.AddScoped<TenantRequestService>();
+builder.Services.AddScoped<TenantService>();
 // JWT settings
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];

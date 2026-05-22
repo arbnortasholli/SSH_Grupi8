@@ -131,43 +131,59 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<TenantRequestResponseDto>.BadRequest("Request account is not valid.");
             }
 
-            request.Status = status;
-            request.AdminComment = dto.AdminComment?.Trim();
-            request.ReviewedByAccountID = adminAccountId;
-            request.ReviewedAt = DateTime.UtcNow;
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            if (status == Approved)
+            try
             {
-                var sellerRole = await _context.AccountRoles
-                    .FirstOrDefaultAsync(x => x.AccountRoleName == "Seller");
+                request.Status = status;
+                request.AdminComment = dto.AdminComment?.Trim();
+                request.ReviewedByAccountID = adminAccountId;
+                request.ReviewedAt = DateTime.UtcNow;
 
-                if (sellerRole == null)
+                if (status == Approved)
                 {
-                    return ServiceResult<TenantRequestResponseDto>.BadRequest("Seller role does not exist.");
+                    if (request.Account.TenantID.HasValue)
+                    {
+                        return ServiceResult<TenantRequestResponseDto>.BadRequest("This account is already linked to a tenant.");
+                    }
+
+                    var sellerRole = await _context.AccountRoles
+                        .FirstOrDefaultAsync(x => x.AccountRoleName == "Seller");
+
+                    if (sellerRole == null)
+                    {
+                        return ServiceResult<TenantRequestResponseDto>.BadRequest("Seller role does not exist.");
+                    }
+
+                    var tenant = new Tenant
+                    {
+                        OwnerAccountID = request.AccountID,
+                        TenantName = request.BusinessName,
+                        TenantBusinessNumber = request.BusinessNumber,
+                        TenantEmail = request.BusinessEmail,
+                        TenantPhoneNumber = request.BusinessPhoneNumber,
+                        TenantCity = request.BusinessCity,
+                        TenantAddress = request.BusinessAddress,
+                        TenantIsActive = true,
+                        TenantCreationDate = DateTime.UtcNow
+                    };
+
+                    _context.Tenants.Add(tenant);
+                    await _context.SaveChangesAsync();
+
+                    request.Account.TenantID = tenant.TenantID;
+                    request.Account.AccountRoleID = sellerRole.AccountRoleID;
+                    request.CreatedTenantID = tenant.TenantID;
                 }
 
-                var tenant = new Tenant
-                {
-                    OwnerAccountID = request.AccountID,
-                    TenantName = request.BusinessName,
-                    TenantBusinessNumber = request.BusinessNumber,
-                    TenantEmail = request.BusinessEmail,
-                    TenantPhoneNumber = request.BusinessPhoneNumber,
-                    TenantCity = request.BusinessCity,
-                    TenantAddress = request.BusinessAddress,
-                    TenantIsActive = true,
-                    TenantCreationDate = DateTime.UtcNow
-                };
-
-                _context.Tenants.Add(tenant);
                 await _context.SaveChangesAsync();
-
-                request.Account.TenantID = tenant.TenantID;
-                request.Account.AccountRoleID = sellerRole.AccountRoleID;
-                request.CreatedTenantID = tenant.TenantID;
+                await transaction.CommitAsync();
             }
-
-            await _context.SaveChangesAsync();
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
 
             await _context.Entry(request).Reference(x => x.ReviewedByAccount).LoadAsync();
             await _context.Entry(request).Reference(x => x.CreatedTenant).LoadAsync();

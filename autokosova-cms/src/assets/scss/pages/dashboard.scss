@@ -316,6 +316,17 @@
   font-weight: 700;
 }
 
+.tenant-request-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+  vertical-align: middle;
+}
+
 .autokosova-layout-brand,
 .autokosova-auth-brand {
   display: inline-flex;
