@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChatWidget } from '../components/chat/ChatWidget';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 
@@ -11,5 +12,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => (
     <Navbar />
     <main className="app-main">{children}</main>
     <Footer />
+    <ChatWidget />
   </div>
 );

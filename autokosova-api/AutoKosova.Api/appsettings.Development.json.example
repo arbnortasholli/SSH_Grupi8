@@ -1,0 +1,11 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=AutoKosova;User Id=sa;Password=YOUR_SA_PASSWORD;TrustServerCertificate=True;Encrypt=False;"
+  },
+  "OpenAI": {
+    "ApiKey": "PASTE_OPENAI_KEY_HERE_OR_USE_USER_SECRETS"
+  },
+  "EmailSettings": {
+    "Enabled": false
+  }
+}
