@@ -43,6 +43,8 @@ type ApiCar = {
     CreatedByAccountID?: number;
     images?: ApiCarImage[];
     Images?: ApiCarImage[];
+    mainImageUrl?: string | null;
+    MainImageUrl?: string | null;
 };
 
 type ApiCarImage = {
@@ -90,6 +92,14 @@ const toFeatureObjects = (carId: string, features: string[] = []) =>
         name,
     }));
 
+const getApiOrigin = () => API_CONFIG.API_BASE_URL.replace(/\/api\/?$/i, '').replace(/\/$/, '');
+
+const resolveImageUrl = (url?: string | null) => {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${getApiOrigin()}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
 const mapSaleCarToCar = (saleCar: SaleCar): Car => ({
     id: saleCar.id,
     brand: saleCar.brand,
@@ -118,7 +128,7 @@ const mapSaleCarToCar = (saleCar: SaleCar): Car => ({
 const normalizeApiImage = (image: ApiCarImage): CarImage => ({
     id: String(image.carImageID ?? image.CarImageID ?? image.carImageUrl ?? image.CarImageUrl ?? ''),
     carId: String(image.carID ?? image.CarID ?? ''),
-    url: image.carImageUrl ?? image.CarImageUrl ?? '',
+    url: resolveImageUrl(image.carImageUrl ?? image.CarImageUrl),
     originalFileName: image.carImageOriginalFileName ?? image.CarImageOriginalFileName ?? null,
     contentType: image.carImageContentType ?? image.CarImageContentType ?? null,
     sizeBytes: image.carImageSizeBytes ?? image.CarImageSizeBytes ?? null,
@@ -137,7 +147,12 @@ const normalizeApiCar = (apiCar: ApiCar, images: string[] = [], features: ApiCar
     );
     const bodyType = apiCar.carBodyType ?? apiCar.CarBodyType ?? 'Sedan';
     const imageRecords = (apiCar.images ?? apiCar.Images ?? []).map(normalizeApiImage);
-    const imageUrls = imageRecords.length > 0 ? imageRecords.map((image) => image.url).filter(Boolean) : images;
+    const mainImageUrl = resolveImageUrl(apiCar.mainImageUrl ?? apiCar.MainImageUrl);
+    const imageUrls = imageRecords.length > 0
+        ? imageRecords.map((image) => image.url).filter(Boolean)
+        : mainImageUrl
+            ? [mainImageUrl]
+            : images;
 
     return {
         id,
@@ -174,6 +189,35 @@ const getSaleCarById = (id: string) => {
     return saleCar ? mapSaleCarToCar(saleCar) : null;
 };
 
+const normalizeCarsResponse = (data: unknown): PaginatedResponse<Car> => {
+    if (Array.isArray(data)) {
+        const cars = data.map((car) => normalizeApiCar(car as ApiCar));
+        return {
+            data: cars,
+            total: cars.length,
+            page: 1,
+            pageSize: cars.length,
+        };
+    }
+
+    const response = data as {
+        data?: ApiCar[];
+        total?: number;
+        totalRecords?: number;
+        page?: number;
+        pageNumber?: number;
+        pageSize?: number;
+    };
+    const cars = (response.data ?? []).map((car) => normalizeApiCar(car));
+
+    return {
+        data: cars,
+        total: response.total ?? response.totalRecords ?? cars.length,
+        page: response.page ?? response.pageNumber ?? 1,
+        pageSize: response.pageSize ?? cars.length,
+    };
+};
+
 export const carService = {
     // Get all cars with filters and pagination
     getCars: async (
@@ -190,7 +234,27 @@ export const carService = {
             pageSize,
         };
         const response = await apiClient.get('/cars', { params });
-        return response.data;
+        return normalizeCarsResponse(response.data);
+    },
+
+    getCarsForSale: async (): Promise<Car[]> => {
+        if (API_CONFIG.USE_MOCK_DATA) {
+            const response = await mockCarService.getCars({ availability: true }, 1, 100);
+            return response.data.filter((car) => car.priceType === 'sale');
+        }
+
+        const response = await apiClient.get('/cars/for-sale');
+        return normalizeCarsResponse(response.data).data;
+    },
+
+    getCarsForRent: async (): Promise<Car[]> => {
+        if (API_CONFIG.USE_MOCK_DATA) {
+            const response = await mockCarService.getCars({ availability: true }, 1, 100);
+            return response.data.filter((car) => car.priceType !== 'sale');
+        }
+
+        const response = await apiClient.get('/cars/for-rent');
+        return normalizeCarsResponse(response.data).data;
     },
 
     // Get single car details
@@ -212,7 +276,7 @@ export const carService = {
         ]);
 
         const images = imagesResponse.status === 'fulfilled'
-            ? imagesResponse.value.data.map((image) => image.carImageUrl ?? image.CarImageUrl ?? '').filter(Boolean)
+            ? imagesResponse.value.data.map((image) => resolveImageUrl(image.carImageUrl ?? image.CarImageUrl)).filter(Boolean)
             : [];
         const features = featuresResponse.status === 'fulfilled' ? featuresResponse.value.data : [];
 

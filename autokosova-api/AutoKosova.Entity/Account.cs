@@ -79,6 +79,8 @@ namespace AutoKosova.Entity
 
         public ICollection<RentalBooking> RentalBookings { get; set; } = new List<RentalBooking>();
 
+        public ICollection<PaymentOrder> PaymentOrders { get; set; } = new List<PaymentOrder>();
+
         public ICollection<TenantRequest> TenantRequests { get; set; } = new List<TenantRequest>();
 
         public ICollection<TenantRequest> ReviewedTenantRequests { get; set; } = new List<TenantRequest>();

@@ -17,6 +17,7 @@ import { FavoritesPage } from '../pages/FavoritesPage';
 import { SellerDashboardPage } from '../pages/SellerDashboardPage';
 import { EditCarPage } from '../pages/EditCarPage';
 import { TenantRequestPage } from '../pages/TenantRequestPage';
+import { PaymentStatusPage } from '../pages/PaymentStatusPage';
 
 export const AppRoutes: React.FC = () => (
   <Router>
@@ -37,6 +38,10 @@ export const AppRoutes: React.FC = () => (
         <Route path="/login" element={<MainLayout><LoginPage /></MainLayout>} />
         <Route path="/register" element={<MainLayout><RegisterPage /></MainLayout>} />
         <Route path="/cars/:id" element={<MainLayout><CarDetailsPage /></MainLayout>} />
+        <Route
+          path="/payment-status"
+          element={<ProtectedRoute><MainLayout><PaymentStatusPage /></MainLayout></ProtectedRoute>}
+        />
 
         <Route
           path="/dashboard"

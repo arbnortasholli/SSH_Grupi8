@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Booking, Car, CarFeature } from '../lib/types';
+import type { Car, CarFeature } from '../lib/types';
 import { carService } from '../services/carService';
 import { bookingService } from '../services/bookingService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -79,13 +79,17 @@ export const CarDetailsPage: React.FC = () => {
 
         setIsBooking(true);
         try {
-            const booking: Booking = await bookingService.createBooking({
+            const booking = await bookingService.createBooking({
                 carId: id,
                 startDate,
                 endDate,
             });
-            alert(`Booking confirmed! Your booking ID is: ${booking.id}`);
-            navigate('/dashboard');
+
+            if (!booking.checkoutUrl) {
+                throw new Error('Checkout URL was not returned by the API.');
+            }
+
+            window.location.href = booking.checkoutUrl;
         } catch (err: unknown) {
             setError(getErrorMessage(err, 'Failed to create booking'));
         } finally {
