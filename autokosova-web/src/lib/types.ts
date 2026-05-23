@@ -128,7 +128,7 @@ export interface Booking {
     startDate: string;
     endDate: string;
     totalPrice: number;
-    status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
+    status: 'PendingPayment' | 'Confirmed' | 'Cancelled' | 'Completed';
     createdAt: string;
 }
 
@@ -136,6 +136,33 @@ export interface BookingRequest {
     carId: string;
     startDate: string;
     endDate: string;
+}
+
+export interface BookingCheckoutResponse {
+    message: string;
+    rentalBookingID: number;
+    paymentOrderID: number;
+    totalDays: number;
+    totalPrice: number;
+    rentalBookingStatus: string;
+    paymentStatus: string;
+    checkoutUrl: string;
+}
+
+export interface PaymentStatusResponse {
+    paymentOrderID: number;
+    rentalBookingID: number;
+    amount: number;
+    currency: string;
+    paymentStatus: string;
+    paymentProvider: string;
+    stripeCheckoutSessionID?: string | null;
+    stripePaymentIntentID?: string | null;
+    rentalBookingStatus: string;
+    createdDate: string;
+    paidDate?: string | null;
+    failedDate?: string | null;
+    cancelledDate?: string | null;
 }
 
 // Paginated response

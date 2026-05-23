@@ -37,5 +37,7 @@ namespace AutoKosova.Entity
         public Cars? Car { get; set; }
 
         public Account? CustomerAccount { get; set; }
+
+        public ICollection<PaymentOrder> PaymentOrders { get; set; } = new List<PaymentOrder>();
     }
 }

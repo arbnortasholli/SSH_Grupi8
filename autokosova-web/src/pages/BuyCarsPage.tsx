@@ -5,9 +5,12 @@ import { Button } from '../components/common/Button';
 import { EmptyState } from '../components/common/EmptyState';
 import { SectionHeader } from '../components/common/SectionHeader';
 import { SortDropdown } from '../components/common/SortDropdown';
-import { saleCars, type SaleCar } from '../data/carsDummyData';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import type { Car } from '../lib/types';
+import { carService } from '../services/carService';
+import { getErrorMessage } from '../utils/helpers';
 
-const sortCars = (cars: SaleCar[], sort: string) => {
+const sortCars = (cars: Car[], sort: string) => {
   const sorted = [...cars];
 
   if (sort === 'lowest-price') sorted.sort((a, b) => a.price - b.price);
@@ -21,7 +24,29 @@ const sortCars = (cars: SaleCar[], sort: string) => {
 export const BuyCarsPage: React.FC = () => {
   const [sort, setSort] = React.useState('newest');
   const [filtersOpen, setFiltersOpen] = React.useState(false);
-  const cars = sortCars(saleCars, sort);
+  const [cars, setCars] = React.useState<Car[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const loadCars = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const saleListings = await carService.getCarsForSale();
+        setCars(saleListings);
+      } catch (err: unknown) {
+        setError(getErrorMessage(err, 'Failed to load cars for sale.'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadCars();
+  }, []);
+
+  const sortedCars = sortCars(cars, sort);
 
   return (
     <div className="page marketplace-page">
@@ -40,7 +65,7 @@ export const BuyCarsPage: React.FC = () => {
               <p>Search sale listings across Kosovo with useful filters and clear comparison cards.</p>
             </div>
             <div className="buy-hero-stats">
-              <span><strong>{cars.length}</strong> listings</span>
+              <span><strong>{sortedCars.length}</strong> listings</span>
               <span><strong>6</strong> cities</span>
               <span><strong>€21.5k</strong> from</span>
             </div>
@@ -56,7 +81,7 @@ export const BuyCarsPage: React.FC = () => {
 
       <section className="ak-container marketplace-toolbar">
         <div>
-          <strong>{cars.length} cars found</strong>
+          <strong>{sortedCars.length} cars found</strong>
           <span>Showing sale listings across Kosovo cities.</span>
         </div>
         <div className="toolbar-actions">
@@ -97,9 +122,13 @@ export const BuyCarsPage: React.FC = () => {
             description="Narrow by brand, year, price, mileage, fuel, transmission, city, and body type."
             action={<Button variant="ghost">Save search</Button>}
           />
-          {cars.length > 0 ? (
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : error ? (
+            <EmptyState title="Could not load cars" description={error} />
+          ) : sortedCars.length > 0 ? (
             <div className="listing-stack">
-              {cars.map((car) => (
+              {sortedCars.map((car) => (
                 <CarCard key={car.id} car={car} />
               ))}
             </div>

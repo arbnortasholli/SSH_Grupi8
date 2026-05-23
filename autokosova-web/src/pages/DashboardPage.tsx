@@ -1,255 +1,254 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../hooks/useAuth';
 import type { Booking } from '../lib/types';
 import { bookingService } from '../services/bookingService';
 import { tenantRequestService, type TenantRequestResponse } from '../services/tenantRequestService';
 import { formatCurrency, formatDate, getErrorMessage } from '../utils/helpers';
-import { LoadingSpinner } from '../components/LoadingSpinner';
+
+type DashboardTab = 'bookings' | 'profile';
+
+const getStatusClass = (status: Booking['status']) => {
+  if (status === 'Confirmed') return 'confirmed';
+  if (status === 'Cancelled') return 'cancelled';
+  if (status === 'Completed') return 'completed';
+  return 'pending';
+};
 
 export const DashboardPage: React.FC = () => {
-    const { user } = useAuth();
-    const [bookings, setBookings] = useState<Booking[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [selectedTab, setSelectedTab] = useState<'bookings' | 'profile'>('bookings');
-    const [tenantRequests, setTenantRequests] = useState<TenantRequestResponse[]>([]);
+  const { user } = useAuth();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [tenantRequests, setTenantRequests] = useState<TenantRequestResponse[]>([]);
+  const [selectedTab, setSelectedTab] = useState<DashboardTab>('bookings');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const hasTenant = Boolean(user?.tenantID);
-    const isSeller = user?.role === 'Seller' || user?.role === 'SuperAdmin';
-    const latestTenantRequest = tenantRequests[0];
+  const isSeller = user?.role === 'Seller';
+  const hasTenant = Boolean(user?.tenantID);
+  const latestTenantRequest = tenantRequests[0];
 
-    const loadBookings = useCallback(async () => {
-        await Promise.resolve();
-        setIsLoading(true);
-        try {
-            const data = await bookingService.getMyBookings();
-            setBookings(data);
-        } catch (err: unknown) {
-            setError(getErrorMessage(err, 'Failed to load bookings'));
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+  const loadBookings = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-    const loadTenantRequests = useCallback(async () => {
-        if (!user || hasTenant || isSeller) return;
+    try {
+      const data = await bookingService.getMyBookings();
+      setBookings(data);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to load your rentals.'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-        try {
-            const data = await tenantRequestService.getMine();
-            setTenantRequests(data);
-        } catch {
-            setTenantRequests([]);
-        }
-    }, [hasTenant, isSeller, user]);
+  const loadTenantRequests = useCallback(async () => {
+    if (!user || hasTenant || isSeller) return;
 
-    useEffect(() => {
-        queueMicrotask(() => {
-            void loadBookings();
-            void loadTenantRequests();
-        });
-    }, [loadBookings, loadTenantRequests]);
+    try {
+      const data = await tenantRequestService.getMine();
+      setTenantRequests(data);
+    } catch {
+      setTenantRequests([]);
+    }
+  }, [hasTenant, isSeller, user]);
 
-    const handleCancelBooking = async (bookingId: string) => {
-        if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+  useEffect(() => {
+    void loadBookings();
+    void loadTenantRequests();
+  }, [loadBookings, loadTenantRequests]);
 
-        try {
-            await bookingService.cancelBooking(bookingId);
-            setBookings(bookings.filter(b => b.id !== bookingId));
-        } catch (err: unknown) {
-            alert(getErrorMessage(err, 'Failed to cancel booking'));
-        }
-    };
+  const stats = useMemo(() => {
+    const confirmed = bookings.filter((booking) => booking.status === 'Confirmed').length;
+    const pending = bookings.filter((booking) => booking.status === 'PendingPayment').length;
+    const totalSpent = bookings
+      .filter((booking) => booking.status !== 'Cancelled')
+      .reduce((sum, booking) => sum + booking.totalPrice, 0);
 
-    return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
-                <p className="text-gray-600">Welcome, {user?.accountName} {user?.accountLastname}!</p>
-            </div>
+    return { confirmed, pending, totalSpent };
+  }, [bookings]);
 
-            {isSeller && hasTenant && (
-                <div className="mb-6 bg-white rounded-lg shadow-md p-6 border border-blue-100">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                            <p className="text-sm font-semibold text-primary uppercase tracking-wide">Renter account</p>
-                            <h2 className="text-2xl font-bold text-gray-800 mt-1">
-                                {user?.tenantName || 'Your rental business'}
-                            </h2>
-                            <p className="text-gray-600 mt-1">Manage your cars and renter activity from the seller dashboard.</p>
-                        </div>
-                        <Link
-                            to="/seller"
-                            className="inline-flex justify-center px-5 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition font-semibold"
-                        >
-                            Open seller dashboard
-                        </Link>
-                    </div>
-                </div>
-            )}
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
 
-            {!hasTenant && !isSeller && (
-                <div className="mb-6 bg-white rounded-lg shadow-md p-6 border border-gray-100">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                            <p className="text-sm font-semibold text-primary uppercase tracking-wide">Rent with AutoKosova</p>
-                            <h2 className="text-2xl font-bold text-gray-800 mt-1">Want to list cars for rent?</h2>
-                            {latestTenantRequest?.status === 'Pending' ? (
-                                <p className="text-gray-600 mt-1">Your renter request is pending review.</p>
-                            ) : latestTenantRequest?.status === 'Rejected' ? (
-                                <p className="text-gray-600 mt-1">Your last request was rejected. You can update your details and send a new request.</p>
-                            ) : (
-                                <p className="text-gray-600 mt-1">Send your business details and wait for SuperAdmin approval.</p>
-                            )}
-                        </div>
-                        <Link
-                            to="/tenant-request"
-                            className="inline-flex justify-center px-5 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition font-semibold"
-                        >
-                            {latestTenantRequest?.status === 'Pending' ? 'View request' : 'Become a renter'}
-                        </Link>
-                    </div>
-                </div>
-            )}
+    try {
+      await bookingService.cancelBooking(bookingId);
+      setBookings((current) => current.filter((booking) => booking.id !== bookingId));
+    } catch (err: unknown) {
+      alert(getErrorMessage(err, 'Failed to cancel booking.'));
+    }
+  };
 
-            {error && (
-                <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                    {error}
-                </div>
-            )}
+  if (isSeller) {
+    return <Navigate to="/seller" replace />;
+  }
 
-            {/* Tabs */}
-            <div className="flex gap-4 border-b border-gray-200 mb-8">
-                <button
-                    onClick={() => setSelectedTab('bookings')}
-                    className={`px-4 py-2 font-medium transition ${selectedTab === 'bookings'
-                        ? 'border-b-2 border-primary text-primary'
-                        : 'text-gray-600 hover:text-gray-800'
-                        }`}
-                >
-                    My Bookings
-                </button>
-                <button
-                    onClick={() => setSelectedTab('profile')}
-                    className={`px-4 py-2 font-medium transition ${selectedTab === 'profile'
-                        ? 'border-b-2 border-primary text-primary'
-                        : 'text-gray-600 hover:text-gray-800'
-                        }`}
-                >
-                    Profile
-                </button>
-            </div>
-
-            {/* Bookings Tab */}
-            {selectedTab === 'bookings' && (
-                <div>
-                    {isLoading ? (
-                        <LoadingSpinner />
-                    ) : bookings.length > 0 ? (
-                        <div className="space-y-4">
-                            {bookings.map((booking) => (
-                                <div key={booking.id} className="bg-white rounded-lg shadow-md p-6">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h3 className="text-xl font-bold text-gray-800">
-                                                {booking.car?.brand} {booking.car?.model}
-                                            </h3>
-                                            <p className="text-sm text-gray-500">Booking ID: {booking.id}</p>
-                                        </div>
-                                        <span
-                                            className={`px-3 py-1 rounded-full text-sm font-medium ${booking.status === 'Confirmed'
-                                                ? 'bg-green-100 text-green-800'
-                                                : booking.status === 'Pending'
-                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                    : booking.status === 'Cancelled'
-                                                        ? 'bg-red-100 text-red-800'
-                                                        : 'bg-blue-100 text-blue-800'
-                                                }`}
-                                        >
-                                            {booking.status}
-                                        </span>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                                        <div>
-                                            <p className="text-gray-500 text-sm">Start Date</p>
-                                            <p className="font-semibold">{formatDate(booking.startDate)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-gray-500 text-sm">End Date</p>
-                                            <p className="font-semibold">{formatDate(booking.endDate)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-gray-500 text-sm">Total Price</p>
-                                            <p className="font-semibold">{formatCurrency(booking.totalPrice)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-gray-500 text-sm">Booked On</p>
-                                            <p className="font-semibold">{formatDate(booking.createdAt)}</p>
-                                        </div>
-                                    </div>
-
-                                    {booking.status === 'Pending' && (
-                                        <button
-                                            onClick={() => handleCancelBooking(booking.id)}
-                                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
-                                        >
-                                            Cancel Booking
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12">
-                            <p className="text-gray-600 text-lg">No bookings yet</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Profile Tab */}
-            {selectedTab === 'profile' && (
-                <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Profile Information</h2>
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Email
-                            </label>
-                            <p className="text-gray-800">{user?.accountEmail}</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    First Name
-                                </label>
-                                <p className="text-gray-800">{user?.accountName}</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Last Name
-                                </label>
-                                <p className="text-gray-800">{user?.accountLastname}</p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Role
-                            </label>
-                            <p className="text-gray-800">{user?.role}</p>
-                        </div>
-                    </div>
-
-                    <button className="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition">
-                        Edit Profile
-                    </button>
-                </div>
-            )}
+  return (
+    <div className="customer-dashboard-page">
+      <section className="customer-dashboard-hero">
+        <div>
+          <p className="eyebrow">My rentals</p>
+          <h1>Your AutoKosova trips</h1>
+          <p>Track active rentals, payment status, and your account details from one place.</p>
         </div>
-    );
+        <Link to="/rent" className="customer-dashboard-primary">
+          Browse rental cars
+        </Link>
+      </section>
+
+      <section className="customer-dashboard-stats" aria-label="Rental summary">
+        <div>
+          <span>Total bookings</span>
+          <strong>{bookings.length}</strong>
+        </div>
+        <div>
+          <span>Confirmed</span>
+          <strong>{stats.confirmed}</strong>
+        </div>
+        <div>
+          <span>Pending payment</span>
+          <strong>{stats.pending}</strong>
+        </div>
+        <div>
+          <span>Total value</span>
+          <strong>{formatCurrency(stats.totalSpent)}</strong>
+        </div>
+      </section>
+
+      {!hasTenant && (
+        <section className="customer-dashboard-callout">
+          <div>
+            <span>List cars for rent</span>
+            <h2>Want to become a renter?</h2>
+            <p>
+              {latestTenantRequest?.status === 'Pending'
+                ? 'Your tenant request is pending review.'
+                : latestTenantRequest?.status === 'Rejected'
+                  ? 'Your last tenant request was rejected. You can update your details and try again.'
+                  : 'Send your business details and wait for SuperAdmin approval.'}
+            </p>
+          </div>
+          <Link to="/tenant-request">
+            {latestTenantRequest?.status === 'Pending' ? 'View request' : 'Send request'}
+          </Link>
+        </section>
+      )}
+
+      {error && <div className="customer-dashboard-error">{error}</div>}
+
+      <div className="customer-dashboard-tabs">
+        <button
+          type="button"
+          className={selectedTab === 'bookings' ? 'active' : undefined}
+          onClick={() => setSelectedTab('bookings')}
+        >
+          Bookings
+        </button>
+        <button
+          type="button"
+          className={selectedTab === 'profile' ? 'active' : undefined}
+          onClick={() => setSelectedTab('profile')}
+        >
+          Profile
+        </button>
+      </div>
+
+      {selectedTab === 'bookings' && (
+        <section className="customer-dashboard-section">
+          <div className="customer-dashboard-section-heading">
+            <div>
+              <span>Rental history</span>
+              <h2>Your bookings</h2>
+            </div>
+            <Link to="/rent">Find another car</Link>
+          </div>
+
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : bookings.length > 0 ? (
+            <div className="customer-booking-list">
+              {bookings.map((booking) => (
+                <article key={booking.id} className="customer-booking-card">
+                  <div className="customer-booking-card__top">
+                    <div>
+                      <h3>
+                        {booking.car?.brand && booking.car?.model
+                          ? `${booking.car.brand} ${booking.car.model}`
+                          : `Rental car #${booking.carId}`}
+                      </h3>
+                      <p>Booking #{booking.id}</p>
+                    </div>
+                    <span className={`customer-booking-status ${getStatusClass(booking.status)}`}>
+                      {booking.status}
+                    </span>
+                  </div>
+
+                  <div className="customer-booking-meta">
+                    <div>
+                      <span>Start</span>
+                      <strong>{formatDate(booking.startDate)}</strong>
+                    </div>
+                    <div>
+                      <span>End</span>
+                      <strong>{formatDate(booking.endDate)}</strong>
+                    </div>
+                    <div>
+                      <span>Total</span>
+                      <strong>{formatCurrency(booking.totalPrice)}</strong>
+                    </div>
+                    <div>
+                      <span>Booked</span>
+                      <strong>{formatDate(booking.createdAt)}</strong>
+                    </div>
+                  </div>
+
+                  {booking.status === 'PendingPayment' && (
+                    <button type="button" onClick={() => handleCancelBooking(booking.id)}>
+                      Cancel booking
+                    </button>
+                  )}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="customer-dashboard-empty">
+              <h3>No rentals yet</h3>
+              <p>Choose a car, select your dates, and your bookings will appear here.</p>
+              <Link to="/rent">Browse rental cars</Link>
+            </div>
+          )}
+        </section>
+      )}
+
+      {selectedTab === 'profile' && (
+        <section className="customer-dashboard-section customer-profile-panel">
+          <div className="customer-dashboard-section-heading">
+            <div>
+              <span>Account</span>
+              <h2>Profile information</h2>
+            </div>
+          </div>
+
+          <div className="customer-profile-grid">
+            <div>
+              <span>Name</span>
+              <strong>{user?.accountName} {user?.accountLastname}</strong>
+            </div>
+            <div>
+              <span>Email</span>
+              <strong>{user?.accountEmail}</strong>
+            </div>
+            <div>
+              <span>Username</span>
+              <strong>{user?.accountUsername}</strong>
+            </div>
+            <div>
+              <span>Role</span>
+              <strong>{user?.role}</strong>
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  );
 };

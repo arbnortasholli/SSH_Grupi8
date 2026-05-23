@@ -64,7 +64,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _rentalBookingService.Create(
+            var result = await _rentalBookingService.CreateWithPayment(
                 request.CarID,
                 request.RentalBookingStartDate,
                 request.RentalBookingEndDate,
@@ -75,13 +75,7 @@ namespace AutoKosova.Api.Controllers
                 return ToActionResult(result);
             }
 
-            return Ok(new
-            {
-                message = "Rental booking created successfully.",
-                rentalBookingID = result.Data!.Booking.RentalBookingID,
-                totalDays = result.Data.TotalDays,
-                totalPrice = result.Data.TotalPrice
-            });
+            return Ok(result.Data);
         }
 
         [Authorize]

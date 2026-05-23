@@ -9,8 +9,8 @@ import { BuySearchForm } from '../components/search/BuySearchForm';
 import { RentSearchForm } from '../components/search/RentSearchForm';
 import { SearchTabs, type SearchMode } from '../components/search/SearchTabs';
 import { brands } from '../data/brandsDummyData';
-import { saleCars } from '../data/carsDummyData';
-import { rentalCars } from '../data/rentalCarsDummyData';
+import type { Car } from '../lib/types';
+import { carService } from '../services/carService';
 
 const howItWorks = [
   {
@@ -43,6 +43,27 @@ const reasons = [
 
 export const HomePage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<SearchMode>('buy');
+  const [saleCars, setSaleCars] = React.useState<Car[]>([]);
+  const [rentalCars, setRentalCars] = React.useState<Car[]>([]);
+
+  React.useEffect(() => {
+    const loadFeaturedCars = async () => {
+      try {
+        const [saleListings, rentalListings] = await Promise.all([
+          carService.getCarsForSale(),
+          carService.getCarsForRent(),
+        ]);
+
+        setSaleCars(saleListings.slice(0, 3));
+        setRentalCars(rentalListings.slice(0, 4));
+      } catch {
+        setSaleCars([]);
+        setRentalCars([]);
+      }
+    };
+
+    void loadFeaturedCars();
+  }, []);
 
   return (
     <div className="page">
@@ -78,7 +99,7 @@ export const HomePage: React.FC = () => {
             action={<Button to="/buy" variant="ghost">View all</Button>}
           />
           <div className="card-grid card-grid--3">
-            {saleCars.slice(0, 3).map((car) => (
+            {saleCars.map((car) => (
               <CarCard key={car.id} car={car} />
             ))}
           </div>
@@ -123,7 +144,7 @@ export const HomePage: React.FC = () => {
               action={<Button to="/rent" variant="ghost">Explore rentals</Button>}
             />
             <div className="home-rentals__grid">
-              {rentalCars.slice(0, 4).map((car) => (
+              {rentalCars.map((car) => (
                 <RentalCarCard key={car.id} car={car} />
               ))}
             </div>

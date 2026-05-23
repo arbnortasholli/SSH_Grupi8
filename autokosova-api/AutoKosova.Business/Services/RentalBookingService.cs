@@ -1,4 +1,5 @@
 using AutoKosova.DataAccess;
+using AutoKosova.Business.DTOs.RentalBookings;
 using AutoKosova.Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,13 +7,21 @@ namespace AutoKosova.Business.Services
 {
     public class RentalBookingService
     {
-        private static readonly string[] AllowedStatuses = { "Pending", "Confirmed", "Cancelled", "Completed" };
+        private static readonly string[] AllowedStatuses =
+        {
+            PaymentConstants.RentalStatusPendingPayment,
+            PaymentConstants.RentalStatusConfirmed,
+            PaymentConstants.RentalStatusCancelled,
+            PaymentConstants.RentalStatusCompleted
+        };
 
         private readonly AppDbContext _context;
+        private readonly PaymentService _paymentService;
 
-        public RentalBookingService(AppDbContext context)
+        public RentalBookingService(AppDbContext context, PaymentService paymentService)
         {
             _context = context;
+            _paymentService = paymentService;
         }
 
         public async Task<ServiceResult<List<RentalBooking>>> GetAll(int accountId, string? role)
@@ -110,7 +119,7 @@ namespace AutoKosova.Business.Services
                 RentalBookingEndDate = endDate,
                 RentalBookingDailyPrice = car.RentalDailyPrice.Value,
                 RentalBookingTotalPrice = totalPrice,
-                RentalBookingStatus = "Pending",
+                RentalBookingStatus = PaymentConstants.RentalStatusPendingPayment,
                 RentalBookingCreationDate = DateTime.UtcNow,
                 RentalBookingDeleted = false,
                 Tenant = car.Tenant,
@@ -121,6 +130,49 @@ namespace AutoKosova.Business.Services
             await _context.SaveChangesAsync();
 
             return ServiceResult<(RentalBooking Booking, int TotalDays, decimal TotalPrice)>.Success((booking, totalDays, totalPrice));
+        }
+
+        public async Task<ServiceResult<RentalBookingCreateResponseDto>> CreateWithPayment(
+            int carId,
+            DateTime rentalBookingStartDate,
+            DateTime rentalBookingEndDate,
+            int accountId)
+        {
+            var bookingResult = await Create(carId, rentalBookingStartDate, rentalBookingEndDate, accountId);
+
+            if (!bookingResult.IsSuccess)
+            {
+                return bookingResult.Status switch
+                {
+                    ServiceStatus.NotFound => ServiceResult<RentalBookingCreateResponseDto>.NotFound(bookingResult.Error!),
+                    ServiceStatus.Forbidden => ServiceResult<RentalBookingCreateResponseDto>.Forbidden(bookingResult.Error!),
+                    _ => ServiceResult<RentalBookingCreateResponseDto>.BadRequest(bookingResult.Error ?? "Rental booking could not be created.")
+                };
+            }
+
+            var checkoutResult = await _paymentService.CreateCheckoutSession(bookingResult.Data!.Booking.RentalBookingID, accountId);
+
+            if (!checkoutResult.IsSuccess)
+            {
+                return checkoutResult.Status switch
+                {
+                    ServiceStatus.NotFound => ServiceResult<RentalBookingCreateResponseDto>.NotFound(checkoutResult.Error!),
+                    ServiceStatus.Forbidden => ServiceResult<RentalBookingCreateResponseDto>.Forbidden(checkoutResult.Error!),
+                    _ => ServiceResult<RentalBookingCreateResponseDto>.BadRequest(checkoutResult.Error ?? "Checkout session could not be created.")
+                };
+            }
+
+            return ServiceResult<RentalBookingCreateResponseDto>.Success(new RentalBookingCreateResponseDto
+            {
+                Message = "Rental booking created. Continue to payment.",
+                RentalBookingID = bookingResult.Data.Booking.RentalBookingID,
+                PaymentOrderID = checkoutResult.Data!.PaymentOrderID,
+                TotalDays = bookingResult.Data.TotalDays,
+                TotalPrice = bookingResult.Data.TotalPrice,
+                RentalBookingStatus = bookingResult.Data.Booking.RentalBookingStatus,
+                PaymentStatus = "Pending",
+                CheckoutUrl = checkoutResult.Data.CheckoutUrl
+            });
         }
 
         public async Task<ServiceResult<List<RentalBooking>>> GetMyBookings(int accountId)
@@ -232,7 +284,7 @@ namespace AutoKosova.Business.Services
             booking.RentalBookingDeleted = true;
             booking.RentalBookingDeletedDate = DateTime.UtcNow;
             booking.RentalBookingUpdatedDate = DateTime.UtcNow;
-            booking.RentalBookingStatus = "Cancelled";
+            booking.RentalBookingStatus = PaymentConstants.RentalStatusCancelled;
 
             await _context.SaveChangesAsync();
 
@@ -245,7 +297,7 @@ namespace AutoKosova.Business.Services
                 .AnyAsync(rb =>
                     rb.CarID == carId &&
                     !rb.RentalBookingDeleted &&
-                    rb.RentalBookingStatus != "Cancelled" &&
+                    rb.RentalBookingStatus != PaymentConstants.RentalStatusCancelled &&
                     startDate < rb.RentalBookingEndDate &&
                     endDate > rb.RentalBookingStartDate);
         }
