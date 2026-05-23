@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using AutoKosova.Api.Authorization;
 using AutoKosova.Api.BackgroundJobs;
+using AutoKosova.Api.Swagger;
 using AutoKosova.Business.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 
@@ -23,8 +24,11 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "AutoKosova API",
-        Version = "v1"
+        Version = "v1",
+        Description = "API per menaxhimin e veturave, qirave, pagesave, perdoruesve, roleve, lejeve dhe tenant requests."
     });
+
+    options.OperationFilter<SwaggerDefaultOperationFilter>();
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
