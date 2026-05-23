@@ -83,6 +83,10 @@ builder.Services.AddScoped<TenantService>();
 builder.Services.AddScoped<EmailQueueService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHttpClient<PaymentService>();
+builder.Services.AddHttpClient<IChatAgentService, ChatAgentService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
 builder.Services.AddHostedService<EmailQueueWorker>();
 // JWT settings
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -150,9 +154,23 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
+    using (var scope = app.Services.CreateScope())
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+
+        try
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbContext.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Database migration skipped. Start SQL Server or update ConnectionStrings:DefaultConnection. " +
+                "Chat and other endpoints that need the database may fail until SQL is available.");
+        }
+    }
 
     app.UseSwagger();
 

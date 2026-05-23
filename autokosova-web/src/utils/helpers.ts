@@ -52,12 +52,17 @@ export const truncateText = (text: string, maxLength: number): string => {
 export const getErrorMessage = (error: unknown, fallback: string): string => {
     if (typeof error === 'object' && error !== null) {
         const maybeError = error as {
+            code?: unknown;
             message?: unknown;
             response?: {
                 data?: unknown;
                 statusText?: unknown;
             };
         };
+
+        if (maybeError.code === 'ERR_NETWORK') {
+            return 'Nuk mund të lidhem me API-në. Sigurohuni që backend-i po punon (dotnet run në autokosova-api/AutoKosova.Api, porti 5265).';
+        }
 
         const data = maybeError.response?.data;
 
