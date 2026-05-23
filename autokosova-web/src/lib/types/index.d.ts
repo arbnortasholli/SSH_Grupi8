@@ -30,7 +30,7 @@ export interface AuthResponse {
     expiresAt?: string;
     accountID?: number;
     accountRoleID?: number;
-    role?: 'Guest' | 'Customer' | 'Seller' | 'SuperAdmin' | string;
+    role?: 'Guest' | 'Customer' | 'Rental' | 'SuperAdmin' | string;
     accountUsername?: string;
     accountEmail?: string;
     accountName?: string;
@@ -41,7 +41,7 @@ export interface AuthResponse {
 export interface User {
     accountID?: number;
     accountRoleID?: number;
-    role: 'Guest' | 'Customer' | 'Seller' | 'SuperAdmin' | string;
+    role: 'Guest' | 'Customer' | 'Rental' | 'SuperAdmin' | string;
     accountUsername?: string;
     accountEmail?: string;
     accountName?: string;

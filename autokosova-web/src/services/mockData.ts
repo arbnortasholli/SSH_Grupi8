@@ -9,7 +9,7 @@ export const mockUsers = {
         accountEmail: 'seller@autokosova.com',
         accountName: 'Arben',
         accountLastname: 'Nortasholli',
-        role: 'Seller' as const,
+        role: 'Rental' as const,
     } as User,
     customer: {
         accountID: 2,

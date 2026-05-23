@@ -12,17 +12,17 @@ export const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
-  const isSeller = user?.role === 'Seller';
+  const isRental = user?.role === 'Rental';
   const isSuperAdmin = user?.role === 'SuperAdmin';
-  const canRequestTenant = isAuthenticated && !user?.tenantID && user?.role !== 'Seller' && user?.role !== 'SuperAdmin';
+  const canRequestTenant = isAuthenticated && !user?.tenantID && user?.role !== 'Rental' && user?.role !== 'SuperAdmin';
   const canListCars = !isAuthenticated || isSuperAdmin;
-  const visibleNavLinks = isSeller
+  const visibleNavLinks = isRental
     ? [
       { to: '/seller', label: 'My cars' },
       { to: '/seller/add-car', label: 'Add rental car' },
     ]
     : navLinks;
-  const accountLink = isSeller
+  const accountLink = isRental
     ? { to: '/seller', label: 'My cars' }
     : isSuperAdmin
       ? { to: '/dashboard', label: 'Admin area' }
@@ -62,7 +62,7 @@ export const Navbar: React.FC = () => {
                   Tenant request
                 </Link>
               )}
-              {!isSeller && (
+              {!isRental && (
                 <Link to={accountLink.to} className="nav-login">
                   {accountLink.label}
                 </Link>
@@ -110,7 +110,7 @@ export const Navbar: React.FC = () => {
                     Tenant request
                   </Link>
                 )}
-                {!isSeller && (
+                {!isRental && (
                   <Link to={accountLink.to} onClick={() => setIsOpen(false)}>
                     {accountLink.label}
                   </Link>

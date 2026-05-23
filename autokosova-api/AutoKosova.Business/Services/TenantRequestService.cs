@@ -149,12 +149,12 @@ namespace AutoKosova.Business.Services
                         return ServiceResult<TenantRequestResponseDto>.BadRequest("This account is already linked to a tenant.");
                     }
 
-                    var sellerRole = await _context.AccountRoles
-                        .FirstOrDefaultAsync(x => x.AccountRoleName == "Seller");
+                    var rentalRole = await _context.AccountRoles
+                        .FirstOrDefaultAsync(x => x.AccountRoleName == "Rental");
 
-                    if (sellerRole == null)
+                    if (rentalRole == null)
                     {
-                        return ServiceResult<TenantRequestResponseDto>.BadRequest("Seller role does not exist.");
+                        return ServiceResult<TenantRequestResponseDto>.BadRequest("Rental role does not exist.");
                     }
 
                     var tenant = new Tenant
@@ -174,7 +174,7 @@ namespace AutoKosova.Business.Services
                     await _context.SaveChangesAsync();
 
                     request.Account.TenantID = tenant.TenantID;
-                    request.Account.AccountRoleID = sellerRole.AccountRoleID;
+                    request.Account.AccountRoleID = rentalRole.AccountRoleID;
                     request.CreatedTenantID = tenant.TenantID;
                 }
 

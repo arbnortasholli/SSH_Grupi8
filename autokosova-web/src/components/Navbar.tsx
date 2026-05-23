@@ -13,7 +13,7 @@ export const Navbar: React.FC = () => {
         navigate('/');
     };
 
-    const canSeeSellerArea = user?.role === 'Seller' || user?.role === 'SuperAdmin';
+    const canSeeSellerArea = user?.role === 'Rental' || user?.role === 'SuperAdmin';
     const firstName = user?.firstName || user?.accountName || '';
     const lastName = user?.lastName || user?.accountLastname || '';
     const fullName = `${firstName} ${lastName}`.trim() || user?.accountUsername || user?.email || 'User';

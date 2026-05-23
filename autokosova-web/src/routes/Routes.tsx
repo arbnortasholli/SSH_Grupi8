@@ -29,7 +29,7 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/create-car"
           element={
-            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
+            <ProtectedRoute requiredRoles={['Rental', 'SuperAdmin']}>
               <MainLayout><CreateCarPage /></MainLayout>
             </ProtectedRoute>
           }
@@ -58,7 +58,7 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/seller"
           element={
-            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
+            <ProtectedRoute requiredRoles={['Rental', 'SuperAdmin']}>
               <MainLayout><SellerDashboardPage /></MainLayout>
             </ProtectedRoute>
           }
@@ -66,7 +66,7 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/seller/add-car"
           element={
-            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
+            <ProtectedRoute requiredRoles={['Rental', 'SuperAdmin']}>
               <MainLayout><CreateCarPage /></MainLayout>
             </ProtectedRoute>
           }
@@ -74,7 +74,7 @@ export const AppRoutes: React.FC = () => (
         <Route
           path="/seller/edit-car/:id"
           element={
-            <ProtectedRoute requiredRoles={['Seller', 'SuperAdmin']}>
+            <ProtectedRoute requiredRoles={['Rental', 'SuperAdmin']}>
               <MainLayout><EditCarPage /></MainLayout>
             </ProtectedRoute>
           }

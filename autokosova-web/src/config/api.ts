@@ -22,7 +22,7 @@ export const DEMO_ACCOUNTS = {
     seller: {
         email: 'seller@autokosova.com',
         password: 'password',
-        role: 'Seller',
+        role: 'Rental',
     },
     customer: {
         email: 'customer@autokosova.com',
