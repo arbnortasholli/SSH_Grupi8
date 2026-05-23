@@ -24,7 +24,7 @@ export const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isSeller = user?.role === 'Seller';
+  const isRental = user?.role === 'Rental';
   const hasTenant = Boolean(user?.tenantID);
   const latestTenantRequest = tenantRequests[0];
 
@@ -43,7 +43,7 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   const loadTenantRequests = useCallback(async () => {
-    if (!user || hasTenant || isSeller) return;
+    if (!user || hasTenant || isRental) return;
 
     try {
       const data = await tenantRequestService.getMine();
@@ -51,7 +51,7 @@ export const DashboardPage: React.FC = () => {
     } catch {
       setTenantRequests([]);
     }
-  }, [hasTenant, isSeller, user]);
+  }, [hasTenant, isRental, user]);
 
   useEffect(() => {
     void loadBookings();
@@ -79,7 +79,7 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  if (isSeller) {
+  if (isRental) {
     return <Navigate to="/seller" replace />;
   }
 

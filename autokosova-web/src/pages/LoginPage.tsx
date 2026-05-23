@@ -28,7 +28,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       const authData = await login(emailOrUsername, password);
-      navigate(authData.role === 'Seller' ? '/seller' : '/');
+      navigate(authData.role === 'Rental' ? '/seller' : '/');
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Login failed.'));
     }
@@ -47,7 +47,7 @@ export const LoginPage: React.FC = () => {
               <p className="eyebrow">Secure access</p>
               <h1>Sign in to manage your car journey.</h1>
               <p>
-                Keep favorite cars, continue rental requests, and manage seller
+                Keep favorite cars, continue rental requests, and manage rental
                 activity from one focused dashboard.
               </p>
             </div>
