@@ -107,7 +107,7 @@ jobs:
 
       - name: Install CMS dependencies
         working-directory: ${{ env.CMS_WORKDIR }}
-        run: npm ci
+        run: npm install
 
       - name: Detect CMS lint script
         id: cms-lint
@@ -153,7 +153,7 @@ jobs:
 
       - name: Install Web dependencies
         working-directory: ${{ env.WEB_WORKDIR }}
-        run: npm ci
+        run: npm install
 
       - name: Detect Web lint script
         id: web-lint
