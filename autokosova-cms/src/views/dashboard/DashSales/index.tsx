@@ -1,168 +1,329 @@
 // @ts-nocheck
+import { useEffect, useMemo, useState } from 'react';
+
 // react-bootstrap
-import { Row, Col, Card } from 'react-bootstrap';
+import { Alert, Badge, Card, Col, Row, Spinner, Table } from 'react-bootstrap';
 
 // third party
-import ApexChart from 'react-apexcharts';
+import FeatherIcon from 'feather-icons-react';
 
 // project imports
-import FlatCard from 'components/Widgets/Statistic/FlatCard';
-import ProductCard from 'components/Widgets/Statistic/ProductCard';
-import FeedTable from 'components/Widgets/FeedTable';
-import ProductTable from 'components/Widgets/ProductTable';
-import { SalesCustomerSatisfactionChartData } from './chart/sales-customer-satisfication-chart';
-import { SalesAccountChartData } from './chart/sales-account-chart';
-import { SalesSupportChartData } from './chart/sales-support-chart';
-import { SalesSupportChartData1 } from './chart/sales-support-chart1';
-import feedData from 'data/feedData';
-import productData from 'data/productTableData';
+import apiClient from 'config/apiClient';
 
-// -----------------------|| DASHBOARD SALES ||-----------------------//
-const Chart = ApexChart?.default ?? ApexChart;
+const numberFormatter = new Intl.NumberFormat('en-US');
+const moneyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'EUR',
+  maximumFractionDigits: 0
+});
+
+const formatNumber = (value) => numberFormatter.format(Number(value || 0));
+const formatMoney = (value) => moneyFormatter.format(Number(value || 0));
+
+const formatDate = (value) => {
+  if (!value) {
+    return '-';
+  }
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).format(new Date(value));
+};
+
+const getStatusVariant = (status = '') => {
+  const normalizedStatus = status.toLowerCase();
+
+  if (['approved', 'available', 'confirmed', 'paid'].includes(normalizedStatus)) {
+    return 'success';
+  }
+
+  if (['pending', 'pendingpayment', 'inreview'].includes(normalizedStatus)) {
+    return 'warning';
+  }
+
+  if (['rejected', 'failed', 'cancelled', 'unavailable'].includes(normalizedStatus)) {
+    return 'danger';
+  }
+
+  return 'secondary';
+};
 
 export default function DashSales() {
+  const [summary, setSummary] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDashboard = async () => {
+      try {
+        setIsLoading(true);
+        setErrorMessage('');
+        const response = await apiClient.get('/dashboard/summary');
+
+        if (isMounted) {
+          setSummary(response.data);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setErrorMessage(error.response?.data?.message || 'Dashboard data could not be loaded.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total Cars',
+        value: summary?.totalCars,
+        icon: 'truck',
+        description: `${formatNumber(summary?.availableCars)} available now`
+      },
+      {
+        title: 'For Sale',
+        value: summary?.carsForSale,
+        icon: 'tag',
+        description: 'Cars published for direct sale'
+      },
+      {
+        title: 'For Rent',
+        value: summary?.carsForRent,
+        icon: 'calendar',
+        description: 'Cars active in rental flow'
+      },
+      {
+        title: 'Active Tenants',
+        value: summary?.activeTenants,
+        icon: 'briefcase',
+        description: `${formatNumber(summary?.pendingTenantRequests)} pending requests`
+      },
+      {
+        title: 'Active Bookings',
+        value: summary?.activeBookings,
+        icon: 'check-square',
+        description: `${formatNumber(summary?.bookingsThisMonth)} created this month`
+      },
+      {
+        title: 'Pending Payments',
+        value: summary?.pendingPayments,
+        icon: 'credit-card',
+        description: `${formatNumber(summary?.failedPayments)} failed payments`
+      },
+      {
+        title: 'Accounts',
+        value: summary?.totalAccounts,
+        icon: 'users',
+        description: `${formatNumber(summary?.activeAccounts)} active accounts`
+      },
+      {
+        title: 'Revenue This Month',
+        value: formatMoney(summary?.revenueThisMonth),
+        icon: 'dollar-sign',
+        description: 'Based on paid payment orders',
+        isFormatted: true
+      }
+    ],
+    [summary]
+  );
+
   return (
-    <Row>
-      <Col md={12} xl={6}>
-        <Card className="flat-card">
-          <div className="row-table">
-            <Card.Body className="col-sm-6 br">
-              <FlatCard params={{ title: 'Customers', iconClass: 'text-primary mb-1', icon: 'group', value: '1000' }} />
-            </Card.Body>
-            <Card.Body className="col-sm-6 d-none d-md-table-cell d-lg-table-cell d-xl-table-cell card-body br">
-              <FlatCard params={{ title: 'Revenue', iconClass: 'text-primary mb-1', icon: 'language', value: '1252' }} />
-            </Card.Body>
-            <Card.Body className="col-sm-6 card-bod">
-              <FlatCard params={{ title: 'Growth', iconClass: 'text-primary mb-1', icon: 'unarchive', value: '600' }} />
-            </Card.Body>
-          </div>
-          <div className="row-table">
-            <Card.Body className="col-sm-6 br">
-              <FlatCard
-                params={{
-                  title: 'Returns',
-                  iconClass: 'text-primary mb-1',
-                  icon: 'swap_horizontal_circle',
-                  value: '3550'
-                }}
-              />
-            </Card.Body>
-            <Card.Body className="col-sm-6 d-none d-md-table-cell d-lg-table-cell d-xl-table-cell card-body br">
-              <FlatCard params={{ title: 'Downloads', iconClass: 'text-primary mb-1', icon: 'cloud_download', value: '3550' }} />
-            </Card.Body>
-            <Card.Body className="col-sm-6 card-bod">
-              <FlatCard params={{ title: 'Order', iconClass: 'text-primary mb-1', icon: 'shopping_cart', value: '100%' }} />
-            </Card.Body>
-          </div>
-        </Card>
-        <Row>
-          <Col md={6}>
-            <Card className="support-bar overflow-hidden">
-              <Card.Body className="pb-0">
-                <h2 className="m-0">53.94%</h2>
-                <span className="text-primary">Conversion Rate</span>
-                <p className="mb-3 mt-3">Number of conversions divided by the total visitors. </p>
-              </Card.Body>
-              <Chart {...SalesSupportChartData()} />
-              <Card.Footer className="border-0 bg-primary text-white background-pattern-white">
-                <Row className="text-center">
-                  <Col>
-                    <h4 className="m-0 text-white">10</h4>
-                    <span>2018</span>
-                  </Col>
-                  <Col>
-                    <h4 className="m-0 text-white">15</h4>
-                    <span>2017</span>
-                  </Col>
-                  <Col>
-                    <h4 className="m-0 text-white">13</h4>
-                    <span>2016</span>
-                  </Col>
-                </Row>
-              </Card.Footer>
-            </Card>
-          </Col>
-          <Col md={6}>
-            <Card className="support-bar overflow-hidden">
-              <Card.Body className="pb-0">
-                <h2 className="m-0">1432</h2>
-                <span className="text-primary">Order Delivered</span>
-                <p className="mb-3 mt-3">Number of conversions divided by the total visitors. </p>
-              </Card.Body>
-              <Card.Footer className="border-0">
-                <Row className="text-center">
-                  <Col>
-                    <h4 className="m-0">130</h4>
-                    <span>May</span>
-                  </Col>
-                  <Col>
-                    <h4 className="m-0">251</h4>
-                    <span>June</span>
-                  </Col>
-                  <Col>
-                    <h4 className="m-0 ">235</h4>
-                    <span>July</span>
-                  </Col>
-                </Row>
-              </Card.Footer>
-              <Chart type="bar" {...SalesSupportChartData1()} />
-            </Card>
-          </Col>
-        </Row>
-      </Col>
-      <Col md={12} xl={6}>
-        <Card>
-          <Card.Header>
-            <h5>Department wise monthly sales report</h5>
-          </Card.Header>
+    <div className="ak-admin-page">
+      <div className="ak-admin-hero">
+        <div>
+          <span className="ak-admin-eyebrow">AutoKosova Admin</span>
+          <h2>Dashboard</h2>
+          <p>Monitor cars, tenants, bookings, accounts and payment activity from one place.</p>
+        </div>
+        <div className="ak-admin-hero-icon">
+          <FeatherIcon icon="bar-chart-2" size={28} />
+        </div>
+      </div>
+
+      {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
+
+      {isLoading ? (
+        <Card className="ak-admin-card">
           <Card.Body>
-            <Row className="pb-2">
-              <div className="col-auto m-b-10">
-                <h3 className="mb-1">$21,356.46</h3>
-                <span>Total Sales</span>
-              </div>
-              <div className="col-auto m-b-10">
-                <h3 className="mb-1">$1935.6</h3>
-                <span>Average</span>
-              </div>
-            </Row>
-            <Chart {...SalesAccountChartData()} />
+            <div className="ak-permissions-loading">
+              <Spinner animation="border" size="sm" />
+              Loading dashboard data...
+            </div>
           </Card.Body>
         </Card>
-      </Col>
-      <Col md={12} xl={6}>
-        <Card>
-          <Card.Body>
-            <h6>Customer Satisfaction</h6>
-            <span>It takes continuous effort to maintain high customer satisfaction levels Internal and external.</span>
-            <Row className="d-flex justify-content-center align-items-center">
-              <Col>
-                <Chart type="pie" {...SalesCustomerSatisfactionChartData()} />
+      ) : (
+        <>
+          <Row>
+            {cards.map((card) => (
+              <Col key={card.title} sm={6} xl={3}>
+                <Card className="ak-admin-card ak-dashboard-card">
+                  <Card.Body>
+                    <div className="ak-dashboard-card__icon">
+                      <FeatherIcon icon={card.icon} size={22} />
+                    </div>
+                    <span>{card.title}</span>
+                    <strong>{card.isFormatted ? card.value : formatNumber(card.value)}</strong>
+                    <p>{card.description}</p>
+                  </Card.Body>
+                </Card>
               </Col>
-            </Row>
-          </Card.Body>
-        </Card>
-        {/* Product Table */}
-        <ProductTable {...productData} />
-      </Col>
-      <Col md={12} xl={6}>
-        <Row>
-          <Col sm={6}>
-            <ProductCard params={{ title: 'Total Profit', primaryText: '$1,783', icon: 'card_giftcard' }} />
-          </Col>
-          <Col sm={6}>
-            <ProductCard params={{ variant: 'primary', title: 'Total Orders', primaryText: '15,830', icon: 'local_mall' }} />
-          </Col>
-          <Col sm={6}>
-            <ProductCard params={{ variant: 'primary', title: 'Average Price', primaryText: '$6,780', icon: 'monetization_on' }} />
-          </Col>
-          <Col sm={6}>
-            <ProductCard params={{ title: 'Product Sold', primaryText: '6,784', icon: 'local_offer' }} />
-          </Col>
-        </Row>
-        {/* Feed Table */}
-        <FeedTable {...feedData} />
-      </Col>
-    </Row>
+            ))}
+          </Row>
+
+          <Row>
+            <Col xl={6}>
+              <Card className="ak-admin-card mb-4">
+                <Card.Body>
+                  <div className="ak-permissions-toolbar">
+                    <div>
+                      <h5>Recent Cars</h5>
+                      <p>Latest cars added to the platform.</p>
+                    </div>
+                  </div>
+                  <Table responsive hover className="ak-permissions-table">
+                    <thead>
+                      <tr>
+                        <th>Car</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary?.recentCars?.length ? (
+                        summary.recentCars.map((car) => (
+                          <tr key={car.carsID}>
+                            <td>
+                              <strong>{car.title || `${car.brand} ${car.model}`}</strong>
+                              <span className="ak-table-muted">
+                                {[car.brand, car.model, car.year].filter(Boolean).join(' ')}
+                              </span>
+                            </td>
+                            <td>
+                              <Badge bg={getStatusVariant(car.status)}>{car.status || '-'}</Badge>
+                            </td>
+                            <td>{formatDate(car.createdAt)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={3} className="ak-empty-cell">
+                            No recent cars found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </Table>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col xl={6}>
+              <Card className="ak-admin-card mb-4">
+                <Card.Body>
+                  <div className="ak-permissions-toolbar">
+                    <div>
+                      <h5>Tenant Requests</h5>
+                      <p>Newest businesses waiting for review.</p>
+                    </div>
+                  </div>
+                  <Table responsive hover className="ak-permissions-table">
+                    <thead>
+                      <tr>
+                        <th>Business</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary?.recentTenantRequests?.length ? (
+                        summary.recentTenantRequests.map((request) => (
+                          <tr key={request.tenantRequestID}>
+                            <td>
+                              <strong>{request.businessName}</strong>
+                              <span className="ak-table-muted">{request.businessCity || 'No city'}</span>
+                            </td>
+                            <td>
+                              <Badge bg={getStatusVariant(request.status)}>{request.status || '-'}</Badge>
+                            </td>
+                            <td>{formatDate(request.createdAt)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={3} className="ak-empty-cell">
+                            No tenant requests found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </Table>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col xl={12}>
+              <Card className="ak-admin-card">
+                <Card.Body>
+                  <div className="ak-permissions-toolbar">
+                    <div>
+                      <h5>Recent Bookings</h5>
+                      <p>Latest rental activity and booking value.</p>
+                    </div>
+                  </div>
+                  <Table responsive hover className="ak-permissions-table">
+                    <thead>
+                      <tr>
+                        <th>Booking</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary?.recentBookings?.length ? (
+                        summary.recentBookings.map((booking) => (
+                          <tr key={booking.rentalBookingID}>
+                            <td>
+                              <strong>#{booking.rentalBookingID}</strong>
+                              <span className="ak-table-muted">Car #{booking.carID}</span>
+                            </td>
+                            <td>#{booking.customerAccountID}</td>
+                            <td>
+                              <Badge bg={getStatusVariant(booking.status)}>{booking.status || '-'}</Badge>
+                            </td>
+                            <td>{formatMoney(booking.totalPrice)}</td>
+                            <td>{formatDate(booking.createdAt)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="ak-empty-cell">
+                            No recent bookings found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </Table>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </>
+      )}
+    </div>
   );
 }

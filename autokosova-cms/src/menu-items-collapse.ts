@@ -19,6 +19,12 @@ const menuItems = {
           url: '/car-features'
         },
         {
+          id: 'rental-bookings',
+          title: 'Rental Bookings',
+          type: 'item',
+          url: '/rental-bookings'
+        },
+        {
           id: 'accounts',
           title: 'Accounts',
           type: 'item',

@@ -24,6 +24,14 @@ const menuItems = {
           url: '/car-features'
         },
         {
+          id: 'rental-bookings',
+          title: 'Rental Bookings',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'event_available',
+          url: '/rental-bookings'
+        },
+        {
           id: 'accounts',
           title: 'Accounts',
           type: 'item',

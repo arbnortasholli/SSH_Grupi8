@@ -14,6 +14,7 @@ const AccountsPage = lazy(() => import('../views/accounts/AccountsPage'));
 const AccountRolePermissionsPage = lazy(() => import('../views/account-role-permissions/AccountRolePermissionsPage'));
 const CarsPage = lazy(() => import('../views/cars/CarsPage'));
 const CarFeaturesPage = lazy(() => import('../views/car-features/CarFeaturesPage'));
+const RentalBookingsPage = lazy(() => import('../views/rental-bookings/RentalBookingsPage'));
 const TenantRequestsPage = lazy(() => import('../views/tenant-requests/TenantRequestsPage'));
 const ExternalCarRequestsPage = lazy(() => import('../views/external-car-requests/ExternalCarRequestsPage'));
 const InterestedCustomersPage = lazy(() => import('../views/interested-customers/InterestedCustomersPage'));
@@ -41,6 +42,10 @@ const MainRoutes = {
         {
           path: '/car-features',
           element: <CarFeaturesPage />
+        },
+        {
+          path: '/rental-bookings',
+          element: <RentalBookingsPage />
         },
         {
           path: '/permissions',
