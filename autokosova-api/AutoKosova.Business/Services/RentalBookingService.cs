@@ -43,6 +43,29 @@ namespace AutoKosova.Business.Services
             return ServiceResult<List<RentalBooking>>.Success(bookings);
         }
 
+        public async Task<ServiceResult<List<RentalBooking>>> GetAdminOverview(int accountId, string? role)
+        {
+            var query = _context.RentalBookings
+                .Include(rb => rb.Car)
+                .Include(rb => rb.Tenant)
+                .Include(rb => rb.CustomerAccount)
+                .Include(rb => rb.PaymentOrders)
+                    .ThenInclude(po => po.PaymentStatus)
+                .Where(rb => !rb.RentalBookingDeleted)
+                .AsQueryable();
+
+            if (role != "SuperAdmin")
+            {
+                query = query.Where(rb => rb.Car != null && rb.Car.CreatedByAccountID == accountId);
+            }
+
+            var bookings = await query
+                .OrderByDescending(rb => rb.RentalBookingCreationDate)
+                .ToListAsync();
+
+            return ServiceResult<List<RentalBooking>>.Success(bookings);
+        }
+
         public async Task<ServiceResult<RentalBooking>> GetById(int id, int accountId, string? role)
         {
             var booking = await _context.RentalBookings
