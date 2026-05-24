@@ -36,6 +36,25 @@ namespace AutoKosova.Api.Controllers
             return Ok(result.Data!.Select(ToListDto));
         }
 
+        [HasPermission("RentalBookings.View")]
+        [HttpGet("api/rental-bookings/admin")]
+        public async Task<IActionResult> GetAdminOverview()
+        {
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            var result = await _rentalBookingService.GetAdminOverview(CurrentAccountId.Value, CurrentRole);
+
+            if (!result.IsSuccess)
+            {
+                return ToActionResult(result);
+            }
+
+            return Ok(result.Data!.Select(ToAdminListDto));
+        }
+
         [Authorize]
         [HttpGet("api/rental-bookings/{id:int}")]
         public async Task<IActionResult> GetById(int id)
@@ -226,6 +245,43 @@ namespace AutoKosova.Api.Controllers
                 RentalBookingStatus = booking.RentalBookingStatus,
                 RentalBookingCreationDate = booking.RentalBookingCreationDate,
                 RentalBookingUpdatedDate = booking.RentalBookingUpdatedDate
+            };
+        }
+
+        private static RentalBookingAdminListResponseDto ToAdminListDto(RentalBooking booking)
+        {
+            var latestPayment = booking.PaymentOrders
+                .OrderByDescending(payment => payment.CreatedDate)
+                .FirstOrDefault();
+
+            return new RentalBookingAdminListResponseDto
+            {
+                RentalBookingID = booking.RentalBookingID,
+                TenantID = booking.TenantID,
+                TenantName = booking.Tenant?.TenantName ?? string.Empty,
+                CarID = booking.CarID,
+                CarTitle = booking.Car?.CarTitle ?? string.Empty,
+                CarBrand = booking.Car?.CarBrand ?? string.Empty,
+                CarModel = booking.Car?.CarModel ?? string.Empty,
+                CarYear = booking.Car?.CarYear ?? 0,
+                CustomerAccountID = booking.CustomerAccountID,
+                CustomerName = string.Join(" ", new[]
+                {
+                    booking.CustomerAccount?.AccountName,
+                    booking.CustomerAccount?.AccountLastname
+                }.Where(value => !string.IsNullOrWhiteSpace(value))),
+                CustomerEmail = booking.CustomerAccount?.AccountEmail ?? string.Empty,
+                CustomerPhoneNumber = booking.CustomerAccount?.AccountPhoneNumber ?? string.Empty,
+                CustomerCity = booking.CustomerAccount?.AccountCity ?? string.Empty,
+                RentalBookingStartDate = booking.RentalBookingStartDate,
+                RentalBookingEndDate = booking.RentalBookingEndDate,
+                RentalBookingDailyPrice = booking.RentalBookingDailyPrice,
+                RentalBookingTotalPrice = booking.RentalBookingTotalPrice,
+                RentalBookingStatus = booking.RentalBookingStatus,
+                RentalBookingCreationDate = booking.RentalBookingCreationDate,
+                PaymentStatus = latestPayment?.PaymentStatus?.PaymentStatusName ?? string.Empty,
+                PaymentAmount = latestPayment?.Amount,
+                PaymentPaidDate = latestPayment?.PaidDate
             };
         }
     }
