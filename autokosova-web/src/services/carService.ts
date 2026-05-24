@@ -3,6 +3,7 @@ import type { Car, CarFilters, CarImage, PaginatedResponse } from '../lib/types'
 import { API_CONFIG } from '../config/api';
 import { mockCarService } from './mockCarService';
 import { saleCars, type SaleCar } from '../data/carsDummyData';
+import { rentalCars, type RentalCar } from '../data/rentalCarsDummyData';
 
 type ApiCar = {
     carsID?: number;
@@ -144,6 +145,36 @@ const mapSaleCarToCar = (saleCar: SaleCar): Car => ({
     createdAt: new Date().toISOString(),
 });
 
+const mapRentalTypeToCarType = (carType: RentalCar['carType']): Car['type'] => {
+    if (carType === 'SUV' || carType === 'Van') return carType;
+    return 'Hatchback';
+};
+
+const mapRentalCarToCar = (rentalCar: RentalCar): Car & { rating: number; trips: number } => ({
+    id: rentalCar.id,
+    brand: rentalCar.brand,
+    model: rentalCar.model,
+    year: rentalCar.year,
+    type: mapRentalTypeToCarType(rentalCar.carType),
+    price: rentalCar.dailyPrice,
+    priceType: 'daily',
+    mileage: 0,
+    fuelType: rentalCar.fuelType,
+    transmission: rentalCar.transmission,
+    seats: rentalCar.seats,
+    bodyType: rentalCar.carType,
+    city: rentalCar.location,
+    features: [],
+    description: `${rentalCar.year} ${rentalCar.brand} ${rentalCar.model} rental car in ${rentalCar.location}.`,
+    images: [rentalCar.image],
+    isAvailable: rentalCar.available,
+    sellerId: rentalCar.id,
+    sellerName: rentalCar.hostName,
+    createdAt: new Date().toISOString(),
+    rating: rentalCar.rating,
+    trips: rentalCar.trips,
+});
+
 const normalizeApiImage = (image: ApiCarImage): CarImage => ({
     id: String(image.carImageID ?? image.CarImageID ?? image.carImageUrl ?? image.CarImageUrl ?? ''),
     carId: String(image.carID ?? image.CarID ?? ''),
@@ -276,13 +307,21 @@ export const carService = {
     },
 
     getCarsForRent: async (): Promise<Car[]> => {
+        const localRentalListings = rentalCars.map(mapRentalCarToCar);
+
         if (API_CONFIG.USE_MOCK_DATA) {
             const response = await mockCarService.getCars({ availability: true }, 1, 100);
-            return response.data.filter((car) => car.priceType !== 'sale');
+            const mockRentalListings = response.data.filter((car) => car.priceType !== 'sale');
+            return [...localRentalListings, ...mockRentalListings.filter((car) => !localRentalListings.some((localCar) => localCar.id === car.id))];
         }
 
-        const response = await apiClient.get('/cars/for-rent');
-        return normalizeCarsResponse(response.data).data;
+        try {
+            const response = await apiClient.get('/cars/for-rent');
+            const apiRentalListings = normalizeCarsResponse(response.data).data;
+            return [...localRentalListings, ...apiRentalListings.filter((car) => !localRentalListings.some((localCar) => localCar.id === car.id))];
+        } catch {
+            return localRentalListings;
+        }
     },
 
     // Get single car details
