@@ -1,6 +1,7 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CarCard } from '../components/cars/CarCard';
-import { FilterSidebar } from '../components/cars/FilterSidebar';
+import { FilterSidebar, type MarketplaceFilters } from '../components/cars/FilterSidebar';
 import { Button } from '../components/common/Button';
 import { EmptyState } from '../components/common/EmptyState';
 import { SectionHeader } from '../components/common/SectionHeader';
@@ -21,12 +22,57 @@ const sortCars = (cars: Car[], sort: string) => {
   return sorted;
 };
 
+const numberParam = (value: string | null) => (value ? Number(value) : undefined);
+
+const filtersFromParams = (searchParams: URLSearchParams): MarketplaceFilters => ({
+  brand: searchParams.get('brand') || undefined,
+  model: searchParams.get('model') || undefined,
+  minYear: numberParam(searchParams.get('minYear')),
+  minPrice: numberParam(searchParams.get('minPrice')),
+  maxPrice: numberParam(searchParams.get('maxPrice')),
+  maxMileage: numberParam(searchParams.get('maxMileage')),
+  fuelType: searchParams.get('fuelType') || undefined,
+  transmission: searchParams.get('transmission') || undefined,
+  city: searchParams.get('city') || undefined,
+  bodyType: searchParams.get('bodyType') || undefined,
+});
+
+const paramsFromFilters = (filters: MarketplaceFilters) => {
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      params.set(key, String(value));
+    }
+  });
+
+  return params;
+};
+
+const filterSaleCars = (cars: Car[], filters: MarketplaceFilters) =>
+  cars.filter((car) => {
+    if (filters.brand && car.brand !== filters.brand) return false;
+    if (filters.model && !car.model.toLowerCase().includes(filters.model.toLowerCase())) return false;
+    if (filters.minYear && car.year < filters.minYear) return false;
+    if (filters.minPrice !== undefined && car.price < filters.minPrice) return false;
+    if (filters.maxPrice !== undefined && car.price > filters.maxPrice) return false;
+    if (filters.maxMileage !== undefined && car.mileage > filters.maxMileage) return false;
+    if (filters.fuelType && car.fuelType !== filters.fuelType) return false;
+    if (filters.transmission && car.transmission !== filters.transmission) return false;
+    if (filters.city && car.city !== filters.city) return false;
+    if (filters.bodyType && (car.bodyType ?? car.type) !== filters.bodyType) return false;
+
+    return true;
+  });
+
 export const BuyCarsPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sort, setSort] = React.useState('newest');
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [cars, setCars] = React.useState<Car[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const filters = React.useMemo(() => filtersFromParams(searchParams), [searchParams]);
 
   React.useEffect(() => {
     const loadCars = async () => {
@@ -46,7 +92,12 @@ export const BuyCarsPage: React.FC = () => {
     void loadCars();
   }, []);
 
-  const sortedCars = sortCars(cars, sort);
+  const filteredCars = React.useMemo(() => filterSaleCars(cars, filters), [cars, filters]);
+  const sortedCars = sortCars(filteredCars, sort);
+
+  const handleFiltersChange = (nextFilters: MarketplaceFilters) => {
+    setSearchParams(paramsFromFilters(nextFilters));
+  };
 
   return (
     <div className="page marketplace-page">
@@ -113,7 +164,7 @@ export const BuyCarsPage: React.FC = () => {
 
       <section className="ak-container marketplace-layout">
         <div className={filtersOpen ? 'filters-panel open' : 'filters-panel'}>
-          <FilterSidebar mode="buy" />
+          <FilterSidebar mode="buy" filters={filters} onFiltersChange={handleFiltersChange} />
         </div>
 
         <main className="marketplace-results">
