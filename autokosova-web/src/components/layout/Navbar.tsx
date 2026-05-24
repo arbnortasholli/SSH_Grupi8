@@ -15,7 +15,6 @@ export const Navbar: React.FC = () => {
   const isRental = user?.role === 'Rental';
   const isSuperAdmin = user?.role === 'SuperAdmin';
   const canRequestTenant = isAuthenticated && !user?.tenantID && user?.role !== 'Rental' && user?.role !== 'SuperAdmin';
-  const canListCars = !isAuthenticated || isSuperAdmin;
   const visibleNavLinks = isRental
     ? [
       { to: '/seller', label: 'My cars' },
@@ -47,11 +46,6 @@ export const Navbar: React.FC = () => {
               {link.label}
             </NavLink>
           ))}
-          {canListCars && (
-            <NavLink to="/rent-your-car" className={({ isActive }) => (isActive ? 'active' : undefined)}>
-              Rent Your Car
-            </NavLink>
-          )}
         </nav>
 
         <div className="nav-actions">
@@ -97,11 +91,6 @@ export const Navbar: React.FC = () => {
               {link.label}
             </NavLink>
           ))}
-          {canListCars && (
-            <NavLink to="/rent-your-car" onClick={() => setIsOpen(false)}>
-              Rent Your Car
-            </NavLink>
-          )}
           <div className="mobile-nav__actions">
             {isAuthenticated ? (
               <>
