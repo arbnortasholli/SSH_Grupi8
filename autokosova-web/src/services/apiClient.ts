@@ -31,6 +31,8 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401 && !isAuthRequest) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            localStorage.removeItem('expiresAt');
+            window.dispatchEvent(new Event('authChanged'));
             window.location.href = '/login';
         }
         return Promise.reject(error);

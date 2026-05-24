@@ -1,15 +1,17 @@
 // @ts-nocheck
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // react-bootstrap
 import { ListGroup, Dropdown } from 'react-bootstrap';
 
 // assets
 import avatar2 from 'assets/images/user/avatar-2.jpg';
+import authService from 'utils/authService';
 
 // -----------------------|| NAV RIGHT ||-----------------------//
 
 export default function NavRight() {
+  const navigate = useNavigate();
   const storedUser = localStorage.getItem('user');
   let user = null;
 
@@ -22,6 +24,11 @@ export default function NavRight() {
   const fullName = [user?.accountName, user?.accountLastname].filter(Boolean).join(' ') || user?.accountUsername || 'Admin User';
   const role = user?.role || 'Administrator';
   const avatar = user?.avatar || user?.profileImageUrl || avatar2;
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <ListGroup as="ul" bsPrefix=" " className="list-unstyled">
@@ -39,9 +46,9 @@ export default function NavRight() {
               <h6 className="text-overflow m-0">{fullName}</h6>
               <span className="text-muted">{role}</span>
             </Dropdown.Header>
-            <Link to="#" className="dropdown-item">
+            <button type="button" className="dropdown-item" onClick={handleLogout}>
               <i className="material-icons-two-tone">chrome_reader_mode</i> Logout
-            </Link>
+            </button>
           </Dropdown.Menu>
         </Dropdown>
       </ListGroup.Item>

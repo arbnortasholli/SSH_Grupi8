@@ -3,6 +3,7 @@ import { lazy } from 'react';
 
 import AdminLayout from 'layouts/AdminLayout';
 import GuestLayout from 'layouts/GuestLayout';
+import ProtectedRoute from 'components/ProtectedRoute';
 
 const AdminDashboard = lazy(() => import('../views/dashboard/AdminDashboard'));
 const Login = lazy(() => import('../views/auth/login'));
@@ -21,7 +22,11 @@ const MainRoutes = {
   children: [
     {
       path: '/',
-      element: <AdminLayout />,
+      element: (
+        <ProtectedRoute>
+          <AdminLayout />
+        </ProtectedRoute>
+      ),
       children: [
         {
           path: '/dashboard/sales',

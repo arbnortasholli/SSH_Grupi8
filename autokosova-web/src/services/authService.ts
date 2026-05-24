@@ -1,6 +1,10 @@
 import apiClient from './apiClient';
 import type { LoginRequest, RegisterRequest, RegisterResponse, AuthResponse, User } from '../lib/types';
 
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
+const EXPIRES_AT_KEY = 'expiresAt';
+
 const toUser = (authData: AuthResponse): User => ({
     accountID: authData.accountID,
     accountRoleID: authData.accountRoleID,
@@ -21,6 +25,21 @@ const notifyAuthChanged = () => {
     window.dispatchEvent(new Event('authChanged'));
 };
 
+const clearStoredSession = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(EXPIRES_AT_KEY);
+};
+
+const isExpired = (expiresAt: string | null): boolean => {
+    if (!expiresAt) {
+        return false;
+    }
+
+    const expiresAtMs = Date.parse(expiresAt);
+    return Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now();
+};
+
 export const authService = {
     async register(data: RegisterRequest): Promise<RegisterResponse> {
         const response = await apiClient.post<RegisterResponse>('/account/register', data);
@@ -32,39 +51,53 @@ export const authService = {
         const authData = response.data;
         const user = toUser(authData);
 
-        localStorage.setItem('token', authData.token);
-        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem(TOKEN_KEY, authData.token);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        if (authData.expiresAt) {
+            localStorage.setItem(EXPIRES_AT_KEY, authData.expiresAt);
+        } else {
+            localStorage.removeItem(EXPIRES_AT_KEY);
+        }
         notifyAuthChanged();
 
         return authData;
     },
 
     async logout(): Promise<void> {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        clearStoredSession();
         notifyAuthChanged();
     },
 
     getToken(): string | null {
-        return localStorage.getItem('token');
+        if (isExpired(localStorage.getItem(EXPIRES_AT_KEY))) {
+            clearStoredSession();
+            return null;
+        }
+
+        return localStorage.getItem(TOKEN_KEY);
     },
 
     getCurrentUser(): User | null {
-        const storedUser = localStorage.getItem('user');
+        if (!this.getToken()) {
+            return null;
+        }
+
+        const storedUser = localStorage.getItem(USER_KEY);
         if (!storedUser) {
+            clearStoredSession();
             return null;
         }
 
         try {
             return JSON.parse(storedUser) as User;
         } catch {
-            localStorage.removeItem('user');
+            clearStoredSession();
             return null;
         }
     },
 
     isAuthenticated(): boolean {
-        return Boolean(localStorage.getItem('token'));
+        return Boolean(this.getToken() && this.getCurrentUser());
     },
 
     async me(): Promise<User> {

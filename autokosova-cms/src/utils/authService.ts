@@ -2,14 +2,33 @@
 import apiClient from '../config/apiClient';
 import type { LoginRequest, AuthResponse, AuthUser } from '../types/auth'
 
+const TOKEN_KEY = 'token';
+const EXPIRES_AT_KEY = 'expiresAt';
+const USER_KEY = 'user';
+
+const clearSession = (): void => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(EXPIRES_AT_KEY);
+    localStorage.removeItem(USER_KEY);
+};
+
+const isExpired = (expiresAt: string | null): boolean => {
+    if (!expiresAt) {
+        return false;
+    }
+
+    const expiresAtMs = Date.parse(expiresAt);
+    return Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now();
+};
+
 const authService = {
     async login(data: LoginRequest): Promise<AuthResponse> {
         const response = await apiClient.post<AuthResponse>('/account/login', data);
 
         const authData = response.data;
 
-        localStorage.setItem('token', authData.token);
-        localStorage.setItem('expiresAt', authData.expiresAt);
+        localStorage.setItem(TOKEN_KEY, authData.token);
+        localStorage.setItem(EXPIRES_AT_KEY, authData.expiresAt);
 
         const user: AuthUser = {
             accountID: authData.accountID,
@@ -24,37 +43,46 @@ const authService = {
             accountLastname: authData.accountLastname
         };
 
-        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
 
         return authData;
     },
 
     logout(): void {
-        localStorage.removeItem('token');
-        localStorage.removeItem('expiresAt');
-        localStorage.removeItem('user');
+        clearSession();
     },
 
     getToken(): string | null {
-        return localStorage.getItem('token');
+        if (isExpired(localStorage.getItem(EXPIRES_AT_KEY))) {
+            clearSession();
+            return null;
+        }
+
+        return localStorage.getItem(TOKEN_KEY);
     },
 
     getUser(): AuthUser | null {
-        const user = localStorage.getItem('user');
+        if (!this.getToken()) {
+            return null;
+        }
+
+        const user = localStorage.getItem(USER_KEY);
 
         if (!user) {
+            clearSession();
             return null;
         }
 
         try {
             return JSON.parse(user) as AuthUser;
         } catch {
+            clearSession();
             return null;
         }
     },
 
     isAuthenticated(): boolean {
-        return Boolean(localStorage.getItem('token'));
+        return Boolean(this.getToken() && this.getUser());
     }
 };
 

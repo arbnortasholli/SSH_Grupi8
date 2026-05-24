@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useContext, useEffect, Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 
 // project imports
 import MobileHeader from './MobileHeader';
@@ -11,6 +11,7 @@ import useWindowSize from 'hooks/useWindowSize';
 import { ConfigContext } from 'contexts/ConfigContext';
 import * as actionType from 'store/actions';
 import Loader from 'components/Loader/Loader';
+import authService from 'utils/authService';
 
 // -----------------------|| ADMIN LAYOUT ||-----------------------//
 
@@ -30,6 +31,10 @@ export default function AdminLayout() {
     bodyElement.classList.add('minimenu');
   } else {
     bodyElement.classList.remove('minimenu');
+  }
+
+  if (!authService.isAuthenticated()) {
+    return <Navigate to="/login" replace />;
   }
 
   let containerClass = ['pc-container'];

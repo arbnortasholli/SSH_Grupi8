@@ -4,20 +4,9 @@ import { authService } from '../services/authService';
 import { AuthContext } from './authContextValue';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                return JSON.parse(storedUser) as User;
-            } catch (error) {
-                console.error('Failed to parse stored user:', error);
-                localStorage.removeItem('user');
-            }
-        }
-        return null;
-    });
+    const [user, setUser] = useState<User | null>(() => authService.getCurrentUser());
     const [isLoading, setIsLoading] = useState(false);
-    const isAuthenticated = Boolean(user || authService.getToken());
+    const isAuthenticated = Boolean(user && authService.getToken());
 
     useEffect(() => {
         const syncUser = () => {
