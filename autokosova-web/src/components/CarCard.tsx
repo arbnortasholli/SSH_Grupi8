@@ -2,45 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Car } from '../lib/types';
 import { formatCurrency } from '../utils/helpers';
-import { useAuth } from '../hooks/useAuth';
-import { carService } from '../services/carService';
 
 interface CarCardProps {
     car: Car;
     onFavoriteChange?: (carId: string, isFavorite: boolean) => void;
 }
 
-export const CarCard: React.FC<CarCardProps> = ({ car, onFavoriteChange }) => {
-    const { isAuthenticated } = useAuth();
-    const [isFavorite, setIsFavorite] = useState(car.isFavorite ?? false);
-    const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+export const CarCard: React.FC<CarCardProps> = ({ car }) => {
     const [imageFailed, setImageFailed] = useState(false);
-
-    const handleFavoriteClick = async (e: React.MouseEvent) => {
-        e.preventDefault();
-
-        if (!isAuthenticated) {
-            alert('Please login to add favorites');
-            return;
-        }
-
-        setIsLoadingFavorite(true);
-        try {
-            if (isFavorite) {
-                await carService.removeFromFavorites(car.id);
-                setIsFavorite(false);
-                onFavoriteChange?.(car.id, false);
-            } else {
-                await carService.addToFavorites(car.id);
-                setIsFavorite(true);
-                onFavoriteChange?.(car.id, true);
-            }
-        } catch (error) {
-            console.error('Failed to update favorite:', error);
-        } finally {
-            setIsLoadingFavorite(false);
-        }
-    };
 
     return (
         <Link to={`/cars/${car.id}`} className="block h-full">
@@ -67,18 +36,6 @@ export const CarCard: React.FC<CarCardProps> = ({ car, onFavoriteChange }) => {
                     >
                         {car.isAvailable ? 'Available' : 'Unavailable'}
                     </span>
-
-                    <button
-                        type="button"
-                        onClick={handleFavoriteClick}
-                        disabled={isLoadingFavorite}
-                        className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg shadow-sm transition hover:bg-gray-100 disabled:opacity-50"
-                        aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                        <span className={isFavorite ? 'text-red-500' : 'text-gray-400'}>
-                            {isFavorite ? '♥' : '♡'}
-                        </span>
-                    </button>
                 </div>
 
                 <div className="p-4">

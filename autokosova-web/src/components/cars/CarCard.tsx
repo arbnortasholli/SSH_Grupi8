@@ -12,9 +12,6 @@ export const CarCard: React.FC<CarCardProps> = ({ car }) => (
   <article className="listing-card">
     <div className="listing-card__image">
       <img src={car.images[0] || '/favicon.svg'} alt={`${car.brand} ${car.model}`} />
-      <button type="button" className={car.isFavorite ? 'favorite active' : 'favorite'} aria-label="Save car">
-        &hearts;
-      </button>
     </div>
     <div className="listing-card__body">
       <div className="listing-card__top">
