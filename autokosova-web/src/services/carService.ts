@@ -84,6 +84,10 @@ const saleCarFeatures: Record<string, string[]> = {
     'sale-4': ['Quattro AWD', 'Panoramic roof', 'Virtual cockpit', 'Parking camera', 'Leather seats'],
     'sale-5': ['Hybrid drivetrain', 'Rear camera', 'Lane assist', 'Bluetooth', 'Dual-zone climate'],
     'sale-6': ['Electric drivetrain', 'Autopilot', 'Glass roof', 'Fast charging', 'Premium audio'],
+    'sale-7': ['AWD', 'Heated steering wheel', 'Rear camera', 'Lane assist', 'Wireless charging'],
+    'sale-8': ['Hybrid drivetrain', 'Panoramic roof', 'Parking sensors', 'Apple CarPlay', 'Heated seats'],
+    'sale-9': ['Service history', 'Cruise control', 'Bluetooth', 'LED headlights', 'Parking sensors'],
+    'sale-10': ['Sport Chrono', 'Leather interior', 'Premium audio', 'Parking camera', 'Adaptive suspension'],
 };
 
 const toFeatureObjects = (carId: string, features: string[] = []) =>
@@ -254,13 +258,21 @@ export const carService = {
     },
 
     getCarsForSale: async (): Promise<Car[]> => {
+        const localSaleListings = saleCars.map(mapSaleCarToCar);
+
         if (API_CONFIG.USE_MOCK_DATA) {
             const response = await mockCarService.getCars({ availability: true }, 1, 100);
-            return response.data.filter((car) => car.priceType === 'sale');
+            const mockSaleListings = response.data.filter((car) => car.priceType === 'sale');
+            return [...localSaleListings, ...mockSaleListings.filter((car) => !localSaleListings.some((localCar) => localCar.id === car.id))];
         }
 
-        const response = await apiClient.get('/cars/for-sale');
-        return normalizeCarsResponse(response.data).data;
+        try {
+            const response = await apiClient.get('/cars/for-sale');
+            const apiSaleListings = normalizeCarsResponse(response.data).data;
+            return [...localSaleListings, ...apiSaleListings.filter((car) => !localSaleListings.some((localCar) => localCar.id === car.id))];
+        } catch {
+            return localSaleListings;
+        }
     },
 
     getCarsForRent: async (): Promise<Car[]> => {
