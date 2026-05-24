@@ -15,7 +15,7 @@ permissions:
 env:
   DOTNET_VERSION: 10.0.x
   NODE_VERSION: lts/*
-  BACKEND_SOLUTION: autokosova-api/AutoKosova.sln
+  BACKEND_SOLUTION: autokosova-api/AutoKosova.slnx
   BACKEND_API_PROJECT: autokosova-api/AutoKosova.Api/AutoKosova.Api.csproj
   CMS_WORKDIR: autokosova-cms
   WEB_WORKDIR: autokosova-web
