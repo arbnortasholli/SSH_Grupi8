@@ -1,5 +1,6 @@
 using AutoKosova.Business.Services;
 using AutoKosova.DataAccess;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -99,30 +100,41 @@ if (string.IsNullOrWhiteSpace(jwtKey))
 }
 
 // Authentication
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.RequireHttpsMetadata = false;
-        options.SaveToken = true;
-
-        options.TokenValidationParameters = new TokenValidationParameters
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services
+        .AddAuthentication(TestHeaderAuthenticationHandler.SchemeName)
+        .AddScheme<AuthenticationSchemeOptions, TestHeaderAuthenticationHandler>(
+            TestHeaderAuthenticationHandler.SchemeName,
+            _ => { });
+}
+else
+{
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
         {
-            ValidateIssuer = true,
-            ValidIssuer = jwtIssuer,
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
 
-            ValidateAudience = true,
-            ValidAudience = jwtAudience,
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwtIssuer,
 
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtKey)
-            ),
+                ValidateAudience = true,
+                ValidAudience = jwtAudience,
 
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(jwtKey)
+                ),
+
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+}
 
 // Authorization
 builder.Services.AddAuthorization();
@@ -192,3 +204,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}

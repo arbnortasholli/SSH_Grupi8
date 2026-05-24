@@ -3126,6 +3126,113 @@ textarea {
   background: #fef2f2;
 }
 
+.ak-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.ak-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.ak-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 760px);
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  border: 1px solid #dfe6ef;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 28px 64px rgba(15, 23, 42, 0.24);
+}
+
+.ak-modal__panel--large {
+  width: min(100%, 1100px);
+}
+
+.ak-modal__header,
+.ak-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+}
+
+.ak-modal__header {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ak-modal__header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 22px;
+}
+
+.ak-modal__close {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.ak-modal__close:hover {
+  background: #f8fafc;
+}
+
+.ak-modal__body {
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+  padding: 22px;
+}
+
+.ak-modal__footer {
+  justify-content: flex-end;
+  border-top: 1px solid #e5e7eb;
+}
+
+.edit-car-shell--modal {
+  width: 100%;
+}
+
+.edit-car-tabs {
+  display: inline-flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 6px;
+  border: 1px solid #dfe6ef;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.edit-car-tabs button {
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 0 16px;
+  color: #607086;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.edit-car-tabs button.active,
+.edit-car-tabs button:hover {
+  background: #0f4c81;
+  color: #ffffff;
+}
+
 .renter-empty {
   margin-top: 18px;
 }
@@ -3778,5 +3885,21 @@ textarea {
 
   .renter-dashboard-hero h1 {
     font-size: 29px;
+  }
+
+  .ak-modal {
+    padding: 12px;
+  }
+
+  .ak-modal__header,
+  .ak-modal__body,
+  .ak-modal__footer {
+    padding-inline: 16px;
+  }
+
+  .edit-car-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
   }
 }

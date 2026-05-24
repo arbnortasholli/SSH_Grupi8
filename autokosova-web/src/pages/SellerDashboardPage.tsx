@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import type { Car } from '../lib/types';
 import { carService } from '../services/carService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { Modal } from '../components/Modal';
+import { EditCarPage } from './EditCarPage';
 import { formatCurrency, getErrorMessage } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
 
@@ -13,10 +15,16 @@ export const SellerDashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedTab, setSelectedTab] = useState<'cars' | 'bookings'>('cars');
+    const [activeModal, setActiveModal] = useState<{
+        carId: string;
+        mode: 'details' | 'images' | 'features';
+        carLabel: string;
+    } | null>(null);
 
     const loadSellerCars = useCallback(async () => {
         await Promise.resolve();
         setIsLoading(true);
+        setError(null);
         try {
             if (!user?.accountID) {
                 setCars([]);
@@ -51,6 +59,12 @@ export const SellerDashboardPage: React.FC = () => {
 
     const availableCars = cars.filter((car) => car.isAvailable).length;
     const inactiveCars = cars.length - availableCars;
+    const getStatusClassName = (status?: string) => {
+        const normalized = (status ?? 'Inactive').toLowerCase().replace(/\s+/g, '-');
+        return `renter-status status-${normalized}`;
+    };
+    const getListingTypeLabel = (car: Car) => (car.priceType === 'sale' ? 'For sale' : 'For rent');
+    const getPriceLabel = (car: Car) => (car.priceType === 'sale' ? formatCurrency(car.price) : `${formatCurrency(car.price)} / day`);
 
     return (
         <div className="renter-dashboard-page">
@@ -115,52 +129,78 @@ export const SellerDashboardPage: React.FC = () => {
                         <div className="renter-table-card">
                             <table className="renter-cars-table">
                                 <thead>
-                                    <tr>
-                                        <th>Car</th>
-                                        <th>Price</th>
-                                        <th>Availability</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                <tr>
+                                    <th>Car</th>
+                                    <th>Mileage</th>
+                                    <th>Listing</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    {cars.map((car) => (
-                                        <tr key={car.id}>
-                                            <td>
-                                                <div className="renter-car-cell">
-                                                    <div className="renter-car-thumb">
-                                                        {car.images[0] ? (
-                                                            <img src={car.images[0]} alt={`${car.brand} ${car.model}`} />
-                                                        ) : (
-                                                            <span>{car.brand.slice(0, 1)}{car.model.slice(0, 1)}</span>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <strong>{car.year} {car.brand} {car.model}</strong>
-                                                        <span>{car.type}</span>
-                                                    </div>
+                                {cars.map((car) => (
+                                    <tr key={car.id}>
+                                        <td>
+                                            <div className="renter-car-cell">
+                                                <div className="renter-car-thumb">
+                                                    {car.images[0] ? (
+                                                        <img src={car.images[0]} alt={`${car.brand} ${car.model}`} />
+                                                    ) : (
+                                                        <span>{car.brand.slice(0, 1)}{car.model.slice(0, 1)}</span>
+                                                    )}
                                                 </div>
-                                            </td>
-                                            <td>
-                                                <strong className="renter-price">{formatCurrency(car.price)}</strong>
-                                                <span className="renter-muted">per day</span>
-                                            </td>
-                                            <td>
-                                                <span className={car.isAvailable ? 'renter-status available' : 'renter-status inactive'}>
-                                                    {car.isAvailable ? 'Available' : 'Unavailable'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className="renter-table-actions">
-                                                    <button type="button" onClick={() => navigate(`/seller/edit-car/${car.id}`)}>
-                                                        Edit
-                                                    </button>
-                                                    <button type="button" className="danger" onClick={() => handleDeleteCar(car.id)}>
-                                                        Delete
-                                                    </button>
+                                                <div>
+                                                    <strong>{car.year} {car.brand} {car.model}</strong>
+                                                    <span>{car.type}</span>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>{car.mileage.toLocaleString()} km</strong>
+                                        </td>
+                                        <td>
+                                            <strong>{getListingTypeLabel(car)}</strong>
+                                            <span className="renter-muted">{car.bodyType ?? car.type}</span>
+                                        </td>
+                                        <td>
+                                            <strong className="renter-price">{getPriceLabel(car)}</strong>
+                                        </td>
+                                        <td>
+                                            <span className={getStatusClassName(car.carStatus)}>
+                                                {car.carStatus ?? (car.isAvailable ? 'Available' : 'Inactive')}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="renter-table-actions">
+                                                <button type="button" onClick={() => setActiveModal({
+                                                    carId: car.id,
+                                                    mode: 'images',
+                                                    carLabel: `${car.year} ${car.brand} ${car.model}`,
+                                                })}>
+                                                    Images
+                                                </button>
+                                                <button type="button" onClick={() => setActiveModal({
+                                                    carId: car.id,
+                                                    mode: 'features',
+                                                    carLabel: `${car.year} ${car.brand} ${car.model}`,
+                                                })}>
+                                                    Features
+                                                </button>
+                                                <button type="button" onClick={() => setActiveModal({
+                                                    carId: car.id,
+                                                    mode: 'details',
+                                                    carLabel: `${car.year} ${car.brand} ${car.model}`,
+                                                })}>
+                                                    Edit
+                                                </button>
+                                                <button type="button" className="danger" onClick={() => handleDeleteCar(car.id)}>
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
                                 </tbody>
                             </table>
                         </div>
@@ -188,6 +228,24 @@ export const SellerDashboardPage: React.FC = () => {
                     <p>Bookings for your rental cars will appear here after the booking flow is connected.</p>
                 </div>
             )}
+
+            <Modal
+                isOpen={Boolean(activeModal)}
+                title={activeModal ? `${activeModal.carLabel} - ${activeModal.mode === 'details' ? 'Edit' : activeModal.mode === 'images' ? 'Images' : 'Features'}` : ''}
+                onClose={() => setActiveModal(null)}
+                cancelText=""
+                size="large"
+            >
+                {activeModal && (
+                    <EditCarPage
+                        carId={activeModal.carId}
+                        initialSection={activeModal.mode}
+                        embedded
+                        onClose={() => setActiveModal(null)}
+                        onUpdated={loadSellerCars}
+                    />
+                )}
+            </Modal>
         </div>
     );
 };

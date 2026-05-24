@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import FeatherIcon from 'feather-icons-react';
 import apiClient from 'config/apiClient';
+import authService from 'utils/authService';
 
 const currentYear = new Date().getFullYear();
 
@@ -142,13 +143,13 @@ export default function CarsPage() {
   const [error, setError] = useState('');
 
   const createImagePreviews = useMemo(
-    () => createImages.map((image) => URL.createObjectURL(image)),
-    [createImages]
+      () => createImages.map((image) => URL.createObjectURL(image)),
+      [createImages]
   );
 
   const uploadImagePreviews = useMemo(
-    () => imageFormValues.images.map((image) => URL.createObjectURL(image)),
-    [imageFormValues.images]
+      () => imageFormValues.images.map((image) => URL.createObjectURL(image)),
+      [imageFormValues.images]
   );
 
   useEffect(() => () => {
@@ -237,10 +238,11 @@ export default function CarsPage() {
   };
 
   const openCreateModal = () => {
+    const user = authService.getUser();
     setEditingCar(null);
     setFormValues({
       ...emptyForm,
-      createdByAccountID: accounts[0]?.accountID || ''
+      createdByAccountID: user?.accountID || ''
     });
     setMessage('');
     setError('');
@@ -414,8 +416,10 @@ export default function CarsPage() {
     setMessage('');
     setError('');
 
-    if (!formValues.carTitle.trim() || !formValues.carBrand.trim() || !formValues.carModel.trim()) {
-      setError('Title, brand and model are required.');
+    const generatedTitle = `${formValues.carYear} ${formValues.carBrand} ${formValues.carModel}`.trim();
+
+    if (!formValues.carBrand.trim() || !formValues.carModel.trim()) {
+      setError('Brand and model are required.');
       return;
     }
 
@@ -445,7 +449,7 @@ export default function CarsPage() {
       if (editingCar) {
         const payload = {
           tenantID: formValues.tenantID ? Number(formValues.tenantID) : null,
-          carTitle: formValues.carTitle.trim(),
+          carTitle: generatedTitle,
           carBrand: formValues.carBrand.trim(),
           carModel: formValues.carModel.trim(),
           carYear: Number(formValues.carYear),
@@ -473,7 +477,7 @@ export default function CarsPage() {
         const formData = new FormData();
         formData.append('tenantID', formValues.tenantID ? String(Number(formValues.tenantID)) : '');
         formData.append('createdByAccountID', String(Number(formValues.createdByAccountID)));
-        formData.append('carTitle', formValues.carTitle.trim());
+        formData.append('carTitle', generatedTitle);
         formData.append('carBrand', formValues.carBrand.trim());
         formData.append('carModel', formValues.carModel.trim());
         formData.append('carYear', String(Number(formValues.carYear)));
@@ -662,564 +666,558 @@ export default function CarsPage() {
   });
 
   return (
-    <div className="ak-admin-page">
-      <div className="ak-admin-hero">
-        <div>
-          <span className="ak-admin-eyebrow">AutoKosova Admin</span>
-          <h2>Cars</h2>
-          <p>Manage car listings for sale and rent using the current backend car API.</p>
-        </div>
-        <div className="ak-admin-hero-icon">
-          <FeatherIcon icon="truck" size={28} />
-        </div>
-      </div>
-
-      <Row className="mb-4">
-        <Col md={4}>
-          <Card className="ak-admin-card ak-permission-stat">
-            <Card.Body>
-              <span>Total cars</span>
-              <strong>{cars.length}</strong>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="ak-admin-card ak-permission-stat">
-            <Card.Body>
-              <span>For sale</span>
-              <strong>{forSaleCount}</strong>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="ak-admin-card ak-permission-stat">
-            <Card.Body>
-              <span>For rent</span>
-              <strong>{forRentCount}</strong>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      <Card className="ak-admin-card">
-        <Card.Body>
-          <div className="ak-permissions-toolbar">
-            <div>
-              <h5>Car list</h5>
-              <p>All active car records from the database.</p>
-            </div>
-            <Button type="button" className="ak-admin-submit" onClick={openCreateModal}>
-              <FeatherIcon icon="plus" size={16} />
-              <span>Add New</span>
-            </Button>
+      <div className="ak-admin-page">
+        <div className="ak-admin-hero">
+          <div>
+            <span className="ak-admin-eyebrow">AutoKosova Admin</span>
+            <h2>Cars</h2>
+            <p>Manage car listings for sale and rent using the current backend car API.</p>
           </div>
+          <div className="ak-admin-hero-icon">
+            <FeatherIcon icon="truck" size={28} />
+          </div>
+        </div>
 
-          {isLoading ? (
-            <div className="ak-permissions-loading">
-              <Spinner animation="border" size="sm" />
-              <span>Loading cars...</span>
+        <Row className="mb-4">
+          <Col md={4}>
+            <Card className="ak-admin-card ak-permission-stat">
+              <Card.Body>
+                <span>Total cars</span>
+                <strong>{cars.length}</strong>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card className="ak-admin-card ak-permission-stat">
+              <Card.Body>
+                <span>For sale</span>
+                <strong>{forSaleCount}</strong>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card className="ak-admin-card ak-permission-stat">
+              <Card.Body>
+                <span>For rent</span>
+                <strong>{forRentCount}</strong>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
+        <Card className="ak-admin-card">
+          <Card.Body>
+            <div className="ak-permissions-toolbar">
+              <div>
+                <h5>Car list</h5>
+                <p>All active car records from the database.</p>
+              </div>
+              <Button type="button" className="ak-admin-submit" onClick={openCreateModal}>
+                <FeatherIcon icon="plus" size={16} />
+                <span>Add New</span>
+              </Button>
             </div>
-          ) : (
-            <div className="table-responsive">
-              <Table hover className="ak-permissions-table">
-                <thead>
-                  <tr>
-                    <th>Photo</th>
-                    <th>Car</th>
-                    <th>Year</th>
-                    <th>Mileage</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                    <th className="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cars.length === 0 ? (
+
+            {isLoading ? (
+                <div className="ak-permissions-loading">
+                  <Spinner animation="border" size="sm" />
+                  <span>Loading cars...</span>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                  <Table hover className="ak-permissions-table">
+                    <thead>
                     <tr>
-                      <td colSpan={7} className="ak-empty-cell">
-                        No cars found.
-                      </td>
+                      <th>Photo</th>
+                      <th>Car</th>
+                      <th>Year</th>
+                      <th>Mileage</th>
+                      <th>Price</th>
+                      <th>Status</th>
+                      <th className="text-end">Actions</th>
                     </tr>
-                  ) : (
-                    cars.map((car) => (
-                      <tr key={car.carsID}>
-                        <td>
-                          {car.mainImageUrl ? (
-                            <img className="ak-car-image-thumb" src={getImageSource(car.mainImageUrl)} alt={car.carTitle} />
-                          ) : (
-                            <span className="ak-table-muted">No image</span>
-                          )}
-                        </td>
-                        <td>
-                          <strong>{car.carTitle}</strong>
-                          <span className="ak-table-muted">{car.carBrand} {car.carModel}</span>
-                        </td>
-                        <td>{car.carYear}</td>
-                        <td>{Number(car.carMileage).toLocaleString()} km</td>
-                        <td>
-                          {car.isForSale && car.salePrice ? <div>Sale: €{Number(car.salePrice).toLocaleString()}</div> : null}
-                          {car.isForRent && car.rentalDailyPrice ? <div>Rent: €{Number(car.rentalDailyPrice).toLocaleString()}/day</div> : null}
-                        </td>
-                        <td>
-                          <Badge bg={car.carStatus === 'Available' ? 'success' : 'secondary'}>{car.carStatus}</Badge>
-                        </td>
-                        <td>
-                          <div className="ak-table-actions">
-                            <Button type="button" variant="light" size="sm" onClick={() => openImagesModal(car)}>
-                              <FeatherIcon icon="image" size={15} />
-                              <span>Images</span>
-                            </Button>
-                            <Button type="button" variant="light" size="sm" onClick={() => openFeaturesModal(car)}>
-                              <FeatherIcon icon="sliders" size={15} />
-                              <span>Features</span>
-                            </Button>
-                            <Button type="button" variant="light" size="sm" onClick={() => openEditModal(car)}>
-                              <FeatherIcon icon="edit-2" size={15} />
-                              <span>Edit</span>
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline-danger"
-                              size="sm"
-                              disabled={isDeletingId === car.carsID}
-                              onClick={() => handleDelete(car)}
-                            >
-                              <FeatherIcon icon="trash-2" size={15} />
-                              <span>{isDeletingId === car.carsID ? 'Deleting...' : 'Delete'}</span>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </Table>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
+                    </thead>
+                    <tbody>
+                    {cars.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="ak-empty-cell">
+                            No cars found.
+                          </td>
+                        </tr>
+                    ) : (
+                        cars.map((car) => (
+                            <tr key={car.carsID}>
+                              <td>
+                                {car.mainImageUrl ? (
+                                    <img className="ak-car-image-thumb" src={getImageSource(car.mainImageUrl)} alt={car.carTitle} />
+                                ) : (
+                                    <span className="ak-table-muted">No image</span>
+                                )}
+                              </td>
+                              <td>
+                                <strong>{car.carTitle}</strong>
+                                <span className="ak-table-muted">{car.carBrand} {car.carModel}</span>
+                              </td>
+                              <td>{car.carYear}</td>
+                              <td>{Number(car.carMileage).toLocaleString()} km</td>
+                              <td>
+                                {car.isForSale && car.salePrice ? <div>Sale: €{Number(car.salePrice).toLocaleString()}</div> : null}
+                                {car.isForRent && car.rentalDailyPrice ? <div>Rent: €{Number(car.rentalDailyPrice).toLocaleString()}/day</div> : null}
+                              </td>
+                              <td>
+                                <Badge bg={car.carStatus === 'Available' ? 'success' : 'secondary'}>{car.carStatus}</Badge>
+                              </td>
+                              <td>
+                                <div className="ak-table-actions">
+                                  <Button type="button" variant="light" size="sm" onClick={() => openImagesModal(car)}>
+                                    <FeatherIcon icon="image" size={15} />
+                                    <span>Images</span>
+                                  </Button>
+                                  <Button type="button" variant="light" size="sm" onClick={() => openFeaturesModal(car)}>
+                                    <FeatherIcon icon="sliders" size={15} />
+                                    <span>Features</span>
+                                  </Button>
+                                  <Button type="button" variant="light" size="sm" onClick={() => openEditModal(car)}>
+                                    <FeatherIcon icon="edit-2" size={15} />
+                                    <span>Edit</span>
+                                  </Button>
+                                  <Button
+                                      type="button"
+                                      variant="outline-danger"
+                                      size="sm"
+                                      disabled={isDeletingId === car.carsID}
+                                      onClick={() => handleDelete(car)}
+                                  >
+                                    <FeatherIcon icon="trash-2" size={15} />
+                                    <span>{isDeletingId === car.carsID ? 'Deleting...' : 'Delete'}</span>
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                        ))
+                    )}
+                    </tbody>
+                  </Table>
+                </div>
+            )}
+          </Card.Body>
+        </Card>
 
-      <Modal show={showModal} onHide={closeModal} centered size="lg">
-        <Form onSubmit={handleSubmit}>
+        <Modal show={showModal} onHide={closeModal} centered size="lg">
+          <Form onSubmit={handleSubmit}>
+            <Modal.Header closeButton>
+              <Modal.Title>{editingCar ? 'Edit Car' : 'Add Car'}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+              {message && <Alert variant="success" dismissible onClose={() => setMessage('')}>{message}</Alert>}
+              <Row>
+                <Col md={12}>
+                  <Form.Group className="mb-3" controlId="createdByAccountID">
+                    <Form.Label>Created by</Form.Label>
+                    <Form.Select
+                        name="createdByAccountID"
+                        value={formValues.createdByAccountID}
+                        onChange={handleChange}
+                        disabled
+                    >
+                      <option value="">Select account</option>
+                      {accounts.map((account) => (
+                          <option key={account.accountID} value={account.accountID}>
+                            {getAccountLabel(account.accountID)}
+                          </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={4}>
+                  <Form.Group className="mb-3" controlId="carBrand">
+                    <Form.Label>Brand</Form.Label>
+                    <Form.Control name="carBrand" value={formValues.carBrand} onChange={handleChange} placeholder="BMW" />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3" controlId="carModel">
+                    <Form.Label>Model</Form.Label>
+                    <Form.Control name="carModel" value={formValues.carModel} onChange={handleChange} placeholder="320d" />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3" controlId="carYear">
+                    <Form.Label>Year</Form.Label>
+                    <Form.Control type="number" name="carYear" value={formValues.carYear} onChange={handleChange} />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={4}>
+                  <Form.Group className="mb-3" controlId="carMileage">
+                    <Form.Label>Mileage</Form.Label>
+                    <Form.Control type="number" name="carMileage" value={formValues.carMileage} onChange={handleChange} />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3" controlId="carFuelType">
+                    <Form.Label>Fuel type</Form.Label>
+                    <Form.Control name="carFuelType" value={formValues.carFuelType} onChange={handleChange} placeholder="Diesel" />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3" controlId="carTransmission">
+                    <Form.Label>Transmission</Form.Label>
+                    <Form.Control name="carTransmission" value={formValues.carTransmission} onChange={handleChange} placeholder="Automatic" />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={3}>
+                  <Form.Group className="mb-3" controlId="carBodyType">
+                    <Form.Label>Body type</Form.Label>
+                    <Form.Control name="carBodyType" value={formValues.carBodyType} onChange={handleChange} placeholder="Sedan" />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3" controlId="carColor">
+                    <Form.Label>Color</Form.Label>
+                    <Form.Control name="carColor" value={formValues.carColor} onChange={handleChange} placeholder="Black" />
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3" controlId="listingType">
+                    <Form.Label>Listing type</Form.Label>
+                    <Form.Select
+                        name="listingType"
+                        value={formValues.isForSale ? 'ForSale' : formValues.isForRent ? 'ForRent' : ''}
+                        onChange={handleListingTypeChange}
+                    >
+                      <option value="" disabled>Select type</option>
+                      <option value="ForSale">For Sale</option>
+                      <option value="ForRent">For Rent</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={3}>
+                  <Form.Group className="mb-3" controlId="carStatus">
+                    <Form.Label>Status</Form.Label>
+                    <Form.Select name="carStatus" value={formValues.carStatus} onChange={handleChange}>
+                      <option value="Available">Available</option>
+                      {formValues.isForSale && (
+                          <>
+                            <option value="Reserved">Reserved</option>
+                            <option value="Sold">Sold</option>
+                          </>
+                      )}
+                      {formValues.isForRent && (
+                          <>
+                            <option value="Rented">Rented</option>
+                            <option value="Under Maintenance">Under Maintenance</option>
+                          </>
+                      )}
+                      <option value="Inactive">Inactive</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Form.Group className="mb-3" controlId="carDescription">
+                <Form.Label>Description</Form.Label>
+                <Form.Control
+                    as="textarea"
+                    rows={3}
+                    name="carDescription"
+                    value={formValues.carDescription}
+                    onChange={handleChange}
+                    placeholder="Describe the car."
+                />
+              </Form.Group>
+
+              <Row>
+                <Col md={6}>
+                  {formValues.isForSale && (
+                      <Form.Group className="mb-3" controlId="salePrice">
+                        <Form.Label>Sale price</Form.Label>
+                        <Form.Control
+                            type="number"
+                            name="salePrice"
+                            value={formValues.salePrice}
+                            onChange={handleChange}
+                            placeholder="Sale price"
+                        />
+                      </Form.Group>
+                  )}
+                  {formValues.isForRent && (
+                      <Form.Group className="mb-3" controlId="rentalDailyPrice">
+                        <Form.Label>Daily rental price</Form.Label>
+                        <Form.Control
+                            type="number"
+                            name="rentalDailyPrice"
+                            value={formValues.rentalDailyPrice}
+                            onChange={handleChange}
+                            placeholder="Daily rental price"
+                        />
+                      </Form.Group>
+                  )}
+                </Col>
+              </Row>
+
+              {!editingCar && (
+                  <div className="mt-4">
+                    <Form.Group className="mb-3" controlId="createCarImages">
+                      <Form.Label>Car photos</Form.Label>
+                      <Form.Control
+                          type="file"
+                          multiple
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleCreateImagesChange}
+                      />
+                      <Form.Text className="text-muted">
+                        Upload up to 10 JPEG, PNG, or WEBP images. Each image must be 5MB or smaller.
+                      </Form.Text>
+                    </Form.Group>
+
+                    {createImagePreviews.length > 0 && (
+                        <div className="ak-image-preview-grid">
+                          {createImagePreviews.map((preview, index) => (
+                              <div key={preview} className="ak-image-preview-card">
+                                <img src={preview} alt={`Car upload preview ${index + 1}`} />
+                                <span>{index === 0 ? 'Main image' : `Image ${index + 1}`}</span>
+                              </div>
+                          ))}
+                        </div>
+                    )}
+                  </div>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button type="button" variant="light" onClick={closeModal} disabled={isSaving}>
+                Cancel
+              </Button>
+              <Button type="submit" className="ak-admin-submit" disabled={isSaving}>
+                {isSaving ? 'Saving...' : editingCar ? 'Save changes' : 'Create car'}
+              </Button>
+            </Modal.Footer>
+          </Form>
+        </Modal>
+
+        <Modal show={showImagesModal} onHide={closeImagesModal} centered size="lg">
           <Modal.Header closeButton>
-            <Modal.Title>{editingCar ? 'Edit Car' : 'Add Car'}</Modal.Title>
+            <Modal.Title>{selectedCarForImages ? `Images - ${selectedCarForImages.carTitle}` : 'Car Images'}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
             {message && <Alert variant="success" dismissible onClose={() => setMessage('')}>{message}</Alert>}
-            <Row>
-              <Col md={8}>
-                <Form.Group className="mb-3" controlId="carTitle">
-                  <Form.Label>Title</Form.Label>
-                  <Form.Control name="carTitle" value={formValues.carTitle} onChange={handleChange} placeholder="BMW 320d" />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="createdByAccountID">
-                  <Form.Label>Created by</Form.Label>
-                  <Form.Select
-                    name="createdByAccountID"
-                    value={formValues.createdByAccountID}
-                    onChange={handleChange}
-                    disabled={Boolean(editingCar)}
-                  >
-                    <option value="">Select account</option>
-                    {accounts.map((account) => (
-                      <option key={account.accountID} value={account.accountID}>
-                        {getAccountLabel(account.accountID)}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="carBrand">
-                  <Form.Label>Brand</Form.Label>
-                  <Form.Control name="carBrand" value={formValues.carBrand} onChange={handleChange} placeholder="BMW" />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="carModel">
-                  <Form.Label>Model</Form.Label>
-                  <Form.Control name="carModel" value={formValues.carModel} onChange={handleChange} placeholder="320d" />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="carYear">
-                  <Form.Label>Year</Form.Label>
-                  <Form.Control type="number" name="carYear" value={formValues.carYear} onChange={handleChange} />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="carMileage">
-                  <Form.Label>Mileage</Form.Label>
-                  <Form.Control type="number" name="carMileage" value={formValues.carMileage} onChange={handleChange} />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="carFuelType">
-                  <Form.Label>Fuel type</Form.Label>
-                  <Form.Control name="carFuelType" value={formValues.carFuelType} onChange={handleChange} placeholder="Diesel" />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="carTransmission">
-                  <Form.Label>Transmission</Form.Label>
-                  <Form.Control name="carTransmission" value={formValues.carTransmission} onChange={handleChange} placeholder="Automatic" />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md={3}>
-                <Form.Group className="mb-3" controlId="carBodyType">
-                  <Form.Label>Body type</Form.Label>
-                  <Form.Control name="carBodyType" value={formValues.carBodyType} onChange={handleChange} placeholder="Sedan" />
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3" controlId="carColor">
-                  <Form.Label>Color</Form.Label>
-                  <Form.Control name="carColor" value={formValues.carColor} onChange={handleChange} placeholder="Black" />
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3" controlId="listingType">
-                  <Form.Label>Listing type</Form.Label>
-                  <Form.Select
-                    name="listingType"
-                    value={formValues.isForSale ? 'ForSale' : formValues.isForRent ? 'ForRent' : ''}
-                    onChange={handleListingTypeChange}
-                  >
-                    <option value="" disabled>Select type</option>
-                    <option value="ForSale">For Sale</option>
-                    <option value="ForRent">For Rent</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group className="mb-3" controlId="carStatus">
-                  <Form.Label>Status</Form.Label>
-                  <Form.Select name="carStatus" value={formValues.carStatus} onChange={handleChange}>
-                    <option value="Available">Available</option>
-                    {formValues.isForSale && (
-                      <>
-                        <option value="Reserved">Reserved</option>
-                        <option value="Sold">Sold</option>
-                      </>
-                    )}
-                    {formValues.isForRent && (
-                      <>
-                        <option value="Rented">Rented</option>
-                        <option value="Under Maintenance">Under Maintenance</option>
-                      </>
-                    )}
-                    <option value="Inactive">Inactive</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Form.Group className="mb-3" controlId="carDescription">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                name="carDescription"
-                value={formValues.carDescription}
-                onChange={handleChange}
-                placeholder="Describe the car."
-              />
-            </Form.Group>
-
-            <Row>
-              <Col md={6}>
-                {formValues.isForSale && (
-                  <Form.Group className="mb-3" controlId="salePrice">
-                    <Form.Label>Sale price</Form.Label>
+            <Form onSubmit={handleImageSubmit} className="mb-4">
+              <Row>
+                <Col md={8}>
+                  <Form.Group className="mb-3" controlId="carImageFile">
+                    <Form.Label>Images</Form.Label>
                     <Form.Control
-                      type="number"
-                      name="salePrice"
-                      value={formValues.salePrice}
-                      onChange={handleChange}
-                      placeholder="Sale price"
+                        type="file"
+                        name="images"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleImageChange}
                     />
                   </Form.Group>
-                )}
-                {formValues.isForRent && (
-                  <Form.Group className="mb-3" controlId="rentalDailyPrice">
-                    <Form.Label>Daily rental price</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="rentalDailyPrice"
-                      value={formValues.rentalDailyPrice}
-                      onChange={handleChange}
-                      placeholder="Daily rental price"
-                    />
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-3" controlId="mainImageIndex">
+                    <Form.Label>Main image index</Form.Label>
+                    <Form.Select
+                        name="mainImageIndex"
+                        value={imageFormValues.mainImageIndex}
+                        onChange={handleImageChange}
+                    >
+                      <option value="">Keep current</option>
+                      {imageFormValues.images.map((image, index) => (
+                          <option key={`${image.name}-${index}`} value={index}>
+                            {index + 1} - {image.name}
+                          </option>
+                      ))}
+                    </Form.Select>
                   </Form.Group>
-                )}
-              </Col>
-            </Row>
+                </Col>
+              </Row>
 
-            {!editingCar && (
-              <div className="mt-4">
-                <Form.Group className="mb-3" controlId="createCarImages">
-                  <Form.Label>Car photos</Form.Label>
-                  <Form.Control
-                    type="file"
-                    multiple
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleCreateImagesChange}
-                  />
-                  <Form.Text className="text-muted">
-                    Upload up to 10 JPEG, PNG, or WEBP images. Each image must be 5MB or smaller.
-                  </Form.Text>
-                </Form.Group>
-
-                {createImagePreviews.length > 0 && (
-                  <div className="ak-image-preview-grid">
-                    {createImagePreviews.map((preview, index) => (
-                      <div key={preview} className="ak-image-preview-card">
-                        <img src={preview} alt={`Car upload preview ${index + 1}`} />
-                        <span>{index === 0 ? 'Main image' : `Image ${index + 1}`}</span>
-                      </div>
+              {uploadImagePreviews.length > 0 && (
+                  <div className="ak-image-preview-grid mb-3">
+                    {uploadImagePreviews.map((preview, index) => (
+                        <div key={preview} className="ak-image-preview-card">
+                          <img src={preview} alt={`New car image ${index + 1}`} />
+                          <span>{index + 1}</span>
+                        </div>
                     ))}
                   </div>
-                )}
-              </div>
+              )}
+
+              <Button type="submit" className="ak-admin-submit" disabled={isSavingImage}>
+                {isSavingImage ? 'Saving...' : 'Add images'}
+              </Button>
+            </Form>
+
+            {isLoadingImages ? (
+                <div className="ak-permissions-loading">
+                  <Spinner animation="border" size="sm" />
+                  <span>Loading images...</span>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                  <Table hover className="ak-permissions-table">
+                    <thead>
+                    <tr>
+                      <th>Preview</th>
+                      <th>URL</th>
+                      <th>Order</th>
+                      <th>Main</th>
+                      <th className="text-end">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {carImages.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="ak-empty-cell">
+                            No images found.
+                          </td>
+                        </tr>
+                    ) : (
+                        carImages.map((image) => (
+                            <tr key={image.carImageID}>
+                              <td>
+                                <img className="ak-car-image-thumb" src={getImageSource(image.carImageUrl)} alt="" />
+                              </td>
+                              <td>
+                                <span className="ak-table-muted">{image.carImageUrl}</span>
+                              </td>
+                              <td>{image.carImageOrderNumber}</td>
+                              <td>
+                                <Badge bg={image.carImageIsMain ? 'success' : 'secondary'}>
+                                  {image.carImageIsMain ? 'Main' : 'No'}
+                                </Badge>
+                              </td>
+                              <td>
+                                <div className="ak-table-actions">
+                                  {!image.carImageIsMain && (
+                                      <Button type="button" variant="light" size="sm" onClick={() => handleSetMainImage(image)}>
+                                        <FeatherIcon icon="star" size={15} />
+                                        <span>Main</span>
+                                      </Button>
+                                  )}
+                                  <Button
+                                      type="button"
+                                      variant="outline-danger"
+                                      size="sm"
+                                      disabled={isDeletingImageId === image.carImageID}
+                                      onClick={() => handleDeleteImage(image)}
+                                  >
+                                    <FeatherIcon icon="trash-2" size={15} />
+                                    <span>{isDeletingImageId === image.carImageID ? 'Deleting...' : 'Delete'}</span>
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                        ))
+                    )}
+                    </tbody>
+                  </Table>
+                </div>
             )}
           </Modal.Body>
-          <Modal.Footer>
-            <Button type="button" variant="light" onClick={closeModal} disabled={isSaving}>
-              Cancel
-            </Button>
-            <Button type="submit" className="ak-admin-submit" disabled={isSaving}>
-              {isSaving ? 'Saving...' : editingCar ? 'Save changes' : 'Create car'}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
+        </Modal>
 
-      <Modal show={showImagesModal} onHide={closeImagesModal} centered size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>{selectedCarForImages ? `Images - ${selectedCarForImages.carTitle}` : 'Car Images'}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
-          {message && <Alert variant="success" dismissible onClose={() => setMessage('')}>{message}</Alert>}
-          <Form onSubmit={handleImageSubmit} className="mb-4">
-            <Row>
-              <Col md={8}>
-                <Form.Group className="mb-3" controlId="carImageFile">
-                  <Form.Label>Images</Form.Label>
-                  <Form.Control
-                    type="file"
-                    name="images"
-                    multiple
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleImageChange}
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3" controlId="mainImageIndex">
-                  <Form.Label>Main image index</Form.Label>
-                  <Form.Select
-                    name="mainImageIndex"
-                    value={imageFormValues.mainImageIndex}
-                    onChange={handleImageChange}
-                  >
-                    <option value="">Keep current</option>
-                    {imageFormValues.images.map((image, index) => (
-                      <option key={`${image.name}-${index}`} value={index}>
-                        {index + 1} - {image.name}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
+        <Modal show={showFeaturesModal} onHide={closeFeaturesModal} centered size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>{selectedCarForFeatures ? `Features - ${selectedCarForFeatures.carTitle}` : 'Car Features'}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+            {message && <Alert variant="success" dismissible onClose={() => setMessage('')}>{message}</Alert>}
+            <Form onSubmit={handleFeatureSubmit} className="mb-4">
+              <Row>
+                <Col md={9}>
+                  <Form.Group className="mb-3" controlId="carFeatureID">
+                    <Form.Label>Feature</Form.Label>
+                    <Form.Select name="carFeatureID" value={featureFormValues.carFeatureID} onChange={handleFeatureChange}>
+                      <option value="">Select feature</option>
+                      {unassignedFeatures.map((feature) => {
+                        const featureId = feature.carFeatureID ?? feature.CarFeatureID;
+                        const featureName = feature.carFeatureName ?? feature.CarFeatureName;
 
-            {uploadImagePreviews.length > 0 && (
-              <div className="ak-image-preview-grid mb-3">
-                {uploadImagePreviews.map((preview, index) => (
-                  <div key={preview} className="ak-image-preview-card">
-                    <img src={preview} alt={`New car image ${index + 1}`} />
-                    <span>{index + 1}</span>
-                  </div>
-                ))}
-              </div>
+                        return (
+                            <option key={featureId} value={featureId}>
+                              {featureName}
+                            </option>
+                        );
+                      })}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={3} className="d-flex align-items-end">
+                  <Button type="submit" className="ak-admin-submit w-100 mb-3" disabled={isSavingFeature}>
+                    {isSavingFeature ? 'Saving...' : 'Add feature'}
+                  </Button>
+                </Col>
+              </Row>
+            </Form>
+
+            {isLoadingFeatures ? (
+                <div className="ak-permissions-loading">
+                  <Spinner animation="border" size="sm" />
+                  <span>Loading features...</span>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                  <Table hover className="ak-permissions-table">
+                    <thead>
+                    <tr>
+                      <th>Feature</th>
+                      <th>Description</th>
+                      <th>Order</th>
+                      <th className="text-end">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {carFeatures.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="ak-empty-cell">
+                            No features assigned.
+                          </td>
+                        </tr>
+                    ) : (
+                        carFeatures.map((feature) => (
+                            <tr key={feature.carFeatureMappingID}>
+                              <td>
+                                <strong>{feature.carFeatureName}</strong>
+                              </td>
+                              <td>{feature.carFeatureDescription || '-'}</td>
+                              <td>{feature.carFeatureOrderNumber}</td>
+                              <td>
+                                <div className="ak-table-actions">
+                                  <Button
+                                      type="button"
+                                      variant="outline-danger"
+                                      size="sm"
+                                      disabled={isRemovingFeatureId === feature.carFeatureID}
+                                      onClick={() => handleRemoveFeature(feature)}
+                                  >
+                                    <FeatherIcon icon="trash-2" size={15} />
+                                    <span>{isRemovingFeatureId === feature.carFeatureID ? 'Removing...' : 'Remove'}</span>
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                        ))
+                    )}
+                    </tbody>
+                  </Table>
+                </div>
             )}
-
-            <Button type="submit" className="ak-admin-submit" disabled={isSavingImage}>
-              {isSavingImage ? 'Saving...' : 'Add images'}
-            </Button>
-          </Form>
-
-          {isLoadingImages ? (
-            <div className="ak-permissions-loading">
-              <Spinner animation="border" size="sm" />
-              <span>Loading images...</span>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <Table hover className="ak-permissions-table">
-                <thead>
-                  <tr>
-                    <th>Preview</th>
-                    <th>URL</th>
-                    <th>Order</th>
-                    <th>Main</th>
-                    <th className="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {carImages.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="ak-empty-cell">
-                        No images found.
-                      </td>
-                    </tr>
-                  ) : (
-                    carImages.map((image) => (
-                      <tr key={image.carImageID}>
-                        <td>
-                          <img className="ak-car-image-thumb" src={getImageSource(image.carImageUrl)} alt="" />
-                        </td>
-                        <td>
-                          <span className="ak-table-muted">{image.carImageUrl}</span>
-                        </td>
-                        <td>{image.carImageOrderNumber}</td>
-                        <td>
-                          <Badge bg={image.carImageIsMain ? 'success' : 'secondary'}>
-                            {image.carImageIsMain ? 'Main' : 'No'}
-                          </Badge>
-                        </td>
-                        <td>
-                          <div className="ak-table-actions">
-                            {!image.carImageIsMain && (
-                              <Button type="button" variant="light" size="sm" onClick={() => handleSetMainImage(image)}>
-                                <FeatherIcon icon="star" size={15} />
-                                <span>Main</span>
-                              </Button>
-                            )}
-                            <Button
-                              type="button"
-                              variant="outline-danger"
-                              size="sm"
-                              disabled={isDeletingImageId === image.carImageID}
-                              onClick={() => handleDeleteImage(image)}
-                            >
-                              <FeatherIcon icon="trash-2" size={15} />
-                              <span>{isDeletingImageId === image.carImageID ? 'Deleting...' : 'Delete'}</span>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </Table>
-            </div>
-          )}
-        </Modal.Body>
-      </Modal>
-
-      <Modal show={showFeaturesModal} onHide={closeFeaturesModal} centered size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>{selectedCarForFeatures ? `Features - ${selectedCarForFeatures.carTitle}` : 'Car Features'}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
-          {message && <Alert variant="success" dismissible onClose={() => setMessage('')}>{message}</Alert>}
-          <Form onSubmit={handleFeatureSubmit} className="mb-4">
-            <Row>
-              <Col md={9}>
-                <Form.Group className="mb-3" controlId="carFeatureID">
-                  <Form.Label>Feature</Form.Label>
-                  <Form.Select name="carFeatureID" value={featureFormValues.carFeatureID} onChange={handleFeatureChange}>
-                    <option value="">Select feature</option>
-                    {unassignedFeatures.map((feature) => {
-                      const featureId = feature.carFeatureID ?? feature.CarFeatureID;
-                      const featureName = feature.carFeatureName ?? feature.CarFeatureName;
-
-                      return (
-                        <option key={featureId} value={featureId}>
-                          {featureName}
-                        </option>
-                      );
-                    })}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={3} className="d-flex align-items-end">
-                <Button type="submit" className="ak-admin-submit w-100 mb-3" disabled={isSavingFeature}>
-                  {isSavingFeature ? 'Saving...' : 'Add feature'}
-                </Button>
-              </Col>
-            </Row>
-          </Form>
-
-          {isLoadingFeatures ? (
-            <div className="ak-permissions-loading">
-              <Spinner animation="border" size="sm" />
-              <span>Loading features...</span>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <Table hover className="ak-permissions-table">
-                <thead>
-                  <tr>
-                    <th>Feature</th>
-                    <th>Description</th>
-                    <th>Order</th>
-                    <th className="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {carFeatures.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="ak-empty-cell">
-                        No features assigned.
-                      </td>
-                    </tr>
-                  ) : (
-                    carFeatures.map((feature) => (
-                      <tr key={feature.carFeatureMappingID}>
-                        <td>
-                          <strong>{feature.carFeatureName}</strong>
-                        </td>
-                        <td>{feature.carFeatureDescription || '-'}</td>
-                        <td>{feature.carFeatureOrderNumber}</td>
-                        <td>
-                          <div className="ak-table-actions">
-                            <Button
-                              type="button"
-                              variant="outline-danger"
-                              size="sm"
-                              disabled={isRemovingFeatureId === feature.carFeatureID}
-                              onClick={() => handleRemoveFeature(feature)}
-                            >
-                              <FeatherIcon icon="trash-2" size={15} />
-                              <span>{isRemovingFeatureId === feature.carFeatureID ? 'Removing...' : 'Remove'}</span>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </Table>
-            </div>
-          )}
-        </Modal.Body>
-      </Modal>
-    </div>
+          </Modal.Body>
+        </Modal>
+      </div>
   );
 }

@@ -92,12 +92,27 @@ const toFeatureObjects = (carId: string, features: string[] = []) =>
         name,
     }));
 
-const getApiOrigin = () => API_CONFIG.API_BASE_URL.replace(/\/api\/?$/i, '').replace(/\/$/, '');
+const getApiOrigin = () => {
+    const apiBaseUrl = API_CONFIG.API_BASE_URL.trim();
+
+    if (!/^https?:\/\//i.test(apiBaseUrl)) {
+        return '';
+    }
+
+    return apiBaseUrl.replace(/\/api\/?$/i, '').replace(/\/$/, '');
+};
 
 const resolveImageUrl = (url?: string | null) => {
     if (!url) return '';
-    if (/^https?:\/\//i.test(url)) return url;
-    return `${getApiOrigin()}${url.startsWith('/') ? url : `/${url}`}`;
+    const normalizedUrl = url.replace(/\\/g, '/').trim();
+    if (/^https?:\/\//i.test(normalizedUrl)) return normalizedUrl;
+
+    const apiOrigin = getApiOrigin();
+    if (!apiOrigin) {
+        return normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`;
+    }
+
+    return `${apiOrigin}${normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`}`;
 };
 
 const mapSaleCarToCar = (saleCar: SaleCar): Car => ({
@@ -178,6 +193,7 @@ const normalizeApiCar = (apiCar: ApiCar, images: string[] = [], features: ApiCar
         images: imageUrls,
         imageRecords,
         isAvailable: (apiCar.carStatus ?? apiCar.CarStatus ?? 'Available').toLowerCase() === 'available',
+        carStatus: apiCar.carStatus ?? apiCar.CarStatus ?? 'Available',
         sellerId: String(apiCar.createdByAccountID ?? apiCar.CreatedByAccountID ?? ''),
         sellerName: 'AutoKosova seller',
         createdAt: apiCar.carCreationDate ?? apiCar.CarCreationDate ?? new Date().toISOString(),
@@ -318,7 +334,7 @@ export const carService = {
             salePrice: isForSale ? carData.price : null,
             isForRent: !isForSale,
             rentalDailyPrice: !isForSale ? carData.price : null,
-            carStatus: carData.isAvailable ? 'Available' : 'Inactive',
+            carStatus: carData.carStatus ?? (carData.isAvailable ? 'Available' : 'Inactive'),
         };
         await apiClient.put(`/cars/${id}`, payload);
         return carService.getCarById(id);
@@ -395,5 +411,30 @@ export const carService = {
         }
         const response = await apiClient.get('/cars/favorites');
         return response.data;
+    },
+
+    // Features management
+    getAllFeatures: async (): Promise<{ id: string; name: string }[]> => {
+        const response = await apiClient.get<ApiCarFeature[]>('/car-features');
+        return response.data.map((f) => ({
+            id: String(f.carFeatureID ?? f.CarFeatureID),
+            name: f.carFeatureName ?? f.CarFeatureName ?? 'Unknown',
+        }));
+    },
+
+    getCarFeatures: async (carId: string): Promise<{ id: string; name: string }[]> => {
+        const response = await apiClient.get<ApiCarFeature[]>(`/cars/${carId}/features`);
+        return response.data.map((f) => ({
+            id: String(f.carFeatureID ?? f.CarFeatureID),
+            name: f.carFeatureName ?? f.CarFeatureName ?? 'Unknown',
+        }));
+    },
+
+    assignFeature: async (carId: string, featureId: string): Promise<void> => {
+        await apiClient.post(`/cars/${carId}/features/${featureId}`);
+    },
+
+    removeFeature: async (carId: string, featureId: string): Promise<void> => {
+        await apiClient.delete(`/cars/${carId}/features/${featureId}`);
     },
 };
