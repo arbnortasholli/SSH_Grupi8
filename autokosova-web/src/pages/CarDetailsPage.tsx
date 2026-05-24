@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Car, CarFeature } from '../lib/types';
+import type { Car, CarFeature, PurchaseOrderRequest, PurchaseOrderResponse, PurchasePaymentMethod } from '../lib/types';
 import { carService } from '../services/carService';
 import { bookingService } from '../services/bookingService';
+import { purchaseService } from '../services/purchaseService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { Modal } from '../components/Modal';
 import { daysBetween, formatCurrency, formatDate, getErrorMessage } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
 
@@ -19,7 +21,7 @@ const getFallbackFeatures = (car: Car): CarFeature[] => [
 export const CarDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [car, setCar] = useState<Car | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,20 @@ export const CarDetailsPage: React.FC = () => {
     const [isAvailable, setIsAvailable] = useState(true);
     const [isBooking, setIsBooking] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+    const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+    const [isOrdering, setIsOrdering] = useState(false);
+    const [purchaseReceipt, setPurchaseReceipt] = useState<PurchaseOrderResponse | null>(null);
+    const [purchaseForm, setPurchaseForm] = useState({
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+        deliveryAddress: '',
+        deliveryCity: '',
+        paymentMethod: 'CashOnDelivery' as PurchasePaymentMethod,
+        cardholderName: '',
+        cardLastFour: '',
+    });
 
     const loadCar = useCallback(async () => {
         if (!id) return;
@@ -48,6 +64,14 @@ export const CarDetailsPage: React.FC = () => {
     useEffect(() => {
         void loadCar();
     }, [loadCar]);
+
+    useEffect(() => {
+        setPurchaseForm((current) => ({
+            ...current,
+            customerName: current.customerName || [user?.accountName ?? user?.firstName, user?.accountLastname ?? user?.lastName].filter(Boolean).join(' '),
+            customerEmail: current.customerEmail || user?.accountEmail || user?.email || '',
+        }));
+    }, [user]);
 
     const handleCheckAvailability = async () => {
         if (!startDate || !endDate || !id) {
@@ -95,6 +119,68 @@ export const CarDetailsPage: React.FC = () => {
         } finally {
             setIsBooking(false);
         }
+    };
+
+    const updatePurchaseField = (field: keyof typeof purchaseForm, value: string) => {
+        setPurchaseForm((current) => ({
+            ...current,
+            [field]: value,
+        }));
+    };
+
+    const handlePurchaseSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!car) return;
+
+        const order: PurchaseOrderRequest = {
+            carId: car.id,
+            carTitle: `${car.year} ${car.brand} ${car.model}`,
+            carPrice: car.price,
+            customerName: purchaseForm.customerName.trim(),
+            customerEmail: purchaseForm.customerEmail.trim(),
+            customerPhone: purchaseForm.customerPhone.trim(),
+            deliveryAddress: purchaseForm.deliveryAddress.trim(),
+            deliveryCity: purchaseForm.deliveryCity.trim(),
+            paymentMethod: purchaseForm.paymentMethod,
+            cardholderName: purchaseForm.cardholderName.trim() || undefined,
+            cardLastFour: purchaseForm.cardLastFour.trim() || undefined,
+        };
+
+        setIsOrdering(true);
+        setError(null);
+        setPurchaseReceipt(null);
+
+        try {
+            const response = await purchaseService.createPurchaseOrder(order);
+            setPurchaseReceipt(response);
+            setIsPurchaseModalOpen(false);
+            setIsReceiptModalOpen(true);
+        } catch (err: unknown) {
+            const message = getErrorMessage(err, 'Failed to place order and generate receipt.');
+            setError(message);
+        } finally {
+            setIsOrdering(false);
+        }
+    };
+
+    const handleDownloadReceipt = () => {
+        if (!purchaseReceipt) return;
+
+        const blob = new Blob([purchaseReceipt.receiptText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `autokosova-receipt-${purchaseReceipt.orderNumber}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    };
+
+    const closeReceiptAndGoHome = () => {
+        setIsReceiptModalOpen(false);
+        navigate('/');
     };
 
     const featureList = useMemo(() => (car ? (car.features?.length ? car.features : getFallbackFeatures(car)) : []), [car]);
@@ -194,8 +280,8 @@ export const CarDetailsPage: React.FC = () => {
                                 <span>Status</span>
                                 <strong>{car.isAvailable ? 'Available' : 'Unavailable'}</strong>
                             </div>
-                            <button type="button" className="details-primary-action">
-                                Contact seller
+                            <button type="button" className="details-primary-action" onClick={() => setIsPurchaseModalOpen(true)}>
+                                Buy this car
                             </button>
                         </div>
                     ) : (
@@ -302,6 +388,154 @@ export const CarDetailsPage: React.FC = () => {
                     )}
                 </div>
             </section>
+
+            <Modal
+                isOpen={isPurchaseModalOpen}
+                title={`Buy ${car.brand} ${car.model}`}
+                onClose={() => {
+                    setIsPurchaseModalOpen(false);
+                }}
+                cancelText=""
+            >
+                <form className="purchase-form" onSubmit={handlePurchaseSubmit}>
+                    <div className="purchase-summary">
+                        <div>
+                            <span>Selected car</span>
+                            <strong>{car.year} {car.brand} {car.model}</strong>
+                        </div>
+                        <div>
+                            <span>Total price</span>
+                            <strong>{formatCurrency(car.price)}</strong>
+                        </div>
+                    </div>
+
+                    <div className="purchase-form-grid">
+                        <label>
+                            <span>Full name</span>
+                            <input
+                                required
+                                value={purchaseForm.customerName}
+                                onChange={(event) => updatePurchaseField('customerName', event.target.value)}
+                            />
+                        </label>
+                        <label>
+                            <span>Email</span>
+                            <input
+                                required
+                                type="email"
+                                value={purchaseForm.customerEmail}
+                                onChange={(event) => updatePurchaseField('customerEmail', event.target.value)}
+                            />
+                        </label>
+                        <label>
+                            <span>Phone number</span>
+                            <input
+                                required
+                                value={purchaseForm.customerPhone}
+                                onChange={(event) => updatePurchaseField('customerPhone', event.target.value)}
+                            />
+                        </label>
+                        <label>
+                            <span>City</span>
+                            <input
+                                required
+                                value={purchaseForm.deliveryCity}
+                                onChange={(event) => updatePurchaseField('deliveryCity', event.target.value)}
+                            />
+                        </label>
+                    </div>
+
+                    <label>
+                        <span>Delivery address</span>
+                        <input
+                            required
+                            value={purchaseForm.deliveryAddress}
+                            onChange={(event) => updatePurchaseField('deliveryAddress', event.target.value)}
+                        />
+                    </label>
+
+                    <fieldset className="payment-choice">
+                        <legend>Payment method</legend>
+                        <label>
+                            <input
+                                type="radio"
+                                name="paymentMethod"
+                                value="CashOnDelivery"
+                                checked={purchaseForm.paymentMethod === 'CashOnDelivery'}
+                                onChange={() => updatePurchaseField('paymentMethod', 'CashOnDelivery')}
+                            />
+                            <span>Cash on delivery</span>
+                        </label>
+                        <label>
+                            <input
+                                type="radio"
+                                name="paymentMethod"
+                                value="Card"
+                                checked={purchaseForm.paymentMethod === 'Card'}
+                                onChange={() => updatePurchaseField('paymentMethod', 'Card')}
+                            />
+                            <span>Card</span>
+                        </label>
+                    </fieldset>
+
+                    {purchaseForm.paymentMethod === 'Card' && (
+                        <div className="purchase-form-grid">
+                            <label>
+                                <span>Cardholder name</span>
+                                <input
+                                    required
+                                    value={purchaseForm.cardholderName}
+                                    onChange={(event) => updatePurchaseField('cardholderName', event.target.value)}
+                                />
+                            </label>
+                            <label>
+                                <span>Card last 4 digits</span>
+                                <input
+                                    required
+                                    inputMode="numeric"
+                                    maxLength={4}
+                                    pattern="[0-9]{4}"
+                                    value={purchaseForm.cardLastFour}
+                                    onChange={(event) => updatePurchaseField('cardLastFour', event.target.value.replace(/\D/g, '').slice(0, 4))}
+                                />
+                            </label>
+                        </div>
+                    )}
+
+                    <div className="purchase-actions">
+                        <button type="button" className="details-secondary-action" onClick={() => setIsPurchaseModalOpen(false)}>
+                            Close
+                        </button>
+                        <button type="submit" className="details-primary-action" disabled={isOrdering}>
+                            {isOrdering ? 'Placing order...' : 'Place order'}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                isOpen={isReceiptModalOpen}
+                title="Order receipt"
+                onClose={closeReceiptAndGoHome}
+                cancelText=""
+            >
+                {purchaseReceipt && (
+                    <div className="receipt-popup">
+                        <div className="purchase-success">
+                            {purchaseReceipt.message} Order number: {purchaseReceipt.orderNumber}
+                        </div>
+                        <pre className="receipt-document">{purchaseReceipt.receiptText}</pre>
+                        <div className="purchase-actions">
+                            <button type="button" className="details-secondary-action" onClick={handleDownloadReceipt}>
+                                Download receipt
+                            </button>
+                            <button type="button" className="details-primary-action" onClick={closeReceiptAndGoHome}>
+                                Back to main page
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };

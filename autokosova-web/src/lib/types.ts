@@ -166,6 +166,29 @@ export interface PaymentStatusResponse {
     cancelledDate?: string | null;
 }
 
+export type PurchasePaymentMethod = 'CashOnDelivery' | 'Card';
+
+export interface PurchaseOrderRequest {
+    carId: string;
+    carTitle: string;
+    carPrice: number;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    deliveryAddress: string;
+    deliveryCity: string;
+    paymentMethod: PurchasePaymentMethod;
+    cardholderName?: string;
+    cardLastFour?: string;
+}
+
+export interface PurchaseOrderResponse {
+    orderNumber: string;
+    message: string;
+    receiptText: string;
+    createdAt: string;
+}
+
 // Paginated response
 export interface PaginatedResponse<T> {
     data: T[];

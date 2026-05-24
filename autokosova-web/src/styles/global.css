@@ -2321,6 +2321,122 @@ textarea {
   opacity: 0.55;
 }
 
+.purchase-form {
+  display: grid;
+  gap: 16px;
+}
+
+.purchase-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.purchase-summary > div {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.purchase-summary span,
+.purchase-form label span,
+.payment-choice legend {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.purchase-summary strong {
+  display: block;
+  margin-top: 6px;
+  color: #111827;
+  font-size: 16px;
+}
+
+.purchase-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.purchase-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.purchase-form input {
+  min-height: 44px;
+  border: 1px solid #d1d8e3;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #111827;
+  padding-inline: 12px;
+}
+
+.payment-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.payment-choice legend {
+  padding-inline: 4px;
+}
+
+.payment-choice label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  border: 1px solid #dbe3ee;
+  border-radius: 999px;
+  padding-inline: 12px;
+}
+
+.payment-choice input {
+  min-height: auto;
+}
+
+.purchase-success {
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 12px;
+  font-weight: 750;
+}
+
+.purchase-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.receipt-popup {
+  display: grid;
+  gap: 16px;
+}
+
+.receipt-document {
+  margin: 0;
+  max-height: 52vh;
+  overflow: auto;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111827;
+  padding: 18px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 .payment-status-page {
   min-height: 72vh;
   display: flex;
@@ -3895,6 +4011,15 @@ textarea {
   .ak-modal__body,
   .ak-modal__footer {
     padding-inline: 16px;
+  }
+
+  .purchase-summary,
+  .purchase-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-actions {
+    flex-direction: column-reverse;
   }
 
   .edit-car-tabs {
