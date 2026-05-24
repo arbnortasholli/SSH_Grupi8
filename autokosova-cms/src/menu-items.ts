@@ -56,6 +56,22 @@ const menuItems = {
           url: '/tenant-requests'
         },
         {
+          id: 'external-car-requests',
+          title: 'External Requests',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'request_quote',
+          url: '/external-car-requests'
+        },
+        {
+          id: 'interested-customers',
+          title: 'Interested Customers',
+          type: 'item',
+          icon: 'material-icons-two-tone',
+          iconname: 'contact_phone',
+          url: '/interested-customers'
+        },
+        {
           id: 'tenants',
           title: 'Tenants',
           type: 'item',

@@ -5,6 +5,9 @@
   "OpenAI": {
     "ApiKey": "PASTE_OPENAI_KEY_HERE_OR_USE_USER_SECRETS"
   },
+  "Carapis": {
+    "ApiKey": "PASTE_CARAPIS_API_KEY_HERE_OR_USE_USER_SECRETS"
+  },
   "EmailSettings": {
     "Enabled": false
   }

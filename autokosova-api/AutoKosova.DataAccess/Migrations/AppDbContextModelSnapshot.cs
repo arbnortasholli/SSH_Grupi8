@@ -462,6 +462,108 @@ namespace AutoKosova.DataAccess.Migrations
                     b.ToTable("EmailQueues");
                 });
 
+            modelBuilder.Entity("AutoKosova.Entity.ExternalCarRequest", b =>
+                {
+                    b.Property<int>("ExternalCarRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ExternalCarRequestID"));
+
+                    b.Property<int>("AccountID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdminComment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Brand")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CarName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Currency")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("CustomerEmail")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("CustomerDecision")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("CustomerDecisionAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("DetailUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ExternalCarID")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Mileage")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReviewedByAccountID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("ExternalCarRequestID");
+
+                    b.HasIndex("AccountID");
+
+                    b.HasIndex("ReviewedByAccountID");
+
+                    b.ToTable("ExternalCarRequests");
+                });
+
             modelBuilder.Entity("AutoKosova.Entity.PaymentEvent", b =>
                 {
                     b.Property<int>("PaymentEventID")
@@ -980,6 +1082,24 @@ namespace AutoKosova.DataAccess.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("AutoKosova.Entity.ExternalCarRequest", b =>
+                {
+                    b.HasOne("AutoKosova.Entity.Account", "Account")
+                        .WithMany("ExternalCarRequests")
+                        .HasForeignKey("AccountID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("AutoKosova.Entity.Account", "ReviewedByAccount")
+                        .WithMany("ReviewedExternalCarRequests")
+                        .HasForeignKey("ReviewedByAccountID")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Account");
+
+                    b.Navigation("ReviewedByAccount");
+                });
+
             modelBuilder.Entity("AutoKosova.Entity.PaymentEvent", b =>
                 {
                     b.HasOne("AutoKosova.Entity.PaymentOrder", "PaymentOrder")
@@ -1083,9 +1203,13 @@ namespace AutoKosova.DataAccess.Migrations
                 {
                     b.Navigation("CreatedCars");
 
+                    b.Navigation("ExternalCarRequests");
+
                     b.Navigation("PaymentOrders");
 
                     b.Navigation("RentalBookings");
+
+                    b.Navigation("ReviewedExternalCarRequests");
 
                     b.Navigation("ReviewedTenantRequests");
 

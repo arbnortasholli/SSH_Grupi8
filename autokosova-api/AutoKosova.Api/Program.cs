@@ -68,6 +68,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         }));
 
 // Services
+builder.Services.AddSingleton<RedisConnectionProvider>();
+builder.Services.AddHttpClient("Carapis", client =>
+{
+    var baseUrl = builder.Configuration["Carapis:BaseUrl"] ?? "https://api.carapis.com";
+    var apiKey = builder.Configuration["Carapis:ApiKey"];
+
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+
+    if (!string.IsNullOrWhiteSpace(apiKey))
+    {
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+    }
+});
+
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CarService>();
 builder.Services.AddScoped<CarImageService>();
@@ -82,6 +97,8 @@ builder.Services.AddScoped<AccountRolePermissionService>();
 builder.Services.AddScoped<TenantRequestService>();
 builder.Services.AddScoped<TenantService>();
 builder.Services.AddScoped<EmailQueueService>();
+builder.Services.AddScoped<ExternalCarService>();
+builder.Services.AddScoped<ExternalCarRequestService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHttpClient<PaymentService>();
 builder.Services.AddHttpClient<IChatAgentService, ChatAgentService>(client =>
