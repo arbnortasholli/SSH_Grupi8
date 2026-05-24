@@ -20,6 +20,7 @@ namespace AutoKosova.DataAccess
         public DbSet<PaymentStatus> PaymentStatuses { get; set; }
         public DbSet<PaymentEvent> PaymentEvents { get; set; }
         public DbSet<TenantRequest> TenantRequests { get; set; }
+        public DbSet<ExternalCarRequest> ExternalCarRequests { get; set; }
         public DbSet<EmailQueue> EmailQueues { get; set; }
 
         public DbSet<CarFavorite> CarFavorites { get; set; }
@@ -78,6 +79,62 @@ namespace AutoKosova.DataAccess
                 .WithMany(t => t.TenantRequests)
                 .HasForeignKey(tr => tr.CreatedTenantID)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .HasOne(request => request.Account)
+                .WithMany(account => account.ExternalCarRequests)
+                .HasForeignKey(request => request.AccountID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .HasOne(request => request.ReviewedByAccount)
+                .WithMany(account => account.ReviewedExternalCarRequests)
+                .HasForeignKey(request => request.ReviewedByAccountID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.ExternalCarID)
+                .HasMaxLength(120);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.Source)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.CarName)
+                .HasMaxLength(255);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.Brand)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.Model)
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.Price)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.Currency)
+                .HasMaxLength(10);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.CustomerEmail)
+                .HasMaxLength(255);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.CustomerPhone)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.Status)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<ExternalCarRequest>()
+                .Property(request => request.CustomerDecision)
+                .HasMaxLength(50);
 
             modelBuilder.Entity<Cars>()
                 .HasOne(c => c.CreatedByAccount)

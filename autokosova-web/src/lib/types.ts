@@ -120,6 +120,94 @@ export interface CarFilters {
     search?: string;
 }
 
+// External car listing types
+export interface ExternalCar {
+    externalId: string;
+    source: string;
+    name: string;
+    brand?: string | null;
+    model?: string | null;
+    trim?: string | null;
+    year?: number | null;
+    price?: number | null;
+    currency?: string | null;
+    mileage?: number | null;
+    fuelType?: string | null;
+    transmission?: string | null;
+    bodyType?: string | null;
+    color?: string | null;
+    engine?: string | null;
+    drivetrain?: string | null;
+    imageUrl?: string | null;
+    detailUrl?: string | null;
+    available?: boolean | null;
+}
+
+export interface ExternalCarListResponse {
+    page: number;
+    pageSize: number;
+    totalRecords: number;
+    cached: boolean;
+    data: ExternalCar[];
+}
+
+export interface ExternalCarSearchParams {
+    page?: number;
+    pageSize?: number;
+    availableOnly?: boolean;
+    brand?: string;
+    model?: string;
+    yearFrom?: number;
+    yearTo?: number;
+    priceFrom?: number;
+    priceTo?: number;
+    mileageFrom?: number;
+    mileageTo?: number;
+    orderBy?: string;
+}
+
+export interface ExternalCarRequestPayload {
+    externalCarID: string;
+    source: string;
+    carName: string;
+    brand?: string | null;
+    model?: string | null;
+    year?: number | null;
+    price?: number | null;
+    currency?: string | null;
+    mileage?: number | null;
+    imageUrl?: string | null;
+    detailUrl?: string | null;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    message?: string;
+}
+
+export interface ExternalCarRequest {
+    externalCarRequestID: number;
+    externalCarID: string;
+    source: string;
+    carName: string;
+    brand?: string | null;
+    model?: string | null;
+    year?: number | null;
+    price?: number | null;
+    currency?: string | null;
+    mileage?: number | null;
+    imageUrl?: string | null;
+    detailUrl?: string | null;
+    customerName?: string | null;
+    customerEmail?: string | null;
+    customerPhone?: string | null;
+    message?: string | null;
+    status: string;
+    adminComment?: string | null;
+    customerDecision?: string | null;
+    customerDecisionAt?: string | null;
+    createdAt: string;
+}
+
 // Booking types
 export interface Booking {
     id: string;

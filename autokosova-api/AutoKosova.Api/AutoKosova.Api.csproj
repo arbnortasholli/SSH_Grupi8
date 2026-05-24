@@ -5,10 +5,19 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>a6f2dff2-7d95-4d84-9827-052aa0444338</UserSecretsId>
+    <DefaultItemExcludes>$(DefaultItemExcludes);build-check\**;**\build-check\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="build-check\**;**\build-check\**" />
+    <None Remove="build-check\**;**\build-check\**" />
+    <Compile Remove="build-check\**;**\build-check\**" />
+    <EmbeddedResource Remove="build-check\**;**\build-check\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
 
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 

@@ -6,6 +6,7 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/buy', label: 'Buy Cars' },
   { to: '/rent', label: 'Rent Cars' },
+  { to: '/korean-cars', label: 'Korean Cars' },
 ];
 
 export const Navbar: React.FC = () => {
@@ -57,9 +58,14 @@ export const Navbar: React.FC = () => {
                 </Link>
               )}
               {!isRental && (
-                <Link to={accountLink.to} className="nav-login">
-                  {accountLink.label}
-                </Link>
+                <>
+                  <Link to="/import-requests" className="nav-login">
+                    My offers
+                  </Link>
+                  <Link to={accountLink.to} className="nav-login">
+                    {accountLink.label}
+                  </Link>
+                </>
               )}
               <button type="button" className="nav-logout" onClick={handleLogout}>
                 Logout
@@ -100,9 +106,14 @@ export const Navbar: React.FC = () => {
                   </Link>
                 )}
                 {!isRental && (
-                  <Link to={accountLink.to} onClick={() => setIsOpen(false)}>
-                    {accountLink.label}
-                  </Link>
+                  <>
+                    <Link to="/import-requests" onClick={() => setIsOpen(false)}>
+                      My offers
+                    </Link>
+                    <Link to={accountLink.to} onClick={() => setIsOpen(false)}>
+                      {accountLink.label}
+                    </Link>
+                  </>
                 )}
                 <button type="button" onClick={handleLogout}>
                   Logout

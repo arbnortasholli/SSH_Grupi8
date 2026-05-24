@@ -43,6 +43,18 @@ const menuItems = {
           url: '/tenant-requests'
         },
         {
+          id: 'external-car-requests',
+          title: 'External Requests',
+          type: 'item',
+          url: '/external-car-requests'
+        },
+        {
+          id: 'interested-customers',
+          title: 'Interested Customers',
+          type: 'item',
+          url: '/interested-customers'
+        },
+        {
           id: 'tenants',
           title: 'Tenants',
           type: 'item',
