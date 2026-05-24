@@ -1,0 +1,262 @@
+name: AutoKosova CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: 10.0.x
+  NODE_VERSION: lts/*
+  BACKEND_SOLUTION: autokosova-api/AutoKosova.sln
+  BACKEND_API_PROJECT: autokosova-api/AutoKosova.Api/AutoKosova.Api.csproj
+  CMS_WORKDIR: autokosova-cms
+  WEB_WORKDIR: autokosova-web
+
+jobs:
+  backend-ci:
+    name: backend-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: |
+            autokosova-api/**/*.csproj
+            autokosova-api/**/*.props
+            autokosova-api/**/*.targets
+
+      - name: Restore backend solution
+        run: dotnet restore $BACKEND_SOLUTION
+
+      - name: Build backend solution
+        run: dotnet build $BACKEND_SOLUTION --configuration Release --no-restore
+
+      - name: Detect backend test projects
+        id: backend-tests
+        shell: bash
+        run: |
+          mapfile -t projects < <(find autokosova-api -type f -name '*.csproj' \
+            ! -path '*/bin/*' ! -path '*/obj/*' \
+            | grep -Ei '(test|tests)\.csproj$' || true)
+
+          if [ ${#projects[@]} -eq 0 ]; then
+            echo "has_tests=false" >> "$GITHUB_OUTPUT"
+            echo "No backend test projects found."
+            exit 0
+          fi
+
+          {
+            echo "has_tests=true"
+            echo "projects<<EOF"
+            printf '%s\n' "${projects[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run backend tests
+        if: steps.backend-tests.outputs.has_tests == 'true'
+        shell: bash
+        run: |
+          while IFS= read -r project; do
+            [ -n "$project" ] || continue
+            echo "Running tests for $project"
+            dotnet test "$project" --configuration Release --no-build --logger "trx;LogFileName=$(basename "$project").trx"
+          done <<< "${{ steps.backend-tests.outputs.projects }}"
+
+      - name: Skip backend tests
+        if: steps.backend-tests.outputs.has_tests != 'true'
+        run: echo "Skipping tests because no backend test projects exist yet."
+
+      - name: Publish backend API
+        run: dotnet publish $BACKEND_API_PROJECT --configuration Release --no-build --output ./artifacts/backend-api
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-api-publish
+          path: artifacts/backend-api
+          if-no-files-found: error
+
+  cms-ci:
+    name: cms-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.CMS_WORKDIR }}/package-lock.json
+
+      - name: Install CMS dependencies
+        working-directory: ${{ env.CMS_WORKDIR }}
+        run: npm ci
+
+      - name: Detect CMS lint script
+        id: cms-lint
+        working-directory: ${{ env.CMS_WORKDIR }}
+        shell: bash
+        run: |
+          if node -e "const pkg=require('./package.json'); process.exit(pkg.scripts && pkg.scripts.lint ? 0 : 1)"; then
+            echo "has_lint=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_lint=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run CMS lint
+        if: steps.cms-lint.outputs.has_lint == 'true'
+        working-directory: ${{ env.CMS_WORKDIR }}
+        run: npm run lint
+
+      - name: Build CMS frontend
+        working-directory: ${{ env.CMS_WORKDIR }}
+        run: npm run build
+
+      - name: Upload CMS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cms-dist
+          path: ${{ env.CMS_WORKDIR }}/dist
+          if-no-files-found: error
+
+  web-ci:
+    name: web-ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.WEB_WORKDIR }}/package-lock.json
+
+      - name: Install Web dependencies
+        working-directory: ${{ env.WEB_WORKDIR }}
+        run: npm ci
+
+      - name: Detect Web lint script
+        id: web-lint
+        working-directory: ${{ env.WEB_WORKDIR }}
+        shell: bash
+        run: |
+          if node -e "const pkg=require('./package.json'); process.exit(pkg.scripts && pkg.scripts.lint ? 0 : 1)"; then
+            echo "has_lint=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_lint=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Web lint
+        if: steps.web-lint.outputs.has_lint == 'true'
+        working-directory: ${{ env.WEB_WORKDIR }}
+        run: npm run lint
+
+      - name: Build Web frontend
+        working-directory: ${{ env.WEB_WORKDIR }}
+        run: npm run build
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: ${{ env.WEB_WORKDIR }}/dist
+          if-no-files-found: error
+
+  deploy-backend:
+    name: deploy-backend
+    runs-on: ubuntu-latest
+    needs:
+      - backend-ci
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-api-publish
+          path: deploy/backend-api
+
+      - name: Deploy backend placeholder
+        run: |
+          echo "Backend deploy placeholder."
+          echo "Configure your real backend deploy here."
+          echo "Recommended secrets depend on your hosting target:"
+          echo "- BACKEND_PUBLISH_PROFILE for Azure App Service publish profile"
+          echo "- BACKEND_SERVER_HOST, BACKEND_SERVER_USER, BACKEND_SERVER_SSH_KEY for VM/SSH deploy"
+          echo "- BACKEND_CONNECTION_STRING and backend app settings in your hosting platform"
+        # Example:
+        # - uses: azure/webapps-deploy@v3
+        #   with:
+        #     app-name: your-backend-app-name
+        #     publish-profile: ${{ secrets.BACKEND_PUBLISH_PROFILE }}
+        #     package: deploy/backend-api
+
+  deploy-cms:
+    name: deploy-cms
+    runs-on: ubuntu-latest
+    needs:
+      - cms-ci
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download CMS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cms-dist
+          path: deploy/cms-dist
+
+      - name: Deploy CMS placeholder
+        run: |
+          echo "CMS deploy placeholder."
+          echo "Configure your real CMS deploy here."
+          echo "Typical secrets:"
+          echo "- CMS_DEPLOY_TOKEN for static hosting providers"
+          echo "- CMS_SERVER_HOST, CMS_SERVER_USER, CMS_SERVER_SSH_KEY for VM/SSH deploy"
+          echo "- CMS_BUCKET_NAME and cloud credentials if using object storage/CDN"
+        # Example:
+        # - run: rsync -avz deploy/cms-dist/ user@host:/var/www/autokosova-cms
+
+  deploy-web:
+    name: deploy-web
+    runs-on: ubuntu-latest
+    needs:
+      - web-ci
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download Web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: deploy/web-dist
+
+      - name: Deploy Web placeholder
+        run: |
+          echo "Web deploy placeholder."
+          echo "Configure your real Web frontend deploy here."
+          echo "Typical secrets:"
+          echo "- WEB_DEPLOY_TOKEN for static hosting providers"
+          echo "- WEB_SERVER_HOST, WEB_SERVER_USER, WEB_SERVER_SSH_KEY for VM/SSH deploy"
+          echo "- WEB_BUCKET_NAME and cloud credentials if using object storage/CDN"
+        # Example:
+        # - run: rsync -avz deploy/web-dist/ user@host:/var/www/autokosova-web

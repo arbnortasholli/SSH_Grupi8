@@ -8,6 +8,7 @@ interface ModalProps {
     onConfirm?: () => void;
     confirmText?: string;
     cancelText?: string;
+    size?: 'default' | 'large';
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -18,45 +19,35 @@ export const Modal: React.FC<ModalProps> = ({
     onConfirm,
     confirmText = 'Confirm',
     cancelText = 'Cancel',
+    size = 'default',
 }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
-                {/* Header */}
-                <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-xl font-bold text-gray-800">{title}</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-500 hover:text-gray-700"
-                    >
-                        ✕
+        <div className="ak-modal" role="dialog" aria-modal="true" aria-labelledby="ak-modal-title">
+            <button type="button" className="ak-modal__backdrop" aria-label="Close modal" onClick={onClose} />
+            <div className={`ak-modal__panel ak-modal__panel--${size}`}>
+                <div className="ak-modal__header">
+                    <h2 id="ak-modal-title">{title}</h2>
+                    <button type="button" onClick={onClose} className="ak-modal__close" aria-label="Close modal">
+                        x
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="px-6 py-4">
-                    {children}
-                </div>
+                <div className="ak-modal__body">{children}</div>
 
-                {/* Footer */}
-                <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-                    >
-                        {cancelText}
-                    </button>
-                    {onConfirm && (
-                        <button
-                            onClick={onConfirm}
-                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition"
-                        >
-                            {confirmText}
+                {(onConfirm || cancelText) && (
+                    <div className="ak-modal__footer">
+                        <button type="button" onClick={onClose} className="ak-button ak-button--secondary">
+                            {cancelText}
                         </button>
-                    )}
-                </div>
+                        {onConfirm && (
+                            <button type="button" onClick={onConfirm} className="ak-button ak-button--primary">
+                                {confirmText}
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

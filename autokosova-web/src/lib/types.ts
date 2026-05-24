@@ -33,7 +33,7 @@ export interface AuthResponse {
     tenantID?: number | null;
     tenantName?: string | null;
     ownerAccountID?: number | null;
-    role?: 'Guest' | 'Customer' | 'Rental' | 'SuperAdmin' | string;
+    role?: 'Guest' | 'Customer' | 'Seller' | 'SuperAdmin' | string;
     accountUsername?: string;
     accountEmail?: string;
     accountName?: string;
@@ -47,7 +47,7 @@ export interface User {
     tenantID?: number | null;
     tenantName?: string | null;
     ownerAccountID?: number | null;
-    role: 'Guest' | 'Customer' | 'Rental' | 'SuperAdmin' | string;
+    role: 'Guest' | 'Customer' | 'Seller' | 'SuperAdmin' | string;
     accountUsername?: string;
     accountEmail?: string;
     accountName?: string;
@@ -83,6 +83,7 @@ export interface Car {
     imageRecords?: CarImage[];
     isFavorite?: boolean;
     isAvailable: boolean;
+    carStatus?: string;
     sellerId: string;
     sellerName: string;
     createdAt: string;

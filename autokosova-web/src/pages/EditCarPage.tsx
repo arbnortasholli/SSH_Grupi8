@@ -19,6 +19,14 @@ type FormState = {
   status: string;
 };
 
+type EditCarPageProps = {
+  carId?: string;
+  initialSection?: 'details' | 'images' | 'features';
+  embedded?: boolean;
+  onClose?: () => void;
+  onUpdated?: () => void | Promise<void>;
+};
+
 const toFormState = (car: Car): FormState => ({
   brand: car.brand,
   model: car.model,
@@ -31,16 +39,29 @@ const toFormState = (car: Car): FormState => ({
   transmission: car.transmission,
   color: car.color ?? '',
   description: car.description,
-  status: car.isAvailable ? 'Available' : 'Inactive',
+  status: car.carStatus ?? (car.isAvailable ? 'Available' : 'Inactive'),
 });
 
-export const EditCarPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+export const EditCarPage: React.FC<EditCarPageProps> = ({
+  carId,
+  initialSection = 'details',
+  embedded = false,
+  onClose,
+  onUpdated,
+}) => {
+  const { id: routeId } = useParams<{ id: string }>();
+  const id = carId ?? routeId;
   const [car, setCar] = React.useState<Car | null>(null);
   const [form, setForm] = React.useState<FormState | null>(null);
   const [newImages, setNewImages] = React.useState<File[]>([]);
+  const [mainImageIndex, setMainImageIndex] = React.useState('');
+  const [allFeatures, setAllFeatures] = React.useState<{ id: string; name: string }[]>([]);
+  const [selectedFeatureId, setSelectedFeatureId] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isImageSaving, setIsImageSaving] = React.useState(false);
+  const [isFeatureSaving, setIsFeatureSaving] = React.useState(false);
+  const [activeSection, setActiveSection] = React.useState<'details' | 'images' | 'features'>(initialSection);
   const previews = React.useMemo(() => newImages.map((image) => URL.createObjectURL(image)), [newImages]);
 
   React.useEffect(() => () => {
@@ -49,6 +70,7 @@ export const EditCarPage: React.FC = () => {
 
   const loadCar = React.useCallback(async () => {
     if (!id) return;
+
     setError(null);
     try {
       const data = await carService.getCarById(id);
@@ -59,9 +81,46 @@ export const EditCarPage: React.FC = () => {
     }
   }, [id]);
 
+  const notifyUpdated = React.useCallback(async () => {
+    await Promise.resolve(onUpdated?.());
+  }, [onUpdated]);
+
   React.useEffect(() => {
     void loadCar();
   }, [loadCar]);
+
+  React.useEffect(() => {
+    const fetchFeatures = async () => {
+      try {
+        const data = await carService.getAllFeatures();
+        setAllFeatures(data);
+      } catch (err) {
+        console.error('Failed to load features', err);
+      }
+    };
+
+    void fetchFeatures();
+  }, []);
+
+  React.useEffect(() => {
+    if (embedded) {
+      setActiveSection(initialSection);
+      return;
+    }
+
+    const hash = window.location.hash;
+    if (hash === '#images') {
+      setActiveSection('images');
+      return;
+    }
+
+    if (hash === '#features') {
+      setActiveSection('features');
+      return;
+    }
+
+    setActiveSection(initialSection);
+  }, [embedded, initialSection, car]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
@@ -84,15 +143,20 @@ export const EditCarPage: React.FC = () => {
       return;
     }
 
+    setError(null);
     setNewImages(files);
+    setMainImageIndex('');
   };
 
   const refresh = async () => {
     await loadCar();
     setNewImages([]);
+    setMainImageIndex('');
+    await notifyUpdated();
   };
 
-  const handleSave = async (event: React.SyntheticEvent<HTMLFormElement>) => {    event.preventDefault();
+  const handleSave = async (event: React.SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!id || !form || !car) return;
 
     setIsSaving(true);
@@ -113,13 +177,11 @@ export const EditCarPage: React.FC = () => {
         color: form.color,
         description: form.description,
         isAvailable: form.status === 'Available',
+        carStatus: form.status,
       });
 
-      if (newImages.length > 0) {
-        await carService.uploadCarImages(id, newImages);
-      }
-
       await refresh();
+      setActiveSection('details');
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to save car.'));
     } finally {
@@ -141,6 +203,7 @@ export const EditCarPage: React.FC = () => {
 
   const moveImage = async (image: CarImage, direction: -1 | 1) => {
     if (!id || !car?.imageRecords) return;
+
     const ordered = [...car.imageRecords].sort((a, b) => a.orderNumber - b.orderNumber);
     const index = ordered.findIndex((item) => item.id === image.id);
     const targetIndex = index + direction;
@@ -152,29 +215,103 @@ export const EditCarPage: React.FC = () => {
     await refresh();
   };
 
+  const handleImageUpload = async () => {
+    if (!id) return;
+    if (newImages.length === 0) {
+      setError('At least one image file is required.');
+      return;
+    }
+
+    setIsImageSaving(true);
+    setError(null);
+    try {
+      await carService.uploadCarImages(
+        id,
+        newImages,
+        mainImageIndex === '' ? undefined : Number(mainImageIndex)
+      );
+      await refresh();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to upload images.'));
+    } finally {
+      setIsImageSaving(false);
+    }
+  };
+
+  const handleAddFeature = async () => {
+    if (!id || !selectedFeatureId) return;
+
+    setIsFeatureSaving(true);
+    setError(null);
+    try {
+      await carService.assignFeature(id, selectedFeatureId);
+      setSelectedFeatureId('');
+      await loadCar();
+      await notifyUpdated();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to add feature.'));
+    } finally {
+      setIsFeatureSaving(false);
+    }
+  };
+
+  const handleRemoveFeature = async (featureId: string) => {
+    if (!id || !window.confirm('Remove this feature?')) return;
+
+    try {
+      await carService.removeFeature(id, featureId);
+      await loadCar();
+      await notifyUpdated();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to remove feature.'));
+    }
+  };
+
   if (!form) {
+    const loadingContent = <div className="ak-container edit-car-shell">{error || 'Loading car...'}</div>;
+
+    if (embedded) {
+      return loadingContent;
+    }
+
     return (
       <div className="page create-car-page">
-        <div className="ak-container edit-car-shell">{error || 'Loading car...'}</div>
+        {loadingContent}
       </div>
     );
   }
 
-  return (
-    <div className="page create-car-page">
-      <section className="ak-section ak-section--soft">
-        <div className="ak-container edit-car-shell">
-          <div className="owner-form-heading">
-            <div>
-              <p className="eyebrow">Edit car</p>
-              <h2>{form.year} {form.brand} {form.model}</h2>
-            </div>
-            <Link to="/seller" className="ak-button ak-button--secondary">Back</Link>
-          </div>
+  const content = (
+    <div className={embedded ? 'edit-car-shell edit-car-shell--modal' : 'ak-container edit-car-shell'}>
+      <div className="owner-form-heading">
+        <div>
+          <p className="eyebrow">Edit car</p>
+          <h2>{form.year} {form.brand} {form.model}</h2>
+        </div>
+        {embedded ? (
+          onClose ? <button type="button" className="ak-button ak-button--secondary" onClick={onClose}>Close</button> : null
+        ) : (
+          <Link to="/seller" className="ak-button ak-button--secondary">Back</Link>
+        )}
+      </div>
 
-          {error && <div className="auth-alert" role="alert">{error}</div>}
+      <div className="edit-car-tabs" role="tablist" aria-label="Car editor sections">
+        <button type="button" className={activeSection === 'details' ? 'active' : undefined} onClick={() => setActiveSection('details')}>
+          Edit
+        </button>
+        <button type="button" className={activeSection === 'images' ? 'active' : undefined} onClick={() => setActiveSection('images')}>
+          Images
+        </button>
+        <button type="button" className={activeSection === 'features' ? 'active' : undefined} onClick={() => setActiveSection('features')}>
+          Features
+        </button>
+      </div>
 
-          <form className="owner-form" onSubmit={handleSave}>
+      {error && <div className="auth-alert" role="alert">{error}</div>}
+
+      <form className="owner-form" onSubmit={handleSave}>
+        {activeSection === 'details' && (
+          <>
             <div className="owner-form-grid">
               <label className="owner-field">
                 <span>Brand</span>
@@ -236,10 +373,10 @@ export const EditCarPage: React.FC = () => {
               <label className="owner-field">
                 <span>Status</span>
                 <select name="status" value={form.status} onChange={handleChange}>
-                  <option>Available</option>
-                  <option>Inactive</option>
-                  <option>Sold</option>
-                  <option>Rented</option>
+                  <option value="Available">Available</option>
+                  <option value="Rented">Rented</option>
+                  <option value="Under Maintenance">Under Maintenance</option>
+                  <option value="Inactive">Inactive</option>
                 </select>
               </label>
             </div>
@@ -249,54 +386,136 @@ export const EditCarPage: React.FC = () => {
               <textarea name="description" value={form.description} onChange={handleChange} required />
             </label>
 
-            <section className="image-manager">
-              <div className="details-section-heading details-section-heading--split">
-                <div>
-                  <span>Photos</span>
-                  <h2>Existing images</h2>
-                </div>
-                <strong>{car?.imageRecords?.length ?? 0} active</strong>
-              </div>
-
-              <div className="image-manager-grid">
-                {(car?.imageRecords ?? []).map((image) => (
-                  <article key={image.id} className={image.isMain ? 'image-manager-card main' : 'image-manager-card'}>
-                    <img src={image.url} alt={image.originalFileName ?? 'Car'} />
-                    <div>
-                      <strong>{image.isMain ? 'Main image' : `Order ${image.orderNumber}`}</strong>
-                      <span>{image.originalFileName ?? image.url}</span>
-                    </div>
-                    <div className="image-manager-actions">
-                      <button type="button" onClick={() => moveImage(image, -1)}>Up</button>
-                      <button type="button" onClick={() => moveImage(image, 1)}>Down</button>
-                      <button type="button" onClick={() => setMainImage(image)}>Main</button>
-                      <button type="button" onClick={() => deleteImage(image)}>Delete</button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              <label className="owner-field">
-                <span>Add new images</span>
-                <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleNewImages} />
-              </label>
-
-              {previews.length > 0 && (
-                <div className="image-preview-grid">
-                  {previews.map((preview, index) => (
-                    <img key={preview} src={preview} alt={`New upload ${index + 1}`} />
-                  ))}
-                </div>
-              )}
-            </section>
-
             <div className="create-car-actions">
               <button type="submit" className="auth-submit" disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Save changes'}
               </button>
             </div>
-          </form>
-        </div>
+          </>
+        )}
+
+        {activeSection === 'images' && (
+          <section className="image-manager">
+            <div className="details-section-heading details-section-heading--split">
+              <div>
+                <span>Photos</span>
+                <h2>Existing images</h2>
+              </div>
+              <strong>{car?.imageRecords?.length ?? 0} active</strong>
+            </div>
+
+            <div className="image-manager-grid">
+              {(car?.imageRecords ?? []).map((image) => (
+                <article key={image.id} className={image.isMain ? 'image-manager-card main' : 'image-manager-card'}>
+                  <img src={image.url} alt={image.originalFileName ?? 'Car'} />
+                  <div>
+                    <strong>{image.isMain ? 'Main image' : `Order ${image.orderNumber}`}</strong>
+                    <span>{image.originalFileName ?? image.url}</span>
+                  </div>
+                  <div className="image-manager-actions">
+                    <button type="button" onClick={() => moveImage(image, -1)}>Up</button>
+                    <button type="button" onClick={() => moveImage(image, 1)}>Down</button>
+                    <button type="button" onClick={() => setMainImage(image)}>Main</button>
+                    <button type="button" onClick={() => deleteImage(image)}>Delete</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <label className="owner-field">
+              <span>Add new images</span>
+              <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleNewImages} />
+            </label>
+
+            {previews.length > 0 && (
+              <>
+                <div className="features-selector">
+                  <select className="renter-select" value={mainImageIndex} onChange={(event) => setMainImageIndex(event.target.value)}>
+                    <option value="">Keep current main image</option>
+                    {newImages.map((image, index) => (
+                      <option key={`${image.name}-${index}`} value={index}>
+                        {index + 1} - {image.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="ak-button ak-button--secondary"
+                    onClick={handleImageUpload}
+                    disabled={isImageSaving}
+                  >
+                    {isImageSaving ? 'Uploading...' : 'Add images'}
+                  </button>
+                </div>
+
+                <div className="ak-image-preview-grid mt-2 mb-4">
+                  {previews.map((preview, index) => (
+                    <div key={preview} className="ak-image-preview-card">
+                      <img src={preview} alt={`New upload ${index + 1}`} />
+                      <span className="ak-preview-tag">New image {index + 1}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </section>
+        )}
+
+        {activeSection === 'features' && (
+          <section className="features-manager">
+            <div className="details-section-heading">
+              <span>Features</span>
+              <h2>Car Features</h2>
+            </div>
+
+            <div className="features-selector">
+              <select className="renter-select" value={selectedFeatureId} onChange={(e) => setSelectedFeatureId(e.target.value)}>
+                <option value="">Select a feature to add</option>
+                {allFeatures
+                  .filter((feature) => !car?.features?.some((assignedFeature) => assignedFeature.id === feature.id))
+                  .map((feature) => (
+                    <option key={feature.id} value={feature.id}>
+                      {feature.name}
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                className="ak-button ak-button--secondary"
+                onClick={handleAddFeature}
+                disabled={!selectedFeatureId || isFeatureSaving}
+              >
+                {isFeatureSaving ? 'Adding...' : 'Add Feature'}
+              </button>
+            </div>
+
+            <div className="assigned-features-list">
+              {car?.features?.map((feature) => (
+                <div key={feature.id} className="feature-tag">
+                  <span>{feature.name}</span>
+                  <button type="button" onClick={() => handleRemoveFeature(feature.id)}>
+                    &times;
+                  </button>
+                </div>
+              ))}
+              {(!car?.features || car.features.length === 0) && (
+                <p className="renter-muted">No features assigned to this car yet.</p>
+              )}
+            </div>
+          </section>
+        )}
+      </form>
+    </div>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <div className="page create-car-page">
+      <section className="ak-section ak-section--soft">
+        {content}
       </section>
     </div>
   );
