@@ -32,7 +32,7 @@ const menuItems = {
           icon: 'material-icons-two-tone',
           iconname: 'event_available',
           url: '/rental-bookings',
-          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
+          allowedRoles: ['SuperAdmin', 'Rental']
         },
         {
           id: 'accounts',
@@ -81,12 +81,12 @@ const menuItems = {
         },
         {
           id: 'interested-customers',
-          title: 'Interested Customers',
+          title: 'Buy Car Requests',
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'contact_phone',
           url: '/interested-customers',
-          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
+          allowedRoles: ['SuperAdmin', 'Seller']
         },
         {
           id: 'tenants',
