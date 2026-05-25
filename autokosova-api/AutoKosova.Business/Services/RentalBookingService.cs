@@ -24,14 +24,18 @@ namespace AutoKosova.Business.Services
             _paymentService = paymentService;
         }
 
-        public async Task<ServiceResult<List<RentalBooking>>> GetAll(int accountId, string? role)
+        public async Task<ServiceResult<List<RentalBooking>>> GetAll(int accountId, string? role, int? tenantId)
         {
             var query = _context.RentalBookings
                 .Include(rb => rb.Car)
                 .Where(rb => !rb.RentalBookingDeleted)
                 .AsQueryable();
 
-            if (role != "SuperAdmin")
+            if (IsRentalRole(role))
+            {
+                query = query.Where(rb => tenantId.HasValue && rb.TenantID == tenantId.Value);
+            }
+            else if (!IsSuperAdmin(role))
             {
                 query = query.Where(rb => rb.Car != null && rb.Car.CreatedByAccountID == accountId);
             }
@@ -43,7 +47,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<List<RentalBooking>>.Success(bookings);
         }
 
-        public async Task<ServiceResult<List<RentalBooking>>> GetAdminOverview(int accountId, string? role)
+        public async Task<ServiceResult<List<RentalBooking>>> GetAdminOverview(int accountId, string? role, int? tenantId)
         {
             var query = _context.RentalBookings
                 .Include(rb => rb.Car)
@@ -54,7 +58,11 @@ namespace AutoKosova.Business.Services
                 .Where(rb => !rb.RentalBookingDeleted)
                 .AsQueryable();
 
-            if (role != "SuperAdmin")
+            if (IsRentalRole(role))
+            {
+                query = query.Where(rb => tenantId.HasValue && rb.TenantID == tenantId.Value);
+            }
+            else if (!IsSuperAdmin(role))
             {
                 query = query.Where(rb => rb.Car != null && rb.Car.CreatedByAccountID == accountId);
             }
@@ -66,7 +74,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<List<RentalBooking>>.Success(bookings);
         }
 
-        public async Task<ServiceResult<RentalBooking>> GetById(int id, int accountId, string? role)
+        public async Task<ServiceResult<RentalBooking>> GetById(int id, int accountId, string? role, int? tenantId)
         {
             var booking = await _context.RentalBookings
                 .Include(rb => rb.Car)
@@ -78,7 +86,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<RentalBooking>.NotFound("Rental booking not found.");
             }
 
-            if (!CanAccessBooking(booking, accountId, role))
+            if (!CanAccessBooking(booking, accountId, role, tenantId))
             {
                 return ServiceResult<RentalBooking>.Forbidden("You are not allowed to view this booking.");
             }
@@ -239,14 +247,23 @@ namespace AutoKosova.Business.Services
             ));
         }
 
-        public async Task<ServiceResult<List<RentalBooking>>> GetByTenant(int tenantId, int accountId, string? role)
+        public async Task<ServiceResult<List<RentalBooking>>> GetByTenant(int tenantId, int accountId, string? role, int? currentTenantId)
         {
+            if (IsRentalRole(role) && currentTenantId != tenantId)
+            {
+                return ServiceResult<List<RentalBooking>>.Forbidden("You can view only bookings for your tenant.");
+            }
+
             var query = _context.RentalBookings
                 .Include(rb => rb.Car)
                 .Where(rb => !rb.RentalBookingDeleted && rb.TenantID == tenantId)
                 .AsQueryable();
 
-            if (role != "SuperAdmin")
+            if (IsRentalRole(role))
+            {
+                query = query.Where(rb => currentTenantId.HasValue && rb.TenantID == currentTenantId.Value);
+            }
+            else if (!IsSuperAdmin(role))
             {
                 query = query.Where(rb => rb.Car != null && rb.Car.CreatedByAccountID == accountId);
             }
@@ -258,7 +275,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<List<RentalBooking>>.Success(bookings);
         }
 
-        public async Task<ServiceResult<RentalBooking>> UpdateStatus(int id, string status, int accountId, string? role)
+        public async Task<ServiceResult<RentalBooking>> UpdateStatus(int id, string status, int accountId, string? role, int? tenantId)
         {
             if (string.IsNullOrWhiteSpace(status) || !AllowedStatuses.Contains(status))
             {
@@ -274,10 +291,9 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<RentalBooking>.NotFound("Rental booking not found.");
             }
 
-            if (role != "SuperAdmin" &&
-                (booking.Car == null || booking.Car.CreatedByAccountID != accountId))
+            if (!CanManageBooking(booking, accountId, role, tenantId))
             {
-                return ServiceResult<RentalBooking>.Forbidden("You can update only bookings for cars created by you.");
+                return ServiceResult<RentalBooking>.Forbidden("You can update only bookings that belong to your tenant.");
             }
 
             booking.RentalBookingStatus = status;
@@ -288,7 +304,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<RentalBooking>.Success(booking);
         }
 
-        public async Task<ServiceResult<RentalBooking>> Delete(int id, int accountId, string? role)
+        public async Task<ServiceResult<RentalBooking>> Delete(int id, int accountId, string? role, int? tenantId)
         {
             var booking = await _context.RentalBookings
                 .Include(rb => rb.Car)
@@ -299,7 +315,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<RentalBooking>.NotFound("Rental booking not found.");
             }
 
-            if (!CanAccessBooking(booking, accountId, role))
+            if (!CanAccessBooking(booking, accountId, role, tenantId))
             {
                 return ServiceResult<RentalBooking>.Forbidden("You are not allowed to delete this booking.");
             }
@@ -345,13 +361,40 @@ namespace AutoKosova.Business.Services
             return null;
         }
 
-        private static bool CanAccessBooking(RentalBooking booking, int accountId, string? role)
+        private static bool CanAccessBooking(RentalBooking booking, int accountId, string? role, int? tenantId)
         {
             var isCustomer = booking.CustomerAccountID == accountId;
             var isCarOwner = booking.Car != null && booking.Car.CreatedByAccountID == accountId;
-            var isAdmin = role == "SuperAdmin";
+            var isAdmin = IsSuperAdmin(role);
+            var isTenantMember = IsRentalRole(role) && tenantId.HasValue && booking.TenantID == tenantId.Value;
 
-            return isCustomer || isCarOwner || isAdmin;
+            return isCustomer || isCarOwner || isAdmin || isTenantMember;
+        }
+
+        private static bool CanManageBooking(RentalBooking booking, int accountId, string? role, int? tenantId)
+        {
+            if (IsSuperAdmin(role))
+            {
+                return true;
+            }
+
+            if (IsRentalRole(role))
+            {
+                return tenantId.HasValue && booking.TenantID == tenantId.Value;
+            }
+
+            return booking.Car != null && booking.Car.CreatedByAccountID == accountId;
+        }
+
+        private static bool IsSuperAdmin(string? role)
+        {
+            return string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsRentalRole(string? role)
+        {
+            return string.Equals(role, "Rental", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(role, "Seller", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

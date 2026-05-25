@@ -21,7 +21,7 @@ namespace AutoKosova.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var cars = await _carService.GetAll();
+            var cars = await _carService.GetAll(CurrentAccountId, CurrentRole, CurrentTenantId);
 
             return Ok(cars.Select(ToListDto));
         }
@@ -49,7 +49,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carService.Create(ToCar(request), CurrentAccountId.Value, request.Images);
+            var result = await _carService.Create(ToCar(request), CurrentAccountId.Value, CurrentRole, CurrentTenantId, request.Images);
 
             if (!result.IsSuccess)
             {
@@ -77,7 +77,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carService.Update(id, ToCar(request), CurrentAccountId.Value, CurrentRole);
+            var result = await _carService.Update(id, ToCar(request), CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -100,7 +100,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carService.Delete(id, CurrentAccountId.Value, CurrentRole);
+            var result = await _carService.Delete(id, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -163,14 +163,14 @@ namespace AutoKosova.Api.Controllers
         }
 
         [HttpGet("my-cars")]
-        public async Task<IActionResult> GetMyCars([FromQuery] int accountId)
+        public async Task<IActionResult> GetMyCars()
         {
-            if (accountId <= 0)
+            if (CurrentAccountId == null)
             {
-                return BadRequest("accountId is required.");
+                return Unauthorized("Invalid token.");
             }
 
-            var cars = await _carService.GetMyCars(accountId);
+            var cars = await _carService.GetMyCars(CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             return Ok(cars.Select(ToListDto));
         }

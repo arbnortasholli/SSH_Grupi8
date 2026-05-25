@@ -29,7 +29,14 @@ public static class TestDataSeeder
             TenantIsActive = true,
             TenantCreationDate = DateTime.UtcNow,
         };
-        context.Tenants.Add(tenant);
+        var otherTenant = new Tenant
+        {
+            TenantID = 2,
+            TenantName = "Other Rentals",
+            TenantIsActive = true,
+            TenantCreationDate = DateTime.UtcNow,
+        };
+        context.Tenants.AddRange(tenant, otherTenant);
         await context.SaveChangesAsync();
 
         var admin = CreateAccount(passwordService, 1, 1, "admin", "admin@test.local", "Admin123!", "System", "Admin");
@@ -138,6 +145,20 @@ public static class TestDataSeeder
             RentalBookingEndDate = DateTime.UtcNow.Date.AddDays(6),
             RentalBookingDailyPrice = 55m,
             RentalBookingTotalPrice = 165m,
+            RentalBookingStatus = PaymentConstants.RentalStatusConfirmed,
+            RentalBookingCreationDate = DateTime.UtcNow,
+        });
+
+        context.RentalBookings.Add(new RentalBooking
+        {
+            RentalBookingID = 2,
+            TenantID = 2,
+            CarID = 2,
+            CustomerAccountID = 200,
+            RentalBookingStartDate = DateTime.UtcNow.Date.AddDays(10),
+            RentalBookingEndDate = DateTime.UtcNow.Date.AddDays(12),
+            RentalBookingDailyPrice = 55m,
+            RentalBookingTotalPrice = 110m,
             RentalBookingStatus = PaymentConstants.RentalStatusConfirmed,
             RentalBookingCreationDate = DateTime.UtcNow,
         });

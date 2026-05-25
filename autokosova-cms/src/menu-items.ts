@@ -13,7 +13,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'directions_car',
-          url: '/cars'
+          url: '/cars',
+          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
         },
         {
           id: 'car-features',
@@ -21,7 +22,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'tune',
-          url: '/car-features'
+          url: '/car-features',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'rental-bookings',
@@ -29,7 +31,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'event_available',
-          url: '/rental-bookings'
+          url: '/rental-bookings',
+          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
         },
         {
           id: 'accounts',
@@ -37,7 +40,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'account_circle',
-          url: '/accounts'
+          url: '/accounts',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'account-roles',
@@ -45,7 +49,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'groups',
-          url: '/account-roles'
+          url: '/account-roles',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'role-permissions',
@@ -53,7 +58,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'link',
-          url: '/role-permissions'
+          url: '/role-permissions',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'tenant-requests',
@@ -61,7 +67,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'business_center',
-          url: '/tenant-requests'
+          url: '/tenant-requests',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'external-car-requests',
@@ -69,7 +76,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'request_quote',
-          url: '/external-car-requests'
+          url: '/external-car-requests',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'buy-car-requests',
@@ -85,7 +93,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'contact_phone',
-          url: '/interested-customers'
+          url: '/interested-customers',
+          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
         },
         {
           id: 'tenants',
@@ -93,7 +102,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'storefront',
-          url: '/tenants'
+          url: '/tenants',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'permissions',
@@ -101,7 +111,8 @@ const menuItems = {
           type: 'item',
           icon: 'material-icons-two-tone',
           iconname: 'admin_panel_settings',
-          url: '/permissions'
+          url: '/permissions',
+          allowedRoles: ['SuperAdmin']
         }
       ]
     }

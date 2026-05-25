@@ -19,9 +19,9 @@ namespace AutoKosova.Business.Services
             _localImageStorageService = localImageStorageService;
         }
 
-        public async Task<List<Cars>> GetAll()
+        public async Task<List<Cars>> GetAll(int? accountId = null, string? role = null, int? tenantId = null)
         {
-            return await BaseCarQuery()
+            return await ApplyTenantScope(BaseCarQuery(), role, tenantId)
                 .OrderByDescending(c => c.CarCreationDate)
                 .ToListAsync();
         }
@@ -40,7 +40,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<Cars>> Create(Cars car, int accountId, List<IFormFile>? images = null)
+        public async Task<ServiceResult<Cars>> Create(Cars car, int accountId, string? role, int? currentTenantId, List<IFormFile>? images = null)
         {
             var validationError = ValidateCar(car);
 
@@ -56,13 +56,16 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<Cars>.BadRequest(imagesValidationError);
             }
 
-            var tenantValidationError = await ValidateTenant(car.TenantID);
+            var tenantResolution = await ResolveTenantForWrite(car.TenantID, role, currentTenantId);
 
-            if (tenantValidationError != null)
+            if (!tenantResolution.IsSuccess)
             {
-                return ServiceResult<Cars>.BadRequest(tenantValidationError);
+                return tenantResolution.Status == ServiceStatus.Forbidden
+                    ? ServiceResult<Cars>.Forbidden(tenantResolution.Error!)
+                    : ServiceResult<Cars>.BadRequest(tenantResolution.Error!);
             }
 
+            car.TenantID = tenantResolution.Data;
             car.CreatedByAccountID = accountId;
             car.CarTitle = car.CarTitle.Trim();
             car.CarBrand = car.CarBrand.Trim();
@@ -117,7 +120,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<Cars>> Update(int id, Cars updatedCar, int accountId, string? role)
+        public async Task<ServiceResult<Cars>> Update(int id, Cars updatedCar, int accountId, string? role, int? currentTenantId)
         {
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == id && !c.CarDeleted);
@@ -127,9 +130,9 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<Cars>.NotFound("Car not found.");
             }
 
-            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
+            if (!CanManageCar(car, accountId, role, currentTenantId))
             {
-                return ServiceResult<Cars>.Forbidden("You can update only cars created by you.");
+                return ServiceResult<Cars>.Forbidden("You can update only cars that belong to your tenant.");
             }
 
             var validationError = ValidateCar(updatedCar);
@@ -139,14 +142,16 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<Cars>.BadRequest(validationError);
             }
 
-            var tenantValidationError = await ValidateTenant(updatedCar.TenantID);
+            var tenantResolution = await ResolveTenantForWrite(updatedCar.TenantID, role, currentTenantId);
 
-            if (tenantValidationError != null)
+            if (!tenantResolution.IsSuccess)
             {
-                return ServiceResult<Cars>.BadRequest(tenantValidationError);
+                return tenantResolution.Status == ServiceStatus.Forbidden
+                    ? ServiceResult<Cars>.Forbidden(tenantResolution.Error!)
+                    : ServiceResult<Cars>.BadRequest(tenantResolution.Error!);
             }
 
-            car.TenantID = updatedCar.TenantID;
+            car.TenantID = tenantResolution.Data;
             car.CarTitle = updatedCar.CarTitle.Trim();
             car.CarBrand = updatedCar.CarBrand.Trim();
             car.CarModel = updatedCar.CarModel.Trim();
@@ -169,7 +174,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<Cars>.Success(car);
         }
 
-        public async Task<ServiceResult<Cars>> Delete(int id, int accountId, string? role)
+        public async Task<ServiceResult<Cars>> Delete(int id, int accountId, string? role, int? currentTenantId)
         {
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == id && !c.CarDeleted);
@@ -179,9 +184,9 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<Cars>.NotFound("Car not found.");
             }
 
-            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
+            if (!CanManageCar(car, accountId, role, currentTenantId))
             {
-                return ServiceResult<Cars>.Forbidden("You can delete only cars created by you.");
+                return ServiceResult<Cars>.Forbidden("You can delete only cars that belong to your tenant.");
             }
 
             car.CarDeleted = true;
@@ -267,10 +272,10 @@ namespace AutoKosova.Business.Services
             return (pageNumber, pageSize, totalRecords, (int)Math.Ceiling(totalRecords / (double)pageSize), cars);
         }
 
-        public async Task<List<Cars>> GetMyCars(int accountId)
+        public async Task<List<Cars>> GetMyCars(int accountId, string? role, int? tenantId)
         {
-            return await BaseCarQuery()
-                .Where(c => c.CreatedByAccountID == accountId)
+            return await ApplyTenantScope(BaseCarQuery(), role, tenantId)
+                .Where(c => IsRentalRole(role) ? c.TenantID == tenantId : c.CreatedByAccountID == accountId)
                 .OrderByDescending(c => c.CarCreationDate)
                 .ToListAsync();
         }
@@ -288,6 +293,65 @@ namespace AutoKosova.Business.Services
             return _context.Cars
                 .Include(c => c.CarImages.Where(ci => !ci.CarImageDeleted))
                 .Where(c => !c.CarDeleted);
+        }
+
+        private static IQueryable<Cars> ApplyTenantScope(IQueryable<Cars> query, string? role, int? tenantId)
+        {
+            return IsRentalRole(role)
+                ? query.Where(c => tenantId.HasValue && c.TenantID == tenantId.Value)
+                : query;
+        }
+
+        private static bool CanManageCar(Cars car, int accountId, string? role, int? tenantId)
+        {
+            if (IsSuperAdmin(role))
+            {
+                return true;
+            }
+
+            if (IsRentalRole(role))
+            {
+                return tenantId.HasValue && car.TenantID == tenantId.Value;
+            }
+
+            return car.CreatedByAccountID == accountId;
+        }
+
+        private async Task<ServiceResult<int?>> ResolveTenantForWrite(int? requestedTenantId, string? role, int? currentTenantId)
+        {
+            if (IsSuperAdmin(role))
+            {
+                var adminValidationError = await ValidateTenant(requestedTenantId);
+                return adminValidationError == null
+                    ? ServiceResult<int?>.Success(requestedTenantId)
+                    : ServiceResult<int?>.BadRequest(adminValidationError);
+            }
+
+            if (!IsRentalRole(role))
+            {
+                return ServiceResult<int?>.Forbidden("Only rental accounts can manage tenant cars.");
+            }
+
+            if (!currentTenantId.HasValue)
+            {
+                return ServiceResult<int?>.Forbidden("Rental account is not linked to a tenant.");
+            }
+
+            var tenantValidationError = await ValidateTenant(currentTenantId);
+            return tenantValidationError == null
+                ? ServiceResult<int?>.Success(currentTenantId)
+                : ServiceResult<int?>.BadRequest(tenantValidationError);
+        }
+
+        private static bool IsSuperAdmin(string? role)
+        {
+            return string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsRentalRole(string? role)
+        {
+            return string.Equals(role, "Rental", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(role, "Seller", StringComparison.OrdinalIgnoreCase);
         }
 
         private async Task<string?> ValidateImagesForCreate(List<IFormFile>? images)

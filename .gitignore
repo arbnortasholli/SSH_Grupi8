@@ -128,3 +128,8 @@ coverage/
 # =========================
 .idea/
 .vscode/
+
+
+# Local API settings / secrets
+autokosova-api/AutoKosova.Api/appsettings.json
+autokosova-api/AutoKosova.Api/appsettings.Development.json

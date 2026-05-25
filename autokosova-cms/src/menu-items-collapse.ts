@@ -10,49 +10,57 @@ const menuItems = {
           id: 'cars',
           title: 'Cars',
           type: 'item',
-          url: '/cars'
+          url: '/cars',
+          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
         },
         {
           id: 'car-features',
           title: 'Car Features',
           type: 'item',
-          url: '/car-features'
+          url: '/car-features',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'rental-bookings',
           title: 'Rental Bookings',
           type: 'item',
-          url: '/rental-bookings'
+          url: '/rental-bookings',
+          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
         },
         {
           id: 'accounts',
           title: 'Accounts',
           type: 'item',
-          url: '/accounts'
+          url: '/accounts',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'account-roles',
           title: 'Account Roles',
           type: 'item',
-          url: '/account-roles'
+          url: '/account-roles',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'role-permissions',
           title: 'Role Permissions',
           type: 'item',
-          url: '/role-permissions'
+          url: '/role-permissions',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'tenant-requests',
           title: 'Tenant Requests',
           type: 'item',
-          url: '/tenant-requests'
+          url: '/tenant-requests',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'external-car-requests',
           title: 'External Requests',
           type: 'item',
-          url: '/external-car-requests'
+          url: '/external-car-requests',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'buy-car-requests',
@@ -64,19 +72,22 @@ const menuItems = {
           id: 'interested-customers',
           title: 'Interested Customers',
           type: 'item',
-          url: '/interested-customers'
+          url: '/interested-customers',
+          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
         },
         {
           id: 'tenants',
           title: 'Tenants',
           type: 'item',
-          url: '/tenants'
+          url: '/tenants',
+          allowedRoles: ['SuperAdmin']
         },
         {
           id: 'permissions',
           title: 'Permissions',
           type: 'item',
-          url: '/permissions'
+          url: '/permissions',
+          allowedRoles: ['SuperAdmin']
         }
       ]
     }

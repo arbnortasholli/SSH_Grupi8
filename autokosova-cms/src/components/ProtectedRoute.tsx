@@ -1,12 +1,14 @@
 import { useEffect, type ReactNode } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import authService from 'utils/authService';
+import { CMS_ACCESS_ROLES, getDefaultCmsPath, hasAllowedRole } from 'config/roleAccess';
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  allowedRoles?: readonly string[];
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles = CMS_ACCESS_ROLES }: ProtectedRouteProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,6 +36,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!authService.isAuthenticated()) {
     return <Navigate to="/login" replace />;
+  }
+
+  const user = authService.getUser();
+  if (!hasAllowedRole(user, allowedRoles)) {
+    return <Navigate to={getDefaultCmsPath(user)} replace />;
   }
 
   return <>{children}</>;

@@ -9,6 +9,7 @@ import FeatherIcon from 'feather-icons-react';
 
 // services
 import authService from 'utils/authService';
+import { CMS_ACCESS_ROLES, getDefaultCmsPath, hasAllowedRole } from 'config/roleAccess';
 
 // types
 import type { LoginRequest } from 'types/auth';
@@ -51,20 +52,20 @@ export default function SignIn1() {
     try {
       setIsLoading(true);
 
-      const response = await authService.login({
+      await authService.login({
         emailOrUsername: formData.emailOrUsername.trim(),
         password: formData.password
       });
 
-      const role = response.role?.toLowerCase();
+      const user = authService.getUser();
 
-      if (role !== 'superadmin') {
+      if (!hasAllowedRole(user, CMS_ACCESS_ROLES)) {
         authService.logout();
-        setErrorMessage('Only SuperAdmin accounts can access the admin dashboard.');
+        setErrorMessage('Only SuperAdmin and Rental accounts can access this panel.');
         return;
       }
 
-      navigate('/dashboard/sales');
+      navigate(getDefaultCmsPath(user));
     } catch (error: unknown) {
       let message = 'Login failed. Please check your credentials.';
 
@@ -107,7 +108,7 @@ export default function SignIn1() {
                 <span className="autokosova-brand-wordmark">AutoKosova</span>
               </div>
 
-              <span className="autokosova-admin-badge">SuperAdmin</span>
+              <span className="autokosova-admin-badge">Admin / Rental</span>
             </div>
 
             <h4>Welcome back</h4>

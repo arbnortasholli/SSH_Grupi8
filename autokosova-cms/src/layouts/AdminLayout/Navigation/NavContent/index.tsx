@@ -9,6 +9,8 @@ import { Card, ListGroup } from 'react-bootstrap';
 // project imports
 import NavGroup from './NavGroup';
 import { ConfigContext } from 'contexts/ConfigContext';
+import { getDefaultCmsPath } from 'config/roleAccess';
+import authService from 'utils/authService';
 
 // third party
 import SimpleBar from 'simplebar-react';
@@ -19,6 +21,7 @@ export default function NavContent({ navigation, activeNav }) {
   const configContext = useContext(ConfigContext);
 
   const { collapseLayout } = configContext.state;
+  const defaultPath = getDefaultCmsPath(authService.getUser());
 
   const navItems = navigation.map((item) => {
     let navItem = <></>;
@@ -58,7 +61,7 @@ export default function NavContent({ navigation, activeNav }) {
 
   const mHeader = (
     <div className="m-header">
-      <Link to="/dashboard/sales" className="b-brand autokosova-layout-brand">
+      <Link to={defaultPath} className="b-brand autokosova-layout-brand">
         <span className="autokosova-layout-brand__text">AutoKosova</span>
       </Link>
     </div>
