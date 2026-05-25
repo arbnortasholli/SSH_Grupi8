@@ -8,6 +8,8 @@ import useWindowSize from 'hooks/useWindowSize';
 import navigation from 'menu-items';
 import navitemcollapse from 'menu-items-collapse';
 import * as actionType from 'store/actions';
+import { hasAllowedRole } from 'config/roleAccess';
+import authService from 'utils/authService';
 
 // assets
 import avatar2 from 'assets/images/user/avatar-2.jpg';
@@ -19,6 +21,27 @@ export default function Navigation() {
   const { collapseMenu, collapseLayout } = configContext.state;
   const windowSize = useWindowSize();
   const { dispatch } = configContext;
+  const user = authService.getUser();
+
+  const filterNavigationByRole = (items) =>
+    items
+      .map((item) => {
+        if (item.children) {
+          const children = item.children.filter((child) => hasAllowedRole(user, child.allowedRoles));
+
+          if (children.length === 0) {
+            return null;
+          }
+
+          return {
+            ...item,
+            children
+          };
+        }
+
+        return hasAllowedRole(user, item.allowedRoles) ? item : null;
+      })
+      .filter(Boolean);
 
   const navToggleHandler = () => {
     dispatch({ type: actionType.COLLAPSE_MENU });
@@ -26,7 +49,8 @@ export default function Navigation() {
 
   let navClass = 'dark-sidebar';
 
-  let navContent = <NavContent navigation={collapseLayout ? navitemcollapse.items : navigation.items} />;
+  const navItems = filterNavigationByRole(collapseLayout ? navitemcollapse.items : navigation.items);
+  let navContent = <NavContent navigation={navItems} />;
   navClass = [...navClass, 'pc-sidebar'];
   if (windowSize.width <= 1024 && collapseMenu) {
     navClass = [...navClass, 'mob-sidebar-active'];

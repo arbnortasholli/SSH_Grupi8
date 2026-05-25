@@ -4,6 +4,7 @@ import { lazy } from 'react';
 import AdminLayout from 'layouts/AdminLayout';
 import GuestLayout from 'layouts/GuestLayout';
 import ProtectedRoute from 'components/ProtectedRoute';
+import { RENTAL_PANEL_ROLES, SUPER_ADMIN_ROLES } from 'config/roleAccess';
 
 const AdminDashboard = lazy(() => import('../views/dashboard/AdminDashboard'));
 const Login = lazy(() => import('../views/auth/login'));
@@ -33,51 +34,99 @@ const MainRoutes = {
       children: [
         {
           path: '/dashboard/sales',
-          element: <AdminDashboard />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/cars',
-          element: <CarsPage />
+          element: (
+            <ProtectedRoute allowedRoles={RENTAL_PANEL_ROLES}>
+              <CarsPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/car-features',
-          element: <CarFeaturesPage />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <CarFeaturesPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/rental-bookings',
-          element: <RentalBookingsPage />
+          element: (
+            <ProtectedRoute allowedRoles={RENTAL_PANEL_ROLES}>
+              <RentalBookingsPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/permissions',
-          element: <PermissionsPage />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <PermissionsPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/account-roles',
-          element: <AccountRolesPage />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <AccountRolesPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/role-permissions',
-          element: <AccountRolePermissionsPage />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <AccountRolePermissionsPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/accounts',
-          element: <AccountsPage />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <AccountsPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/tenant-requests',
-          element: <TenantRequestsPage />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <TenantRequestsPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/external-car-requests',
-          element: <ExternalCarRequestsPage />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <ExternalCarRequestsPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/interested-customers',
-          element: <InterestedCustomersPage />
+          element: (
+            <ProtectedRoute allowedRoles={RENTAL_PANEL_ROLES}>
+              <InterestedCustomersPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '/tenants',
-          element: <TenantsPage />
+          element: (
+            <ProtectedRoute allowedRoles={SUPER_ADMIN_ROLES}>
+              <TenantsPage />
+            </ProtectedRoute>
+          )
         },
         {
           path: '*',

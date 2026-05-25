@@ -26,7 +26,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _rentalBookingService.GetAll(CurrentAccountId.Value, CurrentRole);
+            var result = await _rentalBookingService.GetAll(CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -45,7 +45,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _rentalBookingService.GetAdminOverview(CurrentAccountId.Value, CurrentRole);
+            var result = await _rentalBookingService.GetAdminOverview(CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -64,7 +64,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _rentalBookingService.GetById(id, CurrentAccountId.Value, CurrentRole);
+            var result = await _rentalBookingService.GetById(id, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -148,7 +148,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _rentalBookingService.GetByTenant(tenantId, CurrentAccountId.Value, CurrentRole);
+            var result = await _rentalBookingService.GetByTenant(tenantId, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -167,7 +167,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _rentalBookingService.UpdateStatus(id, request.Status, CurrentAccountId.Value, CurrentRole);
+            var result = await _rentalBookingService.UpdateStatus(id, request.Status, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -191,7 +191,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _rentalBookingService.Delete(id, CurrentAccountId.Value, CurrentRole);
+            var result = await _rentalBookingService.Delete(id, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {

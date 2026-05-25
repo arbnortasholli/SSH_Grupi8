@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AutoKosova.Api.Controllers
 {
     [ApiController]
-    public class CarFeaturesController : ControllerBase
+    public class CarFeaturesController : BaseApiController
     {
         private readonly AppDbContext _context;
 
@@ -65,6 +65,11 @@ namespace AutoKosova.Api.Controllers
         [HttpPost("api/car-features")]
         public async Task<IActionResult> Create(CarFeatureCreateRequestDto request)
         {
+            if (!IsSuperAdmin(CurrentRole))
+            {
+                return Forbid();
+            }
+
             if (string.IsNullOrWhiteSpace(request.CarFeatureName))
             {
                 return BadRequest("Car feature name is required.");
@@ -107,6 +112,11 @@ namespace AutoKosova.Api.Controllers
         [HttpPut("api/car-features/{id:int}")]
         public async Task<IActionResult> Update(int id, CarFeatureUpdateRequestDto request)
         {
+            if (!IsSuperAdmin(CurrentRole))
+            {
+                return Forbid();
+            }
+
             var feature = await _context.CarFeatures
                 .FirstOrDefaultAsync(cf => cf.CarFeatureID == id && !cf.CarFeatureDeleted);
 
@@ -152,6 +162,11 @@ namespace AutoKosova.Api.Controllers
         [HttpDelete("api/car-features/{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
+            if (!IsSuperAdmin(CurrentRole))
+            {
+                return Forbid();
+            }
+
             var feature = await _context.CarFeatures
                 .FirstOrDefaultAsync(cf => cf.CarFeatureID == id && !cf.CarFeatureDeleted);
 
@@ -221,12 +236,22 @@ namespace AutoKosova.Api.Controllers
         [HttpPost("api/cars/{carId:int}/features/{featureId:int}")]
         public async Task<IActionResult> AssignFeatureToCar(int carId, int featureId)
         {
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == carId && !c.CarDeleted);
 
             if (car == null)
             {
                 return NotFound("Car not found.");
+            }
+
+            if (!CanManageCar(car, CurrentAccountId.Value, CurrentRole, CurrentTenantId))
+            {
+                return Forbid();
             }
 
             var feature = await _context.CarFeatures
@@ -287,12 +312,22 @@ namespace AutoKosova.Api.Controllers
         [HttpDelete("api/cars/{carId:int}/features/{featureId:int}")]
         public async Task<IActionResult> RemoveFeatureFromCar(int carId, int featureId)
         {
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.CarsID == carId && !c.CarDeleted);
 
             if (car == null)
             {
                 return NotFound("Car not found.");
+            }
+
+            if (!CanManageCar(car, CurrentAccountId.Value, CurrentRole, CurrentTenantId))
+            {
+                return Forbid();
             }
 
             var mapping = await _context.CarFeatureMappings
@@ -317,6 +352,32 @@ namespace AutoKosova.Api.Controllers
                 carID = carId,
                 carFeatureID = featureId
             });
+        }
+
+        private static bool CanManageCar(Cars car, int accountId, string? role, int? tenantId)
+        {
+            if (IsSuperAdmin(role))
+            {
+                return true;
+            }
+
+            if (IsRentalRole(role))
+            {
+                return tenantId.HasValue && car.TenantID == tenantId.Value;
+            }
+
+            return car.CreatedByAccountID == accountId;
+        }
+
+        private static bool IsSuperAdmin(string? role)
+        {
+            return string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsRentalRole(string? role)
+        {
+            return string.Equals(role, "Rental", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(role, "Seller", StringComparison.OrdinalIgnoreCase);
         }
 
     }

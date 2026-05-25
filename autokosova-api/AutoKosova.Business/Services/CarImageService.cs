@@ -58,7 +58,8 @@ namespace AutoKosova.Business.Services
             bool carImageIsMain,
             int carImageOrderNumber,
             int accountId,
-            string? role)
+            string? role,
+            int? tenantId)
         {
             if (string.IsNullOrWhiteSpace(carImageUrl))
             {
@@ -73,9 +74,9 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
-            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
+            if (!CanManageCar(car, accountId, role, tenantId))
             {
-                return ServiceResult<CarImage>.Forbidden("You can add images only to cars created by you.");
+                return ServiceResult<CarImage>.Forbidden("You can add images only to cars that belong to your tenant.");
             }
 
             if (carImageIsMain)
@@ -105,6 +106,7 @@ namespace AutoKosova.Business.Services
             List<IFormFile>? images,
             int accountId,
             string? role,
+            int? tenantId,
             int? mainImageIndex = null)
         {
             if (images == null || images.Count == 0)
@@ -121,9 +123,9 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<List<CarImage>>.NotFound("Car not found.");
             }
 
-            if (role != "SuperAdmin" && car.CreatedByAccountID != accountId)
+            if (!CanManageCar(car, accountId, role, tenantId))
             {
-                return ServiceResult<List<CarImage>>.Forbidden("You can upload images only for cars created by you.");
+                return ServiceResult<List<CarImage>>.Forbidden("You can upload images only for cars that belong to your tenant.");
             }
 
             var existingImageCount = car.CarImages.Count;
@@ -212,7 +214,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<List<CarImage>>.Success(createdImages);
         }
       
-        public async Task<ServiceResult<CarImage>> SetMainImage(int imageId, int accountId, string? role)
+        public async Task<ServiceResult<CarImage>> SetMainImage(int imageId, int accountId, string? role, int? tenantId)
         {
             var image = await _context.CarImages
                 .Include(ci => ci.Car)
@@ -230,9 +232,9 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
-            if (role != "SuperAdmin" && image.Car.CreatedByAccountID != accountId)
+            if (!CanManageCar(image.Car, accountId, role, tenantId))
             {
-                return ServiceResult<CarImage>.Forbidden("You can update images only for cars created by you.");
+                return ServiceResult<CarImage>.Forbidden("You can update images only for cars that belong to your tenant.");
             }
 
             await ClearMainImages(image.CarID);
@@ -261,14 +263,24 @@ namespace AutoKosova.Business.Services
             return ServiceResult<CarImage>.Success(image);
         }
 
-        public async Task<ServiceResult<List<CarImage>>> ReorderImages(int carId, Dictionary<int, int> imageOrders)
+        public async Task<ServiceResult<List<CarImage>>> ReorderImages(
+            int carId,
+            Dictionary<int, int> imageOrders,
+            int accountId,
+            string? role,
+            int? tenantId)
         {
-            var carExists = await _context.Cars
-                .AnyAsync(c => c.CarsID == carId && !c.CarDeleted);
+            var car = await _context.Cars
+                .FirstOrDefaultAsync(c => c.CarsID == carId && !c.CarDeleted);
 
-            if (!carExists)
+            if (car == null)
             {
                 return ServiceResult<List<CarImage>>.NotFound("Car not found.");
+            }
+
+            if (!CanManageCar(car, accountId, role, tenantId))
+            {
+                return ServiceResult<List<CarImage>>.Forbidden("You can reorder images only for cars that belong to your tenant.");
             }
 
             if (imageOrders.Count == 0)
@@ -296,7 +308,7 @@ namespace AutoKosova.Business.Services
             return await GetImagesByCarId(carId);
         }
       
-        public async Task<ServiceResult<CarImage>> DeleteImage(int imageId, int accountId, string? role)
+        public async Task<ServiceResult<CarImage>> DeleteImage(int imageId, int accountId, string? role, int? tenantId)
         {
             var image = await _context.CarImages
                 .Include(ci => ci.Car)
@@ -314,9 +326,9 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<CarImage>.NotFound("Car not found.");
             }
 
-            if (role != "SuperAdmin" && image.Car.CreatedByAccountID != accountId)
+            if (!CanManageCar(image.Car, accountId, role, tenantId))
             {
-                return ServiceResult<CarImage>.Forbidden("You can delete images only for cars created by you.");
+                return ServiceResult<CarImage>.Forbidden("You can delete images only for cars that belong to your tenant.");
             }
 
             image.CarImageDeleted = true;
@@ -408,6 +420,32 @@ namespace AutoKosova.Business.Services
             {
                 existingImage.CarImageIsMain = false;
             }
+        }
+
+        private static bool CanManageCar(Cars car, int accountId, string? role, int? tenantId)
+        {
+            if (IsSuperAdmin(role))
+            {
+                return true;
+            }
+
+            if (IsRentalRole(role))
+            {
+                return tenantId.HasValue && car.TenantID == tenantId.Value;
+            }
+
+            return car.CreatedByAccountID == accountId;
+        }
+
+        private static bool IsSuperAdmin(string? role)
+        {
+            return string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsRentalRole(string? role)
+        {
+            return string.Equals(role, "Rental", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(role, "Seller", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

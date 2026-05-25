@@ -57,7 +57,33 @@ public class RentalBookingsControllerTests : IClassFixture<CustomWebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    private static void AddAuthHeaders(HttpRequestMessage request, int accountId, string role, int roleId)
+    [Fact]
+    public async Task GetByTenant_WhenRentalRequestsDifferentTenant_ReturnsForbidden()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/tenants/2/bookings");
+        AddAuthHeaders(request, accountId: 100, role: "Seller", roleId: 2, tenantId: 1);
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetAll_WhenRentalIsAuthenticated_ReturnsOnlyOwnTenantBookings()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/rental-bookings");
+        AddAuthHeaders(request, accountId: 100, role: "Seller", roleId: 2, tenantId: 1);
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var bookings = await response.Content.ReadFromJsonAsync<List<RentalBookingListResponse>>();
+        bookings.Should().NotBeNull();
+        bookings!.Should().OnlyContain(booking => booking.TenantID == 1);
+    }
+
+    private static void AddAuthHeaders(HttpRequestMessage request, int accountId, string role, int roleId, int tenantId = 1)
     {
         request.Headers.Add("X-Test-Auth", "true");
         request.Headers.Add("X-Test-AccountId", accountId.ToString());
@@ -65,5 +91,12 @@ public class RentalBookingsControllerTests : IClassFixture<CustomWebApplicationF
         request.Headers.Add("X-Test-AccountRoleId", roleId.ToString());
         request.Headers.Add("X-Test-Username", role.ToLowerInvariant());
         request.Headers.Add("X-Test-Email", $"{role.ToLowerInvariant()}@test.local");
+        request.Headers.Add("X-Test-TenantId", tenantId.ToString());
+    }
+
+    private sealed class RentalBookingListResponse
+    {
+        public int RentalBookingID { get; set; }
+        public int TenantID { get; set; }
     }
 }

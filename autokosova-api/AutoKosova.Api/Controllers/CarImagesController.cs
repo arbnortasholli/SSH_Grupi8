@@ -52,7 +52,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carImageService.UploadImages(carId, request.Images, CurrentAccountId.Value, CurrentRole, request.MainImageIndex);
+            var result = await _carImageService.UploadImages(carId, request.Images, CurrentAccountId.Value, CurrentRole, CurrentTenantId, request.MainImageIndex);
 
             if (!result.IsSuccess)
             {
@@ -81,7 +81,8 @@ namespace AutoKosova.Api.Controllers
                 request.CarImageIsMain,
                 request.CarImageOrderNumber,
                 CurrentAccountId.Value,
-                CurrentRole
+                CurrentRole,
+                CurrentTenantId
             );
 
             if (!result.IsSuccess)
@@ -114,7 +115,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carImageService.SetMainImage(imageId, CurrentAccountId.Value, CurrentRole);
+            var result = await _carImageService.SetMainImage(imageId, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -132,11 +133,16 @@ namespace AutoKosova.Api.Controllers
         [HttpPut("api/cars/{carId:int}/images/reorder")]
         public async Task<IActionResult> ReorderImages(int carId, [FromBody] CarImageReorderRequestDto request)
         {
+            if (CurrentAccountId == null)
+            {
+                return Unauthorized("Invalid token.");
+            }
+
             var imageOrders = request.Images.ToDictionary(
                 image => image.CarImageID,
                 image => image.CarImageOrderNumber);
 
-            var result = await _carImageService.ReorderImages(carId, imageOrders);
+            var result = await _carImageService.ReorderImages(carId, imageOrders, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -155,7 +161,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carImageService.DeleteImage(imageId, CurrentAccountId.Value, CurrentRole);
+            var result = await _carImageService.DeleteImage(imageId, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -178,7 +184,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carImageService.SetMainImage(imageId, CurrentAccountId.Value, CurrentRole);
+            var result = await _carImageService.SetMainImage(imageId, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -201,7 +207,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _carImageService.DeleteImage(imageId, CurrentAccountId.Value, CurrentRole);
+            var result = await _carImageService.DeleteImage(imageId, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {

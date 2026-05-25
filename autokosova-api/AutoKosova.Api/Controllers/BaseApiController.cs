@@ -20,6 +20,18 @@ namespace AutoKosova.Api.Controllers
 
         protected string? CurrentRole => User.FindFirstValue(ClaimTypes.Role);
 
+        protected int? CurrentTenantId
+        {
+            get
+            {
+                var tenantIdValue = User.FindFirstValue("TenantID");
+
+                return int.TryParse(tenantIdValue, out var tenantId)
+                    ? tenantId
+                    : null;
+            }
+        }
+
         protected IActionResult ToActionResult<T>(ServiceResult<T> result)
         {
             if (result.IsSuccess)

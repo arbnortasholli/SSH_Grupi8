@@ -43,7 +43,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _paymentService.GetPaymentStatusByOrder(paymentOrderId, CurrentAccountId.Value, CurrentRole);
+            var result = await _paymentService.GetPaymentStatusByOrder(paymentOrderId, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {
@@ -62,7 +62,7 @@ namespace AutoKosova.Api.Controllers
                 return Unauthorized("Invalid token.");
             }
 
-            var result = await _paymentService.GetPaymentStatusByBooking(rentalBookingId, CurrentAccountId.Value, CurrentRole);
+            var result = await _paymentService.GetPaymentStatusByBooking(rentalBookingId, CurrentAccountId.Value, CurrentRole, CurrentTenantId);
 
             if (!result.IsSuccess)
             {

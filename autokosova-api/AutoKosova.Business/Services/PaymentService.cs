@@ -98,7 +98,7 @@ namespace AutoKosova.Business.Services
             });
         }
 
-        public async Task<ServiceResult<PaymentStatusResponseDto>> GetPaymentStatusByOrder(int paymentOrderId, int accountId, string? role)
+        public async Task<ServiceResult<PaymentStatusResponseDto>> GetPaymentStatusByOrder(int paymentOrderId, int accountId, string? role, int? tenantId)
         {
             var order = await GetOrderQuery()
                 .FirstOrDefaultAsync(po => po.PaymentOrderID == paymentOrderId);
@@ -108,7 +108,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<PaymentStatusResponseDto>.NotFound("Payment order not found.");
             }
 
-            if (!CanAccessOrder(order, accountId, role))
+            if (!CanAccessOrder(order, accountId, role, tenantId))
             {
                 return ServiceResult<PaymentStatusResponseDto>.Forbidden("You are not allowed to view this payment.");
             }
@@ -118,7 +118,7 @@ namespace AutoKosova.Business.Services
             return ServiceResult<PaymentStatusResponseDto>.Success(ToStatusDto(order));
         }
 
-        public async Task<ServiceResult<PaymentStatusResponseDto>> GetPaymentStatusByBooking(int rentalBookingId, int accountId, string? role)
+        public async Task<ServiceResult<PaymentStatusResponseDto>> GetPaymentStatusByBooking(int rentalBookingId, int accountId, string? role, int? tenantId)
         {
             var order = await GetOrderQuery()
                 .Where(po => po.RentalBookingID == rentalBookingId)
@@ -130,7 +130,7 @@ namespace AutoKosova.Business.Services
                 return ServiceResult<PaymentStatusResponseDto>.NotFound("Payment order not found.");
             }
 
-            if (!CanAccessOrder(order, accountId, role))
+            if (!CanAccessOrder(order, accountId, role, tenantId))
             {
                 return ServiceResult<PaymentStatusResponseDto>.Forbidden("You are not allowed to view this payment.");
             }
@@ -427,13 +427,28 @@ namespace AutoKosova.Business.Services
             };
         }
 
-        private static bool CanAccessOrder(PaymentOrder order, int accountId, string? role)
+        private static bool CanAccessOrder(PaymentOrder order, int accountId, string? role, int? tenantId)
         {
             var isCustomer = order.AccountID == accountId;
             var isCarOwner = order.RentalBooking?.Car?.CreatedByAccountID == accountId;
-            var isAdmin = role == "SuperAdmin";
+            var isAdmin = IsSuperAdmin(role);
+            var isTenantMember =
+                IsRentalRole(role) &&
+                tenantId.HasValue &&
+                order.RentalBooking?.TenantID == tenantId.Value;
 
-            return isCustomer || isCarOwner || isAdmin;
+            return isCustomer || isCarOwner || isAdmin || isTenantMember;
+        }
+
+        private static bool IsSuperAdmin(string? role)
+        {
+            return string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsRentalRole(string? role)
+        {
+            return string.Equals(role, "Rental", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(role, "Seller", StringComparison.OrdinalIgnoreCase);
         }
 
         private string GetCurrency()

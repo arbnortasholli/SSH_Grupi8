@@ -89,6 +89,40 @@ public class CarsControllerTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Create_WhenRentalSendsDifferentTenant_UsesTenantFromToken()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/cars");
+        AddAuthHeaders(request, accountId: 100, role: "Seller", roleId: 2, tenantId: 1);
+
+        var form = new MultipartFormDataContent
+        {
+            { new StringContent("2"), "tenantID" },
+            { new StringContent("2024 VW Golf Rental"), "carTitle" },
+            { new StringContent("Volkswagen"), "carBrand" },
+            { new StringContent("Golf"), "carModel" },
+            { new StringContent("2024"), "carYear" },
+            { new StringContent("9000"), "carMileage" },
+            { new StringContent("Diesel"), "carFuelType" },
+            { new StringContent("Automatic"), "carTransmission" },
+            { new StringContent("Hatchback"), "carBodyType" },
+            { new StringContent("Blue"), "carColor" },
+            { new StringContent("Rental test car"), "carDescription" },
+            { new StringContent("false"), "isForSale" },
+            { new StringContent("true"), "isForRent" },
+            { new StringContent("45"), "rentalDailyPrice" },
+            { new StringContent("Available"), "carStatus" },
+        };
+        request.Content = form;
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var cars = await _client.GetFromJsonAsync<List<CarListResponse>>("/api/cars/by-tenant/1");
+        cars.Should().Contain(car => car.CarTitle == "2024 VW Golf Rental" && car.TenantID == 1);
+    }
+
+    [Fact]
     public async Task Update_WhenTokenIsMissing_ReturnsUnauthorized()
     {
         using var request = new HttpRequestMessage(HttpMethod.Put, "/api/cars/999");
@@ -128,7 +162,7 @@ public class CarsControllerTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
-    private static void AddAuthHeaders(HttpRequestMessage request, int accountId, string role, int roleId)
+    private static void AddAuthHeaders(HttpRequestMessage request, int accountId, string role, int roleId, int tenantId = 1)
     {
         request.Headers.Add("X-Test-Auth", "true");
         request.Headers.Add("X-Test-AccountId", accountId.ToString());
@@ -136,6 +170,13 @@ public class CarsControllerTests : IClassFixture<CustomWebApplicationFactory>
         request.Headers.Add("X-Test-AccountRoleId", roleId.ToString());
         request.Headers.Add("X-Test-Username", role.ToLowerInvariant());
         request.Headers.Add("X-Test-Email", $"{role.ToLowerInvariant()}@test.local");
-        request.Headers.Add("X-Test-TenantId", "1");
+        request.Headers.Add("X-Test-TenantId", tenantId.ToString());
+    }
+
+    private sealed class CarListResponse
+    {
+        public int CarsID { get; set; }
+        public int? TenantID { get; set; }
+        public string CarTitle { get; set; } = string.Empty;
     }
 }
