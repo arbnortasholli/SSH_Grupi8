@@ -99,7 +99,7 @@ export default function InterestedCustomersPage() {
       <div className="ak-admin-hero">
         <div>
           <span className="ak-admin-eyebrow">AutoKosova Admin</span>
-          <h2>Interested Customers</h2>
+          <h2>Buy Car Requests</h2>
           <p>Customers who accepted an import offer and are waiting to be contacted.</p>
         </div>
         <div className="ak-admin-hero-icon">

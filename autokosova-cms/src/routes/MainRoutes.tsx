@@ -4,7 +4,7 @@ import { lazy } from 'react';
 import AdminLayout from 'layouts/AdminLayout';
 import GuestLayout from 'layouts/GuestLayout';
 import ProtectedRoute from 'components/ProtectedRoute';
-import { RENTAL_PANEL_ROLES, SUPER_ADMIN_ROLES } from 'config/roleAccess';
+import { CAR_PANEL_ROLES, RENTAL_PANEL_ROLES, SELLER_PANEL_ROLES, SUPER_ADMIN_ROLES } from 'config/roleAccess';
 
 const AdminDashboard = lazy(() => import('../views/dashboard/AdminDashboard'));
 const Login = lazy(() => import('../views/auth/login'));
@@ -44,7 +44,7 @@ const MainRoutes = {
         {
           path: '/cars',
           element: (
-            <ProtectedRoute allowedRoles={RENTAL_PANEL_ROLES}>
+            <ProtectedRoute allowedRoles={CAR_PANEL_ROLES}>
               <CarsPage />
             </ProtectedRoute>
           )
@@ -120,7 +120,7 @@ const MainRoutes = {
         {
           path: '/interested-customers',
           element: (
-            <ProtectedRoute allowedRoles={RENTAL_PANEL_ROLES}>
+            <ProtectedRoute allowedRoles={SELLER_PANEL_ROLES}>
               <InterestedCustomersPage />
             </ProtectedRoute>
           )

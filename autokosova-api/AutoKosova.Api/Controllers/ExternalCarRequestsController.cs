@@ -55,7 +55,7 @@ namespace AutoKosova.Api.Controllers
             return ToActionResult(result);
         }
 
-        [Authorize(Roles = "SuperAdmin")]
+        [Authorize(Roles = "SuperAdmin,Seller")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
