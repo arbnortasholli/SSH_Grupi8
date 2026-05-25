@@ -92,7 +92,7 @@ public class CarsControllerTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Create_WhenRentalSendsDifferentTenant_UsesTenantFromToken()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/cars");
-        AddAuthHeaders(request, accountId: 100, role: "Seller", roleId: 2, tenantId: 1);
+        AddAuthHeaders(request, accountId: 101, role: "Rental", roleId: 5, tenantId: 1);
 
         var form = new MultipartFormDataContent
         {

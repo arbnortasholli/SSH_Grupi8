@@ -61,7 +61,7 @@ public class RentalBookingsControllerTests : IClassFixture<CustomWebApplicationF
     public async Task GetByTenant_WhenRentalRequestsDifferentTenant_ReturnsForbidden()
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "/api/tenants/2/bookings");
-        AddAuthHeaders(request, accountId: 100, role: "Seller", roleId: 2, tenantId: 1);
+        AddAuthHeaders(request, accountId: 101, role: "Rental", roleId: 5, tenantId: 1);
 
         var response = await _client.SendAsync(request);
 
@@ -72,7 +72,7 @@ public class RentalBookingsControllerTests : IClassFixture<CustomWebApplicationF
     public async Task GetAll_WhenRentalIsAuthenticated_ReturnsOnlyOwnTenantBookings()
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "/api/rental-bookings");
-        AddAuthHeaders(request, accountId: 100, role: "Seller", roleId: 2, tenantId: 1);
+        AddAuthHeaders(request, accountId: 101, role: "Rental", roleId: 5, tenantId: 1);
 
         var response = await _client.SendAsync(request);
 

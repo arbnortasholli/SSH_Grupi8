@@ -19,8 +19,9 @@ public static class TestDataSeeder
         var sellerRole = new AccountRole { AccountRoleID = 2, AccountRoleName = "Seller" };
         var customerRole = new AccountRole { AccountRoleID = 3, AccountRoleName = "Customer" };
         var viewerRole = new AccountRole { AccountRoleID = 4, AccountRoleName = "Viewer" };
+        var rentalRole = new AccountRole { AccountRoleID = 5, AccountRoleName = "Rental" };
 
-        context.AccountRoles.AddRange(adminRole, sellerRole, customerRole, viewerRole);
+        context.AccountRoles.AddRange(adminRole, sellerRole, customerRole, viewerRole, rentalRole);
 
         var tenant = new Tenant
         {
@@ -43,8 +44,9 @@ public static class TestDataSeeder
         var seller = CreateAccount(passwordService, 100, 2, "seller", "seller@test.local", "Seller123!", "Rental", "Owner", tenantId: 1);
         var customer = CreateAccount(passwordService, 200, 3, "customer", "customer@test.local", "Customer123!", "Car", "Buyer");
         var viewer = CreateAccount(passwordService, 300, 4, "viewer", "viewer@test.local", "Viewer123!", "Read", "Only");
+        var rental = CreateAccount(passwordService, 101, 5, "rental", "rental@test.local", "Rental123!", "Rental", "Manager", tenantId: 1);
 
-        context.Accounts.AddRange(admin, seller, customer, viewer);
+        context.Accounts.AddRange(admin, seller, customer, viewer, rental);
         await context.SaveChangesAsync();
 
         tenant.OwnerAccountID = seller.AccountID;
@@ -77,6 +79,16 @@ public static class TestDataSeeder
             new AccountRolePermission { AccountRolePermissionID = 8, AccountRoleID = 2, PermissionID = 8 },
             new AccountRolePermission { AccountRolePermissionID = 9, AccountRoleID = 2, PermissionID = 9 },
             new AccountRolePermission { AccountRolePermissionID = 10, AccountRoleID = 2, PermissionID = 10 },
+            new AccountRolePermission { AccountRolePermissionID = 11, AccountRoleID = 5, PermissionID = 1 },
+            new AccountRolePermission { AccountRolePermissionID = 12, AccountRoleID = 5, PermissionID = 2 },
+            new AccountRolePermission { AccountRolePermissionID = 13, AccountRoleID = 5, PermissionID = 3 },
+            new AccountRolePermission { AccountRolePermissionID = 14, AccountRoleID = 5, PermissionID = 4 },
+            new AccountRolePermission { AccountRolePermissionID = 15, AccountRoleID = 5, PermissionID = 5 },
+            new AccountRolePermission { AccountRolePermissionID = 16, AccountRoleID = 5, PermissionID = 6 },
+            new AccountRolePermission { AccountRolePermissionID = 17, AccountRoleID = 5, PermissionID = 7 },
+            new AccountRolePermission { AccountRolePermissionID = 18, AccountRoleID = 5, PermissionID = 8 },
+            new AccountRolePermission { AccountRolePermissionID = 19, AccountRoleID = 5, PermissionID = 9 },
+            new AccountRolePermission { AccountRolePermissionID = 20, AccountRoleID = 5, PermissionID = 10 },
         });
 
         var saleCar = new Cars

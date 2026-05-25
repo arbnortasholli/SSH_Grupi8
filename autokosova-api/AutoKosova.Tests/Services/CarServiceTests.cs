@@ -11,15 +11,15 @@ public class CarServiceTests
     public async Task Create_WhenCarIsValidRental_ReturnsSuccess()
     {
         using var db = new SqliteTestDbContext();
-        db.Context.AccountRoles.Add(TestDataFactory.CreateRole(1, "Seller"));
-        db.Context.Accounts.Add(TestDataFactory.CreateAccount(7, 1, "seller7", "seller7@test.local", "Password123!", "Seller"));
+        db.Context.AccountRoles.Add(TestDataFactory.CreateRole(1, "Rental"));
+        db.Context.Accounts.Add(TestDataFactory.CreateAccount(7, 1, "rental7", "rental7@test.local", "Password123!", "Rental", tenantId: 1));
         db.Context.Tenants.Add(TestDataFactory.CreateTenant(1));
         await db.Context.SaveChangesAsync();
 
         var service = new CarService(db.Context, CreateLocalImageStorageService());
         var car = TestDataFactory.CreateRentalCar();
 
-        var result = await service.Create(car, accountId: 7, role: "Seller", currentTenantId: 1);
+        var result = await service.Create(car, accountId: 7, role: "Rental", currentTenantId: 1);
 
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeNull();
