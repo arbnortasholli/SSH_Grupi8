@@ -63,6 +63,12 @@ const menuItems = {
           allowedRoles: ['SuperAdmin']
         },
         {
+          id: 'buy-car-requests',
+          title: 'Buy Car Requests',
+          type: 'item',
+          url: '/buy-car-requests'
+        },
+        {
           id: 'interested-customers',
           title: 'Interested Customers',
           type: 'item',

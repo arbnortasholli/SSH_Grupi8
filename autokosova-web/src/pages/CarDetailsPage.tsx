@@ -1,22 +1,33 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Car, CarFeature, PurchaseOrderRequest, PurchaseOrderResponse, PurchasePaymentMethod } from '../lib/types';
+import type { Car, ExternalCarRequest } from '../lib/types';
 import { carService } from '../services/carService';
 import { bookingService } from '../services/bookingService';
-import { purchaseService } from '../services/purchaseService';
+import { externalCarService } from '../services/externalCarService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { Modal } from '../components/Modal';
 import { daysBetween, formatCurrency, formatDate, getErrorMessage } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
 
-const getFallbackFeatures = (car: Car): CarFeature[] => [
-    { id: 'fuel', name: `${car.fuelType} engine` },
-    { id: 'transmission', name: `${car.transmission} transmission` },
-    { id: 'body', name: `${car.bodyType ?? car.type} body` },
-    { id: 'mileage', name: `${car.mileage.toLocaleString()} km mileage` },
-    { id: 'seats', name: `${car.seats} seats` },
-    ...(car.color ? [{ id: 'color', name: `${car.color} color` }] : []),
-];
+const ACTIVE_BUY_REQUEST_STATUSES = new Set(['Pending', 'Approved', 'Contacted', 'InProgress']);
+
+const getBuyRequestStatusMessage = (request: ExternalCarRequest | null) => {
+    if (!request) return null;
+
+    if (request.status === 'Approved') {
+        return 'Your request has been approved. One of our agents will call you soon to discuss and finalize the car purchase.';
+    }
+
+    if (request.status === 'Rejected') {
+        return 'Your buy request was rejected. Please contact AutoKosova if you need more information.';
+    }
+
+    if (request.status === 'Contacted' || request.status === 'InProgress') {
+        return 'Your request is being processed. Please wait for a phone call from one of our agents.';
+    }
+
+    return 'Your request has been sent. Please wait while our team reviews it.';
+};
 
 export const CarDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -32,18 +43,17 @@ export const CarDetailsPage: React.FC = () => {
     const [isBooking, setIsBooking] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
-    const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
-    const [isOrdering, setIsOrdering] = useState(false);
-    const [purchaseReceipt, setPurchaseReceipt] = useState<PurchaseOrderResponse | null>(null);
+    const [isSubmittingBuyRequest, setIsSubmittingBuyRequest] = useState(false);
+    const [isRequestStatusLoading, setIsRequestStatusLoading] = useState(false);
+    const [buyRequest, setBuyRequest] = useState<ExternalCarRequest | null>(null);
+    const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
+    const [purchaseError, setPurchaseError] = useState<string | null>(null);
     const [purchaseForm, setPurchaseForm] = useState({
         customerName: '',
         customerEmail: '',
         customerPhone: '',
-        deliveryAddress: '',
-        deliveryCity: '',
-        paymentMethod: 'CashOnDelivery' as PurchasePaymentMethod,
-        cardholderName: '',
-        cardLastFour: '',
+        customerCity: '',
+        message: '',
     });
 
     const loadCar = useCallback(async () => {
@@ -72,6 +82,30 @@ export const CarDetailsPage: React.FC = () => {
             customerEmail: current.customerEmail || user?.accountEmail || user?.email || '',
         }));
     }, [user]);
+
+    const loadBuyRequestStatus = useCallback(async () => {
+        if (!isAuthenticated || !id || !car || car.priceType !== 'sale') {
+            setBuyRequest(null);
+            return;
+        }
+
+        setIsRequestStatusLoading(true);
+        try {
+            const requests = await externalCarService.getMyRequests();
+            const latestRequest = requests
+                .filter((request) => request.source === 'AutoKosova' && request.externalCarID === id)
+                .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())[0] ?? null;
+            setBuyRequest(latestRequest);
+        } catch (err: unknown) {
+            setPurchaseError(getErrorMessage(err, 'Could not load your buy request status.'));
+        } finally {
+            setIsRequestStatusLoading(false);
+        }
+    }, [car, id, isAuthenticated]);
+
+    useEffect(() => {
+        void loadBuyRequestStatus();
+    }, [loadBuyRequestStatus]);
 
     const handleCheckAvailability = async () => {
         if (!startDate || !endDate || !id) {
@@ -128,62 +162,46 @@ export const CarDetailsPage: React.FC = () => {
         }));
     };
 
+    const redirectToLogin = () => {
+        navigate('/login', { state: { returnTo: `/cars/${id}` } });
+    };
+
     const handlePurchaseSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
         if (!car) return;
 
-        const order: PurchaseOrderRequest = {
-            carId: car.id,
-            carTitle: `${car.year} ${car.brand} ${car.model}`,
-            carPrice: car.price,
-            customerName: purchaseForm.customerName.trim(),
-            customerEmail: purchaseForm.customerEmail.trim(),
-            customerPhone: purchaseForm.customerPhone.trim(),
-            deliveryAddress: purchaseForm.deliveryAddress.trim(),
-            deliveryCity: purchaseForm.deliveryCity.trim(),
-            paymentMethod: purchaseForm.paymentMethod,
-            cardholderName: purchaseForm.cardholderName.trim() || undefined,
-            cardLastFour: purchaseForm.cardLastFour.trim() || undefined,
-        };
+        if (!isAuthenticated) {
+            redirectToLogin();
+            return;
+        }
 
-        setIsOrdering(true);
-        setError(null);
-        setPurchaseReceipt(null);
+        if (buyRequest && ACTIVE_BUY_REQUEST_STATUSES.has(buyRequest.status)) {
+            setPurchaseError(getBuyRequestStatusMessage(buyRequest));
+            return;
+        }
+
+        setIsSubmittingBuyRequest(true);
+        setPurchaseError(null);
+        setPurchaseSuccess(null);
 
         try {
-            const response = await purchaseService.createPurchaseOrder(order);
-            setPurchaseReceipt(response);
+            await externalCarService.createAutoKosovaBuyRequest(car, {
+                customerName: purchaseForm.customerName.trim(),
+                customerEmail: purchaseForm.customerEmail.trim(),
+                customerPhone: purchaseForm.customerPhone.trim(),
+                message: [purchaseForm.customerCity.trim(), purchaseForm.message.trim()].filter(Boolean).join(' | '),
+            });
+            await loadBuyRequestStatus();
+            setPurchaseSuccess('Your request has been sent. Please wait while our team reviews it.');
             setIsPurchaseModalOpen(false);
-            setIsReceiptModalOpen(true);
         } catch (err: unknown) {
-            const message = getErrorMessage(err, 'Failed to place order and generate receipt.');
-            setError(message);
+            setPurchaseError(getErrorMessage(err, 'Failed to send your buy request.'));
         } finally {
-            setIsOrdering(false);
+            setIsSubmittingBuyRequest(false);
         }
     };
 
-    const handleDownloadReceipt = () => {
-        if (!purchaseReceipt) return;
-
-        const blob = new Blob([purchaseReceipt.receiptText], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `autokosova-receipt-${purchaseReceipt.orderNumber}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
-    };
-
-    const closeReceiptAndGoHome = () => {
-        setIsReceiptModalOpen(false);
-        navigate('/');
-    };
-
-    const featureList = useMemo(() => (car ? (car.features?.length ? car.features : getFallbackFeatures(car)) : []), [car]);
+    const featureList = useMemo(() => car?.features ?? [], [car]);
 
     if (isLoading) {
         return (
@@ -212,6 +230,8 @@ export const CarDetailsPage: React.FC = () => {
     const isSaleListing = car.priceType === 'sale';
     const days = startDate && endDate ? daysBetween(startDate, endDate) : 0;
     const totalPrice = days > 0 ? car.price * days : 0;
+    const buyRequestStatusMessage = getBuyRequestStatusMessage(buyRequest);
+    const isBuyRequestBlocked = Boolean(buyRequest && ACTIVE_BUY_REQUEST_STATUSES.has(buyRequest.status));
     const quickFacts = [
         { label: 'City', value: car.city ?? 'Not listed' },
         { label: 'Mileage', value: `${car.mileage.toLocaleString()} km` },
@@ -222,6 +242,7 @@ export const CarDetailsPage: React.FC = () => {
     return (
         <div className="car-details-page">
             {error && <div className="car-details-alert">{error}</div>}
+            {purchaseSuccess && <div className="car-details-alert car-details-alert--success">{purchaseSuccess}</div>}
 
             <section className="car-details-hero">
                 <div className="car-details-gallery">
@@ -280,8 +301,26 @@ export const CarDetailsPage: React.FC = () => {
                                 <span>Status</span>
                                 <strong>{car.isAvailable ? 'Available' : 'Unavailable'}</strong>
                             </div>
-                            <button type="button" className="details-primary-action" onClick={() => setIsPurchaseModalOpen(true)}>
-                                Buy this car
+                            {isRequestStatusLoading ? (
+                                <div className="booking-available">Loading your request status...</div>
+                            ) : buyRequestStatusMessage ? (
+                                <div className="booking-available">{buyRequestStatusMessage}</div>
+                            ) : null}
+                            <button
+                                type="button"
+                                className="details-primary-action"
+                                onClick={() => {
+                                    if (!isAuthenticated) {
+                                        redirectToLogin();
+                                        return;
+                                    }
+
+                                    setPurchaseError(null);
+                                    setIsPurchaseModalOpen(true);
+                                }}
+                                disabled={isBuyRequestBlocked}
+                            >
+                                {isBuyRequestBlocked ? 'Request already sent' : 'Buy this car'}
                             </button>
                         </div>
                     ) : (
@@ -398,13 +437,18 @@ export const CarDetailsPage: React.FC = () => {
                 cancelText=""
             >
                 <form className="purchase-form" onSubmit={handlePurchaseSubmit}>
+                    {purchaseError && (
+                        <div className="auth-alert" role="alert">
+                            {purchaseError}
+                        </div>
+                    )}
                     <div className="purchase-summary">
                         <div>
                             <span>Selected car</span>
                             <strong>{car.year} {car.brand} {car.model}</strong>
                         </div>
                         <div>
-                            <span>Total price</span>
+                            <span>Listed price</span>
                             <strong>{formatCurrency(car.price)}</strong>
                         </div>
                     </div>
@@ -439,102 +483,31 @@ export const CarDetailsPage: React.FC = () => {
                             <span>City</span>
                             <input
                                 required
-                                value={purchaseForm.deliveryCity}
-                                onChange={(event) => updatePurchaseField('deliveryCity', event.target.value)}
+                                value={purchaseForm.customerCity}
+                                onChange={(event) => updatePurchaseField('customerCity', event.target.value)}
                             />
                         </label>
                     </div>
 
                     <label>
-                        <span>Delivery address</span>
-                        <input
-                            required
-                            value={purchaseForm.deliveryAddress}
-                            onChange={(event) => updatePurchaseField('deliveryAddress', event.target.value)}
+                        <span>Message to AutoKosova</span>
+                        <textarea
+                            rows={4}
+                            value={purchaseForm.message}
+                            onChange={(event) => updatePurchaseField('message', event.target.value)}
+                            placeholder="Add any notes about financing, preferred contact time, or questions about the car."
                         />
                     </label>
-
-                    <fieldset className="payment-choice">
-                        <legend>Payment method</legend>
-                        <label>
-                            <input
-                                type="radio"
-                                name="paymentMethod"
-                                value="CashOnDelivery"
-                                checked={purchaseForm.paymentMethod === 'CashOnDelivery'}
-                                onChange={() => updatePurchaseField('paymentMethod', 'CashOnDelivery')}
-                            />
-                            <span>Cash on delivery</span>
-                        </label>
-                        <label>
-                            <input
-                                type="radio"
-                                name="paymentMethod"
-                                value="Card"
-                                checked={purchaseForm.paymentMethod === 'Card'}
-                                onChange={() => updatePurchaseField('paymentMethod', 'Card')}
-                            />
-                            <span>Card</span>
-                        </label>
-                    </fieldset>
-
-                    {purchaseForm.paymentMethod === 'Card' && (
-                        <div className="purchase-form-grid">
-                            <label>
-                                <span>Cardholder name</span>
-                                <input
-                                    required
-                                    value={purchaseForm.cardholderName}
-                                    onChange={(event) => updatePurchaseField('cardholderName', event.target.value)}
-                                />
-                            </label>
-                            <label>
-                                <span>Card last 4 digits</span>
-                                <input
-                                    required
-                                    inputMode="numeric"
-                                    maxLength={4}
-                                    pattern="[0-9]{4}"
-                                    value={purchaseForm.cardLastFour}
-                                    onChange={(event) => updatePurchaseField('cardLastFour', event.target.value.replace(/\D/g, '').slice(0, 4))}
-                                />
-                            </label>
-                        </div>
-                    )}
 
                     <div className="purchase-actions">
                         <button type="button" className="details-secondary-action" onClick={() => setIsPurchaseModalOpen(false)}>
                             Close
                         </button>
-                        <button type="submit" className="details-primary-action" disabled={isOrdering}>
-                            {isOrdering ? 'Placing order...' : 'Place order'}
+                        <button type="submit" className="details-primary-action" disabled={isSubmittingBuyRequest}>
+                            {isSubmittingBuyRequest ? 'Sending request...' : 'Send buy request'}
                         </button>
                     </div>
                 </form>
-            </Modal>
-
-            <Modal
-                isOpen={isReceiptModalOpen}
-                title="Order receipt"
-                onClose={closeReceiptAndGoHome}
-                cancelText=""
-            >
-                {purchaseReceipt && (
-                    <div className="receipt-popup">
-                        <div className="purchase-success">
-                            {purchaseReceipt.message} Order number: {purchaseReceipt.orderNumber}
-                        </div>
-                        <pre className="receipt-document">{purchaseReceipt.receiptText}</pre>
-                        <div className="purchase-actions">
-                            <button type="button" className="details-secondary-action" onClick={handleDownloadReceipt}>
-                                Download receipt
-                            </button>
-                            <button type="button" className="details-primary-action" onClick={closeReceiptAndGoHome}>
-                                Back to main page
-                            </button>
-                        </div>
-                    </div>
-                )}
             </Modal>
         </div>
     );

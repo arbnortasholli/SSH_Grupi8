@@ -29,19 +29,6 @@ namespace AutoKosova.Api.Controllers
             return Ok(result.Data!.Select(ToDto));
         }
 
-        [HttpGet("api/car-images/{imageId:int}")]
-        public async Task<IActionResult> GetImageById(int imageId)
-        {
-            var result = await _carImageService.GetImageById(imageId);
-
-            if (!result.IsSuccess)
-            {
-                return ToActionResult(result);
-            }
-
-            return Ok(ToDto(result.Data!));
-        }
-
         [HasPermission("Cars.Images.Manage")]
         [HttpPost("api/cars/{carId:int}/images")]
         [Consumes("multipart/form-data")]

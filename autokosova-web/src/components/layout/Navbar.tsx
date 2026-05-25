@@ -60,7 +60,7 @@ export const Navbar: React.FC = () => {
               {!isRental && (
                 <>
                   <Link to="/import-requests" className="nav-login">
-                    My offers
+                    My requests
                   </Link>
                   <Link to={accountLink.to} className="nav-login">
                     {accountLink.label}
@@ -108,7 +108,7 @@ export const Navbar: React.FC = () => {
                 {!isRental && (
                   <>
                     <Link to="/import-requests" onClick={() => setIsOpen(false)}>
-                      My offers
+                      My requests
                     </Link>
                     <Link to={accountLink.to} onClick={() => setIsOpen(false)}>
                       {accountLink.label}

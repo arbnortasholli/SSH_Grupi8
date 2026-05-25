@@ -213,6 +213,9 @@ export interface Booking {
     id: string;
     carId: string;
     car?: Car;
+    carTitle?: string;
+    carBrand?: string;
+    carModel?: string;
     userId: string;
     startDate: string;
     endDate: string;

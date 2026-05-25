@@ -5,6 +5,8 @@ import type { ExternalCarRequest } from '../lib/types';
 import { externalCarService } from '../services/externalCarService';
 import { getErrorMessage } from '../utils/helpers';
 
+const isAutoKosovaRequest = (request: ExternalCarRequest) => request.source === 'AutoKosova';
+
 const formatMoney = (value?: number | null, currency?: string | null) => {
   if (!value) return 'Waiting for offer';
 
@@ -21,6 +23,19 @@ const formatMileage = (value?: number | null) => {
 };
 
 const getDecisionText = (request: ExternalCarRequest) => {
+  if (isAutoKosovaRequest(request)) {
+    if (request.status === 'Approved') {
+      return 'Your request has been approved. One of our agents will call you soon to discuss and finalize the car purchase.';
+    }
+    if (request.status === 'Rejected') {
+      return 'Your buy request was rejected. Please wait for AutoKosova if more details are needed.';
+    }
+    if (request.status === 'Contacted' || request.status === 'InProgress') {
+      return 'Your request is being processed. Please wait for a phone call from one of our agents.';
+    }
+    return 'Your request has been sent. Please wait while our team reviews it.';
+  }
+
   if (request.customerDecision === 'Interested') return 'You accepted this offer. Our team will contact you.';
   if (request.customerDecision === 'Declined') return 'You declined this offer.';
   if (request.price) return 'Do you want to buy this car?';
@@ -75,9 +90,9 @@ export const ImportRequestsPage: React.FC = () => {
     <div className="page import-requests-page">
       <section className="page-hero page-hero--korean">
         <div className="ak-container">
-          <p className="eyebrow">My import requests</p>
-          <h1>Car Offers</h1>
-          <p>Review prices prepared by AutoKosova for the cars you requested.</p>
+          <p className="eyebrow">My requests</p>
+          <h1>Car Purchase Requests</h1>
+          <p>Track AutoKosova sale-car requests and Korea import offers from one place.</p>
         </div>
       </section>
 
@@ -92,6 +107,7 @@ export const ImportRequestsPage: React.FC = () => {
             {requests.map((request) => {
               const hasDecision = request.customerDecision === 'Interested' || request.customerDecision === 'Declined';
               const hasOffer = Boolean(request.price);
+              const isLocalBuyRequest = isAutoKosovaRequest(request);
 
               return (
                 <article className="listing-card import-request-card" key={request.externalCarRequestID}>
@@ -116,9 +132,10 @@ export const ImportRequestsPage: React.FC = () => {
                     </div>
 
                     <div className="car-specs">
+                      <span>{isLocalBuyRequest ? 'AutoKosova sale car' : 'Korea import request'}</span>
                       {formatMileage(request.mileage) && <span>{formatMileage(request.mileage)}</span>}
                       <span>{request.status}</span>
-                      <span>{request.customerDecision || 'Pending decision'}</span>
+                      <span>{isLocalBuyRequest ? 'Awaiting team review' : request.customerDecision || 'Pending decision'}</span>
                     </div>
 
                     {request.adminComment && (
@@ -130,7 +147,7 @@ export const ImportRequestsPage: React.FC = () => {
 
                     <div className="import-request-decision">
                       <strong>{getDecisionText(request)}</strong>
-                      {hasOffer && !hasDecision && (
+                      {!isLocalBuyRequest && hasOffer && !hasDecision && (
                         <div className="external-card-actions">
                           <button
                             type="button"
@@ -157,7 +174,7 @@ export const ImportRequestsPage: React.FC = () => {
             })}
           </div>
         ) : (
-          <EmptyState title="No import requests yet" description="Request a Korean import car and your offers will appear here." />
+          <EmptyState title="No requests yet" description="Buy a sale car or request a Korean import car and your statuses will appear here." />
         )}
       </section>
     </div>
