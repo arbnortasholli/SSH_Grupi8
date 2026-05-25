@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useForm } from '../hooks/useForm';
 import { getErrorMessage } from '../utils/helpers';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [apiError, setApiError] = useState<string | null>(null);
+  const returnTo = useMemo(() => {
+    const value = (location.state as { returnTo?: string } | null)?.returnTo;
+    return typeof value === 'string' && value.startsWith('/') ? value : null;
+  }, [location.state]);
 
   const { values, handleChange, handleSubmit, isSubmitting } = useForm({
     emailOrUsername: '',
@@ -28,7 +33,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       const authData = await login(emailOrUsername, password);
-      navigate(authData.role === 'Rental' ? '/seller' : '/');
+      navigate(returnTo ?? (authData.role === 'Rental' ? '/seller' : '/'));
     } catch (error: unknown) {
       setApiError(getErrorMessage(error, 'Login failed.'));
     }

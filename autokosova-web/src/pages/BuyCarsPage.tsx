@@ -9,7 +9,7 @@ import { SortDropdown } from '../components/common/SortDropdown';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import type { Car } from '../lib/types';
 import { carService } from '../services/carService';
-import { getErrorMessage } from '../utils/helpers';
+import { formatCurrency, getErrorMessage } from '../utils/helpers';
 
 const sortCars = (cars: Car[], sort: string) => {
   const sorted = [...cars];
@@ -93,7 +93,45 @@ export const BuyCarsPage: React.FC = () => {
   }, []);
 
   const filteredCars = React.useMemo(() => filterSaleCars(cars, filters), [cars, filters]);
-  const sortedCars = sortCars(filteredCars, sort);
+  const sortedCars = React.useMemo(() => sortCars(filteredCars, sort), [filteredCars, sort]);
+  const heroStats = React.useMemo(() => {
+    const cityCount = new Set(sortedCars.map((car) => car.city).filter(Boolean)).size;
+    const lowestPrice = sortedCars.length > 0 ? Math.min(...sortedCars.map((car) => car.price)) : null;
+
+    return {
+      listings: sortedCars.length,
+      cities: cityCount,
+      fromPrice: lowestPrice,
+    };
+  }, [sortedCars]);
+  const marketStats = React.useMemo(() => {
+    if (sortedCars.length === 0) {
+      return {
+        averagePrice: null as number | null,
+        topBodyType: 'No data',
+        topCity: 'No data',
+        newestYear: null as number | null,
+      };
+    }
+
+    const averagePrice = sortedCars.reduce((sum, car) => sum + car.price, 0) / sortedCars.length;
+    const bodyTypeCounts = new Map<string, number>();
+    const cityCounts = new Map<string, number>();
+
+    sortedCars.forEach((car) => {
+      const bodyType = car.bodyType ?? car.type;
+      bodyTypeCounts.set(bodyType, (bodyTypeCounts.get(bodyType) ?? 0) + 1);
+      if (car.city) {
+        cityCounts.set(car.city, (cityCounts.get(car.city) ?? 0) + 1);
+      }
+    });
+
+    const topBodyType = [...bodyTypeCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'No data';
+    const topCity = [...cityCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'No data';
+    const newestYear = Math.max(...sortedCars.map((car) => car.year));
+
+    return { averagePrice, topBodyType, topCity, newestYear };
+  }, [sortedCars]);
 
   const handleFiltersChange = (nextFilters: MarketplaceFilters) => {
     setSearchParams(paramsFromFilters(nextFilters));
@@ -116,15 +154,15 @@ export const BuyCarsPage: React.FC = () => {
               <p>Search sale listings across Kosovo with useful filters and clear comparison cards.</p>
             </div>
             <div className="buy-hero-stats">
-              <span><strong>{sortedCars.length}</strong> listings</span>
-              <span><strong>6</strong> cities</span>
-              <span><strong>€21.5k</strong> from</span>
+              <span><strong>{heroStats.listings}</strong> listings</span>
+              <span><strong>{heroStats.cities}</strong> cities</span>
+              <span><strong>{heroStats.fromPrice !== null ? formatCurrency(heroStats.fromPrice) : 'No data'}</strong> from</span>
             </div>
             <div className="buy-hero-chips">
               <span>Diesel</span>
               <span>Automatic</span>
               <span>Under 50k km</span>
-              <span>Dealer listings</span>
+              <span>Live API data</span>
             </div>
           </div>
         </div>
@@ -146,19 +184,19 @@ export const BuyCarsPage: React.FC = () => {
       <section className="ak-container buy-market-strip" aria-label="Market highlights">
         <div>
           <span>Average listed price</span>
-          <strong>€31,450</strong>
+          <strong>{marketStats.averagePrice !== null ? formatCurrency(marketStats.averagePrice) : 'No data'}</strong>
         </div>
         <div>
           <span>Most listed body type</span>
-          <strong>Sedan</strong>
+          <strong>{marketStats.topBodyType}</strong>
         </div>
         <div>
           <span>Popular city</span>
-          <strong>Prishtina</strong>
+          <strong>{marketStats.topCity}</strong>
         </div>
         <div>
-          <span>Dealer listings</span>
-          <strong>64%</strong>
+          <span>Newest listing year</span>
+          <strong>{marketStats.newestYear ?? 'No data'}</strong>
         </div>
       </section>
 

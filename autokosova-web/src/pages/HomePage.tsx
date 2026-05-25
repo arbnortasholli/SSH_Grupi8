@@ -1,16 +1,18 @@
 import React from 'react';
-import { BrandCard } from '../components/cars/BrandCard';
+import { BrandCard, type BrandCardData } from '../components/cars/BrandCard';
 import { CarCard } from '../components/cars/CarCard';
 import { HowItWorksCard } from '../components/cars/HowItWorksCard';
 import { RentalCarCard } from '../components/cars/RentalCarCard';
 import { Button } from '../components/common/Button';
+import { EmptyState } from '../components/common/EmptyState';
 import { SectionHeader } from '../components/common/SectionHeader';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 import { BuySearchForm } from '../components/search/BuySearchForm';
 import { RentSearchForm } from '../components/search/RentSearchForm';
 import { SearchTabs, type SearchMode } from '../components/search/SearchTabs';
-import { brands } from '../data/brandsDummyData';
 import type { Car } from '../lib/types';
 import { carService } from '../services/carService';
+import { formatCurrency, getErrorMessage } from '../utils/helpers';
 
 const howItWorks = [
   {
@@ -38,27 +40,94 @@ const reasons = [
   'Kosovo city filters for sale and rental searches',
   'Separate buying and booking flows',
   'Vehicle details arranged for fast comparison',
-  'Structured dummy data ready to be replaced by API results',
+  'Live listing data loaded from the AutoKosova API',
 ];
+
+const brandAccents = ['#1d4ed8', '#111827', '#475569', '#b91c1c', '#15803d', '#991b1b'];
+
+const buildBrandLogoUrl = (brandName: string) =>
+  `https://cdn.simpleicons.org/${brandName.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
+
+const buildPopularBrands = (cars: Car[]): BrandCardData[] => {
+  const brandMap = new Map<string, {
+    count: number;
+    totalPrice: number;
+    models: Map<string, number>;
+    cities: Map<string, number>;
+  }>();
+
+  cars.forEach((car) => {
+    const brandName = car.brand.trim();
+    if (!brandName) return;
+
+    const current = brandMap.get(brandName) ?? {
+      count: 0,
+      totalPrice: 0,
+      models: new Map<string, number>(),
+      cities: new Map<string, number>(),
+    };
+
+    current.count += 1;
+    current.totalPrice += car.price;
+    if (car.model) {
+      current.models.set(car.model, (current.models.get(car.model) ?? 0) + 1);
+    }
+    if (car.city) {
+      current.cities.set(car.city, (current.cities.get(car.city) ?? 0) + 1);
+    }
+
+    brandMap.set(brandName, current);
+  });
+
+  return [...brandMap.entries()]
+    .sort(([, left], [, right]) => right.count - left.count)
+    .slice(0, 6)
+    .map(([name, stats], index) => {
+      const popularModel = [...stats.models.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Model data unavailable';
+      const topCity = [...stats.cities.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Not listed';
+
+      return {
+        name,
+        logoUrl: buildBrandLogoUrl(name),
+        count: stats.count,
+        averagePrice: formatCurrency(stats.totalPrice / stats.count),
+        popularModel,
+        topCity,
+        accent: brandAccents[index % brandAccents.length],
+      };
+    });
+};
 
 export const HomePage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<SearchMode>('buy');
   const [saleCars, setSaleCars] = React.useState<Car[]>([]);
   const [rentalCars, setRentalCars] = React.useState<Car[]>([]);
+  const [brands, setBrands] = React.useState<BrandCardData[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const loadFeaturedCars = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
-        const [saleListings, rentalListings] = await Promise.all([
+        const [saleListings, rentalListings, allCarsResponse] = await Promise.all([
           carService.getCarsForSale(),
           carService.getCarsForRent(),
+          carService.getCars(undefined, 1, 200),
         ]);
 
         setSaleCars(saleListings.slice(0, 3));
         setRentalCars(rentalListings.slice(0, 4));
-      } catch {
+        setBrands(buildPopularBrands(allCarsResponse.data));
+      } catch (err: unknown) {
+        setError(getErrorMessage(err, 'Could not load homepage listings.'));
         setSaleCars([]);
         setRentalCars([]);
+        setBrands([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -98,11 +167,19 @@ export const HomePage: React.FC = () => {
             description="Selected sale listings with price, mileage, fuel type, and seller information."
             action={<Button to="/buy" variant="ghost">View all</Button>}
           />
-          <div className="card-grid card-grid--3">
-            {saleCars.map((car) => (
-              <CarCard key={car.id} car={car} />
-            ))}
-          </div>
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : error ? (
+            <EmptyState title="Could not load featured sale cars" description={error} />
+          ) : saleCars.length > 0 ? (
+            <div className="card-grid card-grid--3">
+              {saleCars.map((car) => (
+                <CarCard key={car.id} car={car} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No sale cars available" description="Featured sale listings will appear here when cars are available." />
+          )}
         </div>
       </section>
 
@@ -143,11 +220,19 @@ export const HomePage: React.FC = () => {
               description="Booking-focused picks with daily price, location, rating, and host details."
               action={<Button to="/rent" variant="ghost">Explore rentals</Button>}
             />
-            <div className="home-rentals__grid">
-              {rentalCars.map((car) => (
-                <RentalCarCard key={car.id} car={car} />
-              ))}
-            </div>
+            {isLoading ? (
+              <LoadingSpinner />
+            ) : error ? (
+              <EmptyState title="Could not load featured rentals" description={error} />
+            ) : rentalCars.length > 0 ? (
+              <div className="home-rentals__grid">
+                {rentalCars.map((car) => (
+                  <RentalCarCard key={car.id} car={car} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No rental cars available" description="Featured rentals will appear here when cars are available." />
+            )}
           </div>
         </div>
       </section>
@@ -157,13 +242,21 @@ export const HomePage: React.FC = () => {
           <SectionHeader
             eyebrow="Market demand"
             title="Popular brands"
-            description="Explore the makes Kosovo buyers search most, with real marketplace signals ready for API data later."
+            description="Explore the makes most represented in the current marketplace listings."
           />
-          <div className="brand-grid">
-            {brands.map((brand) => (
-              <BrandCard key={brand.name} brand={brand} />
-            ))}
-          </div>
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : error ? (
+            <EmptyState title="Could not load popular brands" description={error} />
+          ) : brands.length > 0 ? (
+            <div className="brand-grid">
+              {brands.map((brand) => (
+                <BrandCard key={brand.name} brand={brand} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No brand data available" description="Popular brands will appear here when listings are available." />
+          )}
         </div>
       </section>
 

@@ -1,19 +1,23 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Car } from '../lib/types';
+import type { Booking, Car } from '../lib/types';
 import { carService } from '../services/carService';
+import { bookingService } from '../services/bookingService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { Modal } from '../components/Modal';
 import { EditCarPage } from './EditCarPage';
-import { formatCurrency, getErrorMessage } from '../utils/helpers';
+import { formatCurrency, formatDate, getErrorMessage } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
 
 export const SellerDashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [cars, setCars] = useState<Car[]>([]);
+    const [bookings, setBookings] = useState<Booking[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isBookingsLoading, setIsBookingsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [bookingsError, setBookingsError] = useState<string | null>(null);
     const [selectedTab, setSelectedTab] = useState<'cars' | 'bookings'>('cars');
     const [activeModal, setActiveModal] = useState<{
         carId: string;
@@ -40,11 +44,26 @@ export const SellerDashboardPage: React.FC = () => {
         }
     }, [user?.accountID]);
 
+    const loadSellerBookings = useCallback(async () => {
+        setIsBookingsLoading(true);
+        setBookingsError(null);
+
+        try {
+            const data = await bookingService.getSellerBookings();
+            setBookings(data);
+        } catch (err: unknown) {
+            setBookingsError(getErrorMessage(err, 'Failed to load bookings'));
+        } finally {
+            setIsBookingsLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         queueMicrotask(() => {
             void loadSellerCars();
+            void loadSellerBookings();
         });
-    }, [loadSellerCars]);
+    }, [loadSellerBookings, loadSellerCars]);
 
     const handleDeleteCar = async (carId: string) => {
         if (!window.confirm('Are you sure you want to delete this car?')) return;
@@ -222,11 +241,71 @@ export const SellerDashboardPage: React.FC = () => {
             )}
 
             {selectedTab === 'bookings' && (
-                <div className="empty-state renter-empty">
-                    <div className="empty-state__mark">BK</div>
-                    <h3>No booking panel yet</h3>
-                    <p>Bookings for your rental cars will appear here after the booking flow is connected.</p>
-                </div>
+                <>
+                    {bookingsError && (
+                        <div className="auth-alert" role="alert">
+                            {bookingsError}
+                        </div>
+                    )}
+
+                    {isBookingsLoading ? (
+                        <LoadingSpinner />
+                    ) : bookings.length > 0 ? (
+                        <div className="renter-table-card">
+                            <table className="renter-cars-table">
+                                <thead>
+                                <tr>
+                                    <th>Booking</th>
+                                    <th>Dates</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {bookings.map((booking) => (
+                                    <tr key={booking.id}>
+                                        <td>
+                                            <div className="renter-car-cell">
+                                                <div className="renter-car-thumb">
+                                                    <span>BK</span>
+                                                </div>
+                                                <div>
+                                                    <strong>
+                                                        {booking.carBrand && booking.carModel
+                                                            ? `${booking.carBrand} ${booking.carModel}`
+                                                            : booking.carTitle || `Car #${booking.carId}`}
+                                                    </strong>
+                                                    <span>Booking #{booking.id}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>{formatDate(booking.startDate)}</strong>
+                                            <span className="renter-muted">{formatDate(booking.endDate)}</span>
+                                        </td>
+                                        <td>
+                                            <strong className="renter-price">{formatCurrency(booking.totalPrice)}</strong>
+                                        </td>
+                                        <td>
+                                            <span className={getStatusClassName(booking.status)}>{booking.status}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{formatDate(booking.createdAt)}</strong>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="empty-state renter-empty">
+                            <div className="empty-state__mark">BK</div>
+                            <h3>No bookings yet</h3>
+                            <p>Bookings for your rental cars will appear here when customers complete the rental flow.</p>
+                        </div>
+                    )}
+                </>
             )}
 
             <Modal

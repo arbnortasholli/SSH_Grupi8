@@ -55,6 +55,12 @@ const menuItems = {
           url: '/external-car-requests'
         },
         {
+          id: 'buy-car-requests',
+          title: 'Buy Car Requests',
+          type: 'item',
+          url: '/buy-car-requests'
+        },
+        {
           id: 'interested-customers',
           title: 'Interested Customers',
           type: 'item',

@@ -48,6 +48,11 @@ x86/
 appsettings.Development.json
 appsettings.Production.json
 appsettings.Local.json
+appsettings.*.local.json
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
 
 # Local uploaded car images
 /autokosova-api/AutoKosova.Api/wwwroot/uploads/cars/**
@@ -83,6 +88,24 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# =========================
+# Secrets / certificates
+# =========================
+*.pfx
+*.p12
+*.key
+*.pem
+*.jks
+secrets.json
+secrets.*.json
+
+# Generated API verification artifacts
+/autokosova-api/build-check/
 
 # =========================
 # OS files

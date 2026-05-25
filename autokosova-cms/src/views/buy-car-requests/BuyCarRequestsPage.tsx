@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, Card, Form, Modal, Spinner, Table } from 'react-bootstrap';
 import FeatherIcon from 'feather-icons-react';
 import apiClient from 'config/apiClient';
+import authService from 'utils/authService';
+
+const AUTO_KOSOVA_SOURCE = 'AutoKosova';
 
 const getErrorMessage = (error, fallback = 'Something went wrong.') => {
   const data = error?.response?.data;
@@ -26,16 +29,6 @@ const getResponseList = (payload) => {
   return [];
 };
 
-const getImageSource = (imageUrl) => {
-  if (!imageUrl) return '';
-  if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
-
-  const apiBaseUrl = apiClient.defaults.baseURL || '';
-  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/i, '');
-
-  return `${apiOrigin}${imageUrl}`;
-};
-
 const normalizeRequest = (item) => ({
   externalCarRequestID: item.externalCarRequestID ?? item.ExternalCarRequestID,
   accountID: item.accountID ?? item.AccountID,
@@ -43,6 +36,7 @@ const normalizeRequest = (item) => ({
   accountEmail: item.accountEmail ?? item.AccountEmail ?? '',
   reviewedByUsername: item.reviewedByUsername ?? item.ReviewedByUsername ?? '',
   externalCarID: item.externalCarID ?? item.ExternalCarID ?? '',
+  source: item.source ?? item.Source ?? '',
   carName: item.carName ?? item.CarName ?? '',
   brand: item.brand ?? item.Brand ?? '',
   model: item.model ?? item.Model ?? '',
@@ -64,34 +58,39 @@ const normalizeRequest = (item) => ({
   reviewedAt: item.reviewedAt ?? item.ReviewedAt
 });
 
-const formatMoney = (value, currency = 'EUR') => {
-  if (value === null || value === undefined || value === '') return '-';
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'EUR',
-    maximumFractionDigits: 0
-  }).format(Number(value));
-};
-
-const formatMileage = (value) => {
+const formatDate = (value) => {
   if (!value) return '-';
-  return `${Number(value).toLocaleString()} km`;
+  return new Date(value).toLocaleString();
 };
 
 const getStatusVariant = (status) => {
-  if (status === 'Approved' || status === 'Completed') return 'success';
+  if (status === 'Approved') return 'success';
   if (status === 'Rejected') return 'danger';
   if (status === 'Contacted' || status === 'InProgress') return 'info';
+  if (status === 'Completed') return 'dark';
   return 'warning';
 };
 
-export default function ExternalCarRequestsPage() {
+const getRequestHeadline = (request) => {
+  if (request.status === 'Approved') {
+    return 'Customer is waiting for a phone call from our agent.';
+  }
+
+  if (request.status === 'Rejected') {
+    return 'Request was rejected.';
+  }
+
+  return 'Review and answer this buy-car request.';
+};
+
+const isSuperAdmin = (user) => user?.role === 'SuperAdmin';
+const isSeller = (user) => user?.role === 'Rental' || user?.role === 'Seller';
+
+export default function BuyCarRequestsPage() {
+  const user = authService.getUser();
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [status, setStatus] = useState('Pending');
-  const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState('EUR');
   const [adminComment, setAdminComment] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,12 +98,26 @@ export default function ExternalCarRequestsPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const pendingCount = useMemo(
-    () => requests.filter((item) => item.status === 'Pending').length,
+  const canLoadAllRequests = isSuperAdmin(user);
+  const sellerBlocked = isSeller(user) && !canLoadAllRequests;
+
+  const buyRequests = useMemo(
+    () => requests.filter((request) => request.source === AUTO_KOSOVA_SOURCE),
     [requests]
   );
 
+  const pendingCount = useMemo(
+    () => buyRequests.filter((request) => request.status === 'Pending').length,
+    [buyRequests]
+  );
+
   const loadRequests = async () => {
+    if (!canLoadAllRequests) {
+      setRequests([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -112,21 +125,19 @@ export default function ExternalCarRequestsPage() {
       const response = await apiClient.get('/external-car-requests');
       setRequests(getResponseList(response.data).map(normalizeRequest));
     } catch (err) {
-      setError(getErrorMessage(err, 'External car requests could not be loaded.'));
+      setError(getErrorMessage(err, 'Buy-car requests could not be loaded.'));
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadRequests();
+    void loadRequests();
   }, []);
 
   const openModal = (request) => {
     setSelectedRequest(request);
     setStatus(request.status || 'Pending');
-    setPrice(request.price ?? '');
-    setCurrency(request.currency || 'EUR');
     setAdminComment(request.adminComment || '');
     setMessage('');
     setError('');
@@ -136,6 +147,28 @@ export default function ExternalCarRequestsPage() {
   const closeModal = () => {
     setSelectedRequest(null);
     setShowModal(false);
+  };
+
+  const quickUpdateStatus = async (request, nextStatus) => {
+    setError('');
+    setMessage('');
+    setIsSaving(true);
+
+    try {
+      await apiClient.put(`/external-car-requests/${request.externalCarRequestID}/status`, {
+        status: nextStatus,
+        price: request.price,
+        currency: request.currency || 'EUR',
+        adminComment: request.adminComment || null
+      });
+
+      setMessage(`Buy-car request #${request.externalCarRequestID} updated to ${nextStatus}.`);
+      await loadRequests();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Buy-car request could not be updated.'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = async (event) => {
@@ -149,16 +182,16 @@ export default function ExternalCarRequestsPage() {
     try {
       await apiClient.put(`/external-car-requests/${selectedRequest.externalCarRequestID}/status`, {
         status,
-        price: price === '' ? null : Number(price),
-        currency: currency.trim() || 'EUR',
+        price: selectedRequest.price,
+        currency: selectedRequest.currency || 'EUR',
         adminComment: adminComment.trim() || null
       });
 
-      setMessage('External car request updated successfully.');
+      setMessage('Buy-car request updated successfully.');
       closeModal();
       await loadRequests();
     } catch (err) {
-      setError(getErrorMessage(err, 'External car request could not be updated.'));
+      setError(getErrorMessage(err, 'Buy-car request could not be updated.'));
     } finally {
       setIsSaving(false);
     }
@@ -169,99 +202,122 @@ export default function ExternalCarRequestsPage() {
       <div className="ak-admin-hero">
         <div>
           <span className="ak-admin-eyebrow">AutoKosova Admin</span>
-          <h2>External Car Requests</h2>
-          <p>Review imported car requests and set the final customer price manually.</p>
+          <h2>Buy Car Requests</h2>
+          <p>Review local AutoKosova sale-car requests and answer customers using the existing request workflow.</p>
         </div>
         <div className="ak-admin-hero-icon">
-          <FeatherIcon icon="truck" size={28} />
+          <FeatherIcon icon="shopping-bag" size={28} />
         </div>
       </div>
 
       {message && <Alert variant="success">{message}</Alert>}
       {error && <Alert variant="danger">{error}</Alert>}
 
+      {sellerBlocked && (
+        <Alert variant="warning">
+          Seller-scoped buy-car requests cannot be shown safely yet. The current backend only exposes
+          `GET /api/external-car-requests` for SuperAdmin users and does not provide seller ownership metadata
+          or a seller-filtered request endpoint for local sale-car requests.
+        </Alert>
+      )}
+
       <Card className="ak-admin-card">
         <Card.Body>
           <div className="ak-permissions-toolbar">
             <div>
-              <h5>Request list</h5>
-              <p>{pendingCount} pending request{pendingCount === 1 ? '' : 's'} waiting for pricing.</p>
+              <h5>Buy-car request list</h5>
+              <p>{pendingCount} pending request{pendingCount === 1 ? '' : 's'} waiting for review.</p>
             </div>
-            <Button type="button" variant="light" onClick={loadRequests}>
-              <FeatherIcon icon="refresh-cw" size={16} />
-              <span>Refresh</span>
-            </Button>
+            {canLoadAllRequests && (
+              <Button type="button" variant="light" onClick={loadRequests}>
+                <FeatherIcon icon="refresh-cw" size={16} />
+                <span>Refresh</span>
+              </Button>
+            )}
           </div>
 
           {isLoading ? (
             <div className="ak-permissions-loading">
               <Spinner animation="border" size="sm" />
-              <span>Loading external car requests...</span>
+              <span>Loading buy-car requests...</span>
+            </div>
+          ) : sellerBlocked ? (
+            <div className="ak-empty-cell">
+              Seller-scoped backend support is missing, so this page stays empty to avoid exposing unrelated requests.
             </div>
           ) : (
             <div className="table-responsive">
               <Table hover className="ak-permissions-table">
                 <thead>
                   <tr>
+                    <th>Request ID</th>
+                    <th>Customer</th>
                     <th>Car</th>
-                    <th>Customer</th>
-                    <th>Specs</th>
-                    <th>Price</th>
+                    <th>Listing ID</th>
                     <th>Status</th>
-                    <th>Customer</th>
+                    <th>Created</th>
                     <th className="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {requests.length === 0 ? (
+                  {buyRequests.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="ak-empty-cell">
-                        No external car requests found.
+                        No buy-car requests found.
                       </td>
                     </tr>
                   ) : (
-                    requests.map((request) => (
+                    buyRequests.map((request) => (
                       <tr key={request.externalCarRequestID}>
                         <td>
-                          <div className="d-flex align-items-center gap-3">
-                            {request.imageUrl ? (
-                              <img
-                                src={getImageSource(request.imageUrl)}
-                                alt={request.carName}
-                                style={{ width: 72, height: 52, objectFit: 'cover', borderRadius: 8 }}
-                              />
-                            ) : null}
-                            <div>
-                              <strong>{request.carName}</strong>
-                              <span className="ak-table-muted">{request.externalCarID}</span>
-                            </div>
-                          </div>
+                          <strong>#{request.externalCarRequestID}</strong>
                         </td>
                         <td>
                           <strong>{request.customerName || request.accountUsername || request.accountID}</strong>
-                          <span className="ak-table-muted">{request.customerEmail || request.accountEmail}</span>
+                          <span className="ak-table-muted">{request.customerEmail || request.accountEmail || '-'}</span>
                           <span className="ak-table-muted">{request.customerPhone || '-'}</span>
                         </td>
                         <td>
-                          <div>{[request.year, request.brand, request.model].filter(Boolean).join(' - ') || '-'}</div>
-                          <span className="ak-table-muted">{formatMileage(request.mileage)}</span>
+                          <strong>{request.carName || [request.brand, request.model].filter(Boolean).join(' ') || 'AutoKosova sale car'}</strong>
+                          <span className="ak-table-muted">{[request.year, request.brand, request.model].filter(Boolean).join(' - ') || '-'}</span>
                         </td>
                         <td>
-                          <strong>{formatMoney(request.price, request.currency)}</strong>
+                          <span className="ak-table-muted">{request.externalCarID || '-'}</span>
                         </td>
                         <td>
                           <Badge bg={getStatusVariant(request.status)}>{request.status}</Badge>
+                          <span className="ak-table-muted">{getRequestHeadline(request)}</span>
                         </td>
+                        <td>{formatDate(request.createdAt)}</td>
                         <td>
-                          <Badge bg={request.customerDecision === 'Interested' ? 'success' : request.customerDecision === 'Declined' ? 'secondary' : 'light'}>
-                            {request.customerDecision}
-                          </Badge>
-                        </td>
-                        <td>
-                          <div className="ak-table-actions">
+                          <div className="ak-table-actions justify-content-end">
+                            {request.status === 'Pending' ? (
+                              <>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="ak-admin-submit"
+                                  disabled={isSaving}
+                                  onClick={() => quickUpdateStatus(request, 'Approved')}
+                                >
+                                  <FeatherIcon icon="check" size={15} />
+                                  <span>Approve</span>
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline-danger"
+                                  size="sm"
+                                  disabled={isSaving}
+                                  onClick={() => quickUpdateStatus(request, 'Rejected')}
+                                >
+                                  <FeatherIcon icon="x" size={15} />
+                                  <span>Reject</span>
+                                </Button>
+                              </>
+                            ) : null}
                             <Button type="button" variant="light" size="sm" onClick={() => openModal(request)}>
                               <FeatherIcon icon="edit-2" size={15} />
-                              <span>Price / Status</span>
+                              <span>Review</span>
                             </Button>
                           </div>
                         </td>
@@ -278,54 +334,37 @@ export default function ExternalCarRequestsPage() {
       <Modal show={showModal} onHide={closeModal} centered>
         <Form onSubmit={handleSave}>
           <Modal.Header closeButton>
-            <Modal.Title>Set request price</Modal.Title>
+            <Modal.Title>Review buy-car request</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <p className="mb-3">
               <strong>{selectedRequest?.carName}</strong>
             </p>
 
-            <Form.Group className="mb-3" controlId="externalRequestPrice">
-              <Form.Label>Price</Form.Label>
-              <Form.Control
-                type="number"
-                min="0"
-                step="1"
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-                placeholder="Example: 18500"
-              />
-            </Form.Group>
+            <Alert variant={selectedRequest?.status === 'Approved' ? 'success' : selectedRequest?.status === 'Rejected' ? 'danger' : 'warning'}>
+              {selectedRequest ? getRequestHeadline(selectedRequest) : 'Review the request.'}
+            </Alert>
 
-            <Form.Group className="mb-3" controlId="externalRequestCurrency">
-              <Form.Label>Currency</Form.Label>
-              <Form.Select value={currency} onChange={(event) => setCurrency(event.target.value)}>
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="KRW">KRW</option>
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="externalRequestStatus">
+            <Form.Group className="mb-3" controlId="buyCarRequestStatus">
               <Form.Label>Status</Form.Label>
               <Form.Select value={status} onChange={(event) => setStatus(event.target.value)}>
                 <option value="Pending">Pending</option>
-                <option value="Contacted">Contacted</option>
-                <option value="InProgress">In Progress</option>
                 <option value="Approved">Approved</option>
                 <option value="Rejected">Rejected</option>
+                <option value="Contacted">Contacted</option>
+                <option value="InProgress">In Progress</option>
                 <option value="Completed">Completed</option>
               </Form.Select>
             </Form.Group>
 
-            <Form.Group controlId="externalRequestAdminComment">
-              <Form.Label>Admin comment</Form.Label>
+            <Form.Group controlId="buyCarRequestAdminComment">
+              <Form.Label>Response / comment</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={4}
                 value={adminComment}
                 onChange={(event) => setAdminComment(event.target.value)}
-                placeholder="Optional internal note."
+                placeholder="Optional note for internal tracking or customer follow-up."
               />
             </Form.Group>
           </Modal.Body>

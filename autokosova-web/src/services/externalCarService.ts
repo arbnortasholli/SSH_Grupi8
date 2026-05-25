@@ -1,5 +1,6 @@
 import apiClient from './apiClient';
 import type {
+    Car,
     ExternalCarListResponse,
     ExternalCarRequest,
     ExternalCarRequestPayload,
@@ -31,6 +32,31 @@ export const externalCarService = {
     createRequest: async (payload: ExternalCarRequestPayload): Promise<ExternalCarRequest> => {
         const response = await apiClient.post<ExternalCarRequest>('/external-car-requests', payload);
         return response.data;
+    },
+
+    createAutoKosovaBuyRequest: async (car: Car, customer: {
+        customerName?: string;
+        customerEmail?: string;
+        customerPhone?: string;
+        message?: string;
+    }): Promise<ExternalCarRequest> => {
+        return externalCarService.createRequest({
+            externalCarID: car.id,
+            source: 'AutoKosova',
+            carName: `${car.year} ${car.brand} ${car.model}`,
+            brand: car.brand,
+            model: car.model,
+            year: car.year,
+            price: car.price,
+            currency: 'EUR',
+            mileage: car.mileage,
+            imageUrl: car.images[0] ?? null,
+            detailUrl: `${window.location.origin}/cars/${car.id}`,
+            customerName: customer.customerName,
+            customerEmail: customer.customerEmail,
+            customerPhone: customer.customerPhone,
+            message: customer.message,
+        });
     },
 
     getMyRequests: async (): Promise<ExternalCarRequest[]> => {

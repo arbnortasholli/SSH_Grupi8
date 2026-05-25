@@ -29,19 +29,6 @@ namespace AutoKosova.Api.Controllers
             return Ok(result.Data!.Select(ToDto));
         }
 
-        [HttpGet("api/car-images/{imageId:int}")]
-        public async Task<IActionResult> GetImageById(int imageId)
-        {
-            var result = await _carImageService.GetImageById(imageId);
-
-            if (!result.IsSuccess)
-            {
-                return ToActionResult(result);
-            }
-
-            return Ok(ToDto(result.Data!));
-        }
-
         [HasPermission("Cars.Images.Manage")]
         [HttpPost("api/cars/{carId:int}/images")]
         [Consumes("multipart/form-data")]
@@ -64,45 +51,6 @@ namespace AutoKosova.Api.Controllers
                 CarID = carId,
                 Images = result.Data!.Select(ToDto).ToList()
             });
-        }
-
-        [HasPermission("Cars.Images.Manage")]
-        [HttpPost("api/cars/{carId:int}/images/url")]
-        public async Task<IActionResult> AddImageUrl(int carId, [FromBody] CarImageCreateRequestDto request)
-        {
-            if (CurrentAccountId == null)
-            {
-                return Unauthorized("Invalid token.");
-            }
-
-            var result = await _carImageService.AddImage(
-                carId,
-                request.CarImageUrl,
-                request.CarImageIsMain,
-                request.CarImageOrderNumber,
-                CurrentAccountId.Value,
-                CurrentRole
-            );
-
-            if (!result.IsSuccess)
-            {
-                return ToActionResult(result);
-            }
-
-            return Ok(new
-            {
-                message = "Car image URL added successfully.",
-                carImageID = result.Data!.CarImageID,
-                carImageUrl = result.Data.CarImageUrl
-            });
-        }
-
-        [HasPermission("Cars.Images.Manage")]
-        [HttpPost("api/cars/{carId:int}/images/upload")]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadImage(int carId, [FromForm] CarImageUploadRequestDto request)
-        {
-            return await UploadImages(carId, request);
         }
 
         [HasPermission("Cars.Images.Manage")]
@@ -149,52 +97,6 @@ namespace AutoKosova.Api.Controllers
         [HasPermission("Cars.Images.Manage")]
         [HttpDelete("api/cars/{carId:int}/images/{imageId:int}")]
         public async Task<IActionResult> DeleteImage(int carId, int imageId, [FromQuery] bool deleteLocalFile = true)
-        {
-            if (CurrentAccountId == null)
-            {
-                return Unauthorized("Invalid token.");
-            }
-
-            var result = await _carImageService.DeleteImage(imageId, CurrentAccountId.Value, CurrentRole);
-
-            if (!result.IsSuccess)
-            {
-                return ToActionResult(result);
-            }
-
-            return Ok(new
-            {
-                message = "Car image deleted successfully.",
-                carImageID = result.Data!.CarImageID
-            });
-        }
-
-        [HasPermission("Cars.Images.Manage")]
-        [HttpPut("api/car-images/{imageId:int}/set-main")]
-        public async Task<IActionResult> SetMainImage(int imageId)
-        {
-            if (CurrentAccountId == null)
-            {
-                return Unauthorized("Invalid token.");
-            }
-
-            var result = await _carImageService.SetMainImage(imageId, CurrentAccountId.Value, CurrentRole);
-
-            if (!result.IsSuccess)
-            {
-                return ToActionResult(result);
-            }
-
-            return Ok(new
-            {
-                message = "Main image updated successfully.",
-                carImageID = result.Data!.CarImageID
-            });
-        }
-
-        [HasPermission("Cars.Images.Manage")]
-        [HttpDelete("api/car-images/{imageId:int}")]
-        public async Task<IActionResult> DeleteImage(int imageId)
         {
             if (CurrentAccountId == null)
             {

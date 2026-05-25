@@ -17,6 +17,7 @@ const CarFeaturesPage = lazy(() => import('../views/car-features/CarFeaturesPage
 const RentalBookingsPage = lazy(() => import('../views/rental-bookings/RentalBookingsPage'));
 const TenantRequestsPage = lazy(() => import('../views/tenant-requests/TenantRequestsPage'));
 const ExternalCarRequestsPage = lazy(() => import('../views/external-car-requests/ExternalCarRequestsPage'));
+const BuyCarRequestsPage = lazy(() => import('../views/buy-car-requests/BuyCarRequestsPage'));
 const InterestedCustomersPage = lazy(() => import('../views/interested-customers/InterestedCustomersPage'));
 const TenantsPage = lazy(() => import('../views/tenants/TenantsPage'));
 
@@ -70,6 +71,10 @@ const MainRoutes = {
         {
           path: '/external-car-requests',
           element: <ExternalCarRequestsPage />
+        },
+        {
+          path: '/buy-car-requests',
+          element: <BuyCarRequestsPage />
         },
         {
           path: '/interested-customers',

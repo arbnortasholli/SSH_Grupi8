@@ -1,14 +1,23 @@
-import type { Brand } from '../../data/brandsDummyData';
 import { Link } from 'react-router-dom';
 
+export type BrandCardData = {
+  name: string;
+  logoUrl: string;
+  count: number;
+  averagePrice: string;
+  popularModel: string;
+  topCity: string;
+  accent: string;
+};
+
 type BrandCardProps = {
-  brand: Brand;
+  brand: BrandCardData;
 };
 
 export const BrandCard: React.FC<BrandCardProps> = ({ brand }) => (
   <Link
     className="brand-card"
-    to={`/buy?brand=${brand.slug}`}
+    to={`/buy?brand=${encodeURIComponent(brand.name)}`}
     aria-label={`Browse ${brand.name} cars`}
     style={{ '--brand-accent': brand.accent } as React.CSSProperties}
   >
