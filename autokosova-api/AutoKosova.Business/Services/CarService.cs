@@ -21,7 +21,7 @@ namespace AutoKosova.Business.Services
 
         public async Task<List<Cars>> GetAll(int? accountId = null, string? role = null, int? tenantId = null)
         {
-            return await ApplyTenantScope(BaseCarQuery(), role, tenantId)
+            return await ApplyRoleScope(BaseCarQuery(), accountId, role, tenantId)
                 .OrderByDescending(c => c.CarCreationDate)
                 .ToListAsync();
         }
@@ -54,6 +54,12 @@ namespace AutoKosova.Business.Services
             if (imagesValidationError != null)
             {
                 return ServiceResult<Cars>.BadRequest(imagesValidationError);
+            }
+
+            var sellerValidationError = ValidateSellerWrite(car, role);
+            if (sellerValidationError != null)
+            {
+                return ServiceResult<Cars>.Forbidden(sellerValidationError);
             }
 
             var tenantResolution = await ResolveTenantForWrite(car.TenantID, role, currentTenantId);
@@ -140,6 +146,12 @@ namespace AutoKosova.Business.Services
             if (validationError != null)
             {
                 return ServiceResult<Cars>.BadRequest(validationError);
+            }
+
+            var sellerValidationError = ValidateSellerWrite(updatedCar, role);
+            if (sellerValidationError != null)
+            {
+                return ServiceResult<Cars>.Forbidden(sellerValidationError);
             }
 
             var tenantResolution = await ResolveTenantForWrite(updatedCar.TenantID, role, currentTenantId);
@@ -274,8 +286,7 @@ namespace AutoKosova.Business.Services
 
         public async Task<List<Cars>> GetMyCars(int accountId, string? role, int? tenantId)
         {
-            return await ApplyTenantScope(BaseCarQuery(), role, tenantId)
-                .Where(c => IsRentalRole(role) ? c.TenantID == tenantId : c.CreatedByAccountID == accountId)
+            return await ApplyRoleScope(BaseCarQuery(), accountId, role, tenantId)
                 .OrderByDescending(c => c.CarCreationDate)
                 .ToListAsync();
         }
@@ -295,11 +306,25 @@ namespace AutoKosova.Business.Services
                 .Where(c => !c.CarDeleted);
         }
 
-        private static IQueryable<Cars> ApplyTenantScope(IQueryable<Cars> query, string? role, int? tenantId)
+        private static IQueryable<Cars> ApplyRoleScope(IQueryable<Cars> query, int? accountId, string? role, int? tenantId)
         {
-            return IsRentalRole(role)
-                ? query.Where(c => tenantId.HasValue && c.TenantID == tenantId.Value)
-                : query;
+            if (IsSellerRole(role))
+            {
+                return query.Where(c =>
+                    accountId.HasValue &&
+                    c.CreatedByAccountID == accountId.Value &&
+                    c.IsForSale);
+            }
+
+            if (IsRentalRole(role))
+            {
+                return query.Where(c =>
+                    tenantId.HasValue &&
+                    c.TenantID == tenantId.Value &&
+                    c.IsForRent);
+            }
+
+            return query;
         }
 
         private static bool CanManageCar(Cars car, int accountId, string? role, int? tenantId)
@@ -311,7 +336,12 @@ namespace AutoKosova.Business.Services
 
             if (IsRentalRole(role))
             {
-                return tenantId.HasValue && car.TenantID == tenantId.Value;
+                return tenantId.HasValue && car.TenantID == tenantId.Value && car.IsForRent;
+            }
+
+            if (IsSellerRole(role))
+            {
+                return car.CreatedByAccountID == accountId && car.IsForSale;
             }
 
             return car.CreatedByAccountID == accountId;
@@ -325,6 +355,11 @@ namespace AutoKosova.Business.Services
                 return adminValidationError == null
                     ? ServiceResult<int?>.Success(requestedTenantId)
                     : ServiceResult<int?>.BadRequest(adminValidationError);
+            }
+
+            if (IsSellerRole(role))
+            {
+                return ServiceResult<int?>.Success(null);
             }
 
             if (!IsRentalRole(role))
@@ -348,10 +383,26 @@ namespace AutoKosova.Business.Services
             return string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase);
         }
 
+        private static bool IsSellerRole(string? role)
+        {
+            return string.Equals(role, "Seller", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static bool IsRentalRole(string? role)
         {
-            return string.Equals(role, "Rental", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(role, "Seller", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(role, "Rental", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string? ValidateSellerWrite(Cars car, string? role)
+        {
+            if (!IsSellerRole(role))
+            {
+                return null;
+            }
+
+            return car.IsForSale && !car.IsForRent
+                ? null
+                : "Seller accounts can manage only cars for sale.";
         }
 
         private async Task<string?> ValidateImagesForCreate(List<IFormFile>? images)

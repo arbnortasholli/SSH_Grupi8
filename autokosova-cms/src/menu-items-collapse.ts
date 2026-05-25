@@ -25,7 +25,7 @@ const menuItems = {
           title: 'Rental Bookings',
           type: 'item',
           url: '/rental-bookings',
-          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
+          allowedRoles: ['SuperAdmin', 'Rental']
         },
         {
           id: 'accounts',
@@ -70,10 +70,10 @@ const menuItems = {
         },
         {
           id: 'interested-customers',
-          title: 'Interested Customers',
+          title: 'Buy Car Requests',
           type: 'item',
           url: '/interested-customers',
-          allowedRoles: ['SuperAdmin', 'Rental', 'Seller']
+          allowedRoles: ['SuperAdmin', 'Seller']
         },
         {
           id: 'tenants',

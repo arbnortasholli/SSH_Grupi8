@@ -115,6 +115,16 @@ const normalizeAccount = (item) => ({
 });
 
 export default function CarsPage() {
+  const currentUser = authService.getUser();
+  const isSeller = currentUser?.role === 'Seller';
+  const currentUserAccount = currentUser
+    ? {
+        accountID: currentUser.accountID,
+        accountUsername: currentUser.accountUsername,
+        accountName: currentUser.accountName,
+        accountLastname: currentUser.accountLastname
+      }
+    : null;
   const [cars, setCars] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [formValues, setFormValues] = useState(emptyForm);
@@ -163,12 +173,21 @@ export default function CarsPage() {
   const forSaleCount = useMemo(() => cars.filter((car) => car.isForSale).length, [cars]);
   const forRentCount = useMemo(() => cars.filter((car) => car.isForRent).length, [cars]);
 
+  const ensureCurrentUserAccount = (accountList) => {
+    if (!currentUserAccount?.accountID) {
+      return accountList;
+    }
+
+    const hasCurrentUser = accountList.some((account) => Number(account.accountID) === Number(currentUserAccount.accountID));
+    return hasCurrentUser ? accountList : [currentUserAccount, ...accountList];
+  };
+
   const loadAccounts = async () => {
     try {
       const response = await apiClient.get('/Account');
-      setAccounts(getResponseList(response.data).map(normalizeAccount));
+      setAccounts(ensureCurrentUserAccount(getResponseList(response.data).map(normalizeAccount)));
     } catch {
-      setAccounts([]);
+      setAccounts(ensureCurrentUserAccount([]));
     }
   };
 
@@ -231,6 +250,11 @@ export default function CarsPage() {
 
   const getAccountLabel = (accountID) => {
     const account = accounts.find((item) => Number(item.accountID) === Number(accountID));
+    if (!account && Number(currentUserAccount?.accountID) === Number(accountID)) {
+      const currentUserName = `${currentUserAccount.accountName} ${currentUserAccount.accountLastname}`.trim();
+      return currentUserName ? `${currentUserName} (@${currentUserAccount.accountUsername})` : currentUserAccount.accountUsername;
+    }
+
     if (!account) return accountID ? `Account #${accountID}` : '-';
 
     const name = `${account.accountName} ${account.accountLastname}`.trim();
@@ -238,11 +262,10 @@ export default function CarsPage() {
   };
 
   const openCreateModal = () => {
-    const user = authService.getUser();
     setEditingCar(null);
     setFormValues({
       ...emptyForm,
-      createdByAccountID: user?.accountID || ''
+      createdByAccountID: currentUser?.accountID || ''
     });
     setMessage('');
     setError('');
@@ -386,6 +409,10 @@ export default function CarsPage() {
 
   const handleListingTypeChange = (event) => {
     const value = event.target.value;
+    if (isSeller && value !== 'ForSale') {
+      return;
+    }
+
     const isForSale = value === 'ForSale';
     const isForRent = value === 'ForRent';
 
@@ -430,6 +457,11 @@ export default function CarsPage() {
 
     if (!formValues.isForSale && !formValues.isForRent) {
       setError('Car must be marked for sale or rent.');
+      return;
+    }
+
+    if (isSeller && (!formValues.isForSale || formValues.isForRent)) {
+      setError('Seller accounts can manage only cars for sale.');
       return;
     }
 
@@ -897,7 +929,7 @@ export default function CarsPage() {
                     >
                       <option value="" disabled>Select type</option>
                       <option value="ForSale">For Sale</option>
-                      <option value="ForRent">For Rent</option>
+                      {!isSeller && <option value="ForRent">For Rent</option>}
                     </Form.Select>
                   </Form.Group>
                 </Col>

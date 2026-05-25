@@ -61,7 +61,7 @@ export default function SignIn1() {
 
       if (!hasAllowedRole(user, CMS_ACCESS_ROLES)) {
         authService.logout();
-        setErrorMessage('Only SuperAdmin and Rental accounts can access this panel.');
+        setErrorMessage('Only SuperAdmin, Rental, and Seller accounts can access this panel.');
         return;
       }
 
@@ -108,7 +108,7 @@ export default function SignIn1() {
                 <span className="autokosova-brand-wordmark">AutoKosova</span>
               </div>
 
-              <span className="autokosova-admin-badge">Admin / Rental</span>
+              <span className="autokosova-admin-badge">Admin / Seller / Rental</span>
             </div>
 
             <h4>Welcome back</h4>
