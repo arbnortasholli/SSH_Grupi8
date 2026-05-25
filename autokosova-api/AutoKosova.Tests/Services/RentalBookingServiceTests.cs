@@ -76,7 +76,7 @@ public class RentalBookingServiceTests
         using var db = new SqliteTestDbContext();
         var service = new RentalBookingService(db.Context, CreatePaymentService(db));
 
-        var result = await service.UpdateStatus(1, "UnknownStatus", 1, "SuperAdmin");
+        var result = await service.UpdateStatus(1, "UnknownStatus", 1, "SuperAdmin", null);
 
         result.Status.Should().Be(ServiceStatus.BadRequest);
         result.Error.Should().Be("Invalid booking status.");
@@ -88,7 +88,7 @@ public class RentalBookingServiceTests
         using var db = new SqliteTestDbContext();
         var service = new RentalBookingService(db.Context, CreatePaymentService(db));
 
-        var result = await service.Delete(999, 1, "SuperAdmin");
+        var result = await service.Delete(999, 1, "SuperAdmin", null);
 
         result.Status.Should().Be(ServiceStatus.NotFound);
         result.Error.Should().Be("Rental booking not found.");

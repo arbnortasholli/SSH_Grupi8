@@ -19,7 +19,7 @@ public class CarServiceTests
         var service = new CarService(db.Context, CreateLocalImageStorageService());
         var car = TestDataFactory.CreateRentalCar();
 
-        var result = await service.Create(car, accountId: 7);
+        var result = await service.Create(car, accountId: 7, role: "Seller", currentTenantId: 1);
 
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().NotBeNull();
@@ -36,7 +36,7 @@ public class CarServiceTests
         car.IsForSale = true;
         car.SalePrice = 10000m;
 
-        var result = await service.Create(car, accountId: 7);
+        var result = await service.Create(car, accountId: 7, role: "SuperAdmin", currentTenantId: null);
 
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ServiceStatus.BadRequest);
@@ -49,7 +49,7 @@ public class CarServiceTests
         using var db = new SqliteTestDbContext();
         var service = new CarService(db.Context, CreateLocalImageStorageService());
 
-        var result = await service.Update(999, TestDataFactory.CreateRentalCar(), 1, "SuperAdmin");
+        var result = await service.Update(999, TestDataFactory.CreateRentalCar(), 1, "SuperAdmin", null);
 
         result.Status.Should().Be(ServiceStatus.NotFound);
         result.Error.Should().Be("Car not found.");
@@ -69,10 +69,10 @@ public class CarServiceTests
 
         var service = new CarService(db.Context, CreateLocalImageStorageService());
 
-        var result = await service.Delete(1, accountId: 99, role: "Customer");
+        var result = await service.Delete(1, accountId: 99, role: "Customer", currentTenantId: null);
 
         result.Status.Should().Be(ServiceStatus.Forbidden);
-        result.Error.Should().Be("You can delete only cars created by you.");
+        result.Error.Should().Be("You can delete only cars that belong to your tenant.");
     }
 
     [Fact]

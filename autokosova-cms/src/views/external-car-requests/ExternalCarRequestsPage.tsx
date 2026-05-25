@@ -43,6 +43,7 @@ const normalizeRequest = (item) => ({
   accountEmail: item.accountEmail ?? item.AccountEmail ?? '',
   reviewedByUsername: item.reviewedByUsername ?? item.ReviewedByUsername ?? '',
   externalCarID: item.externalCarID ?? item.ExternalCarID ?? '',
+  source: item.source ?? item.Source ?? '-',
   carName: item.carName ?? item.CarName ?? '',
   brand: item.brand ?? item.Brand ?? '',
   model: item.model ?? item.Model ?? '',
@@ -203,6 +204,7 @@ export default function ExternalCarRequestsPage() {
               <Table hover className="ak-permissions-table">
                 <thead>
                   <tr>
+                    <th>Source</th>
                     <th>Car</th>
                     <th>Customer</th>
                     <th>Specs</th>
@@ -215,13 +217,16 @@ export default function ExternalCarRequestsPage() {
                 <tbody>
                   {requests.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="ak-empty-cell">
+                      <td colSpan={8} className="ak-empty-cell">
                         No external car requests found.
                       </td>
                     </tr>
                   ) : (
                     requests.map((request) => (
                       <tr key={request.externalCarRequestID}>
+                        <td>
+                          <span>{request.source || '-'}</span>
+                        </td>
                         <td>
                           <div className="d-flex align-items-center gap-3">
                             {request.imageUrl ? (
@@ -342,3 +347,8 @@ export default function ExternalCarRequestsPage() {
     </div>
   );
 }
+
+
+
+
+
